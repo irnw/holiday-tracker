@@ -281,9 +281,13 @@ function debouncedSync(){
 
 async function gistAPI(path,opts={}){
   const c=getSyncConfig();if(!c.token)throw new Error('No token');
-  const r=await fetch('https://api.github.com'+path,{...opts,headers:{'Authorization':'token '+c.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json',...(opts.headers||{})}});
-  if(!r.ok){const t=await r.text();throw new Error('GitHub API '+r.status+': '+t);}
-  return r.json();
+  const hdrs={'Authorization':'Bearer '+c.token,'Accept':'application/vnd.github.v3+json',...(opts.headers||{})};
+  if(opts.body)hdrs['Content-Type']='application/json';
+  const r=await fetch('https://api.github.com'+path,{...opts,headers:hdrs});
+  if(!r.ok){const t=await r.text().catch(()=>'');throw new Error('GitHub API '+r.status+': '+(t||'unknown error'));}
+  const txt=await r.text();
+  if(!txt)return {};
+  return JSON.parse(txt);
 }
 
 function syncData(){
