@@ -388,20 +388,14 @@ async function connectSync(){
       c.gistId=existing.id;setSyncConfig(c);
       const fullGist=await gistAPI('/gists/'+existing.id);
       const remote=JSON.parse(fullGist.files[GIST_FILE].content);
-      if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
-        // Remote is newer — pull it
-        S.trips=remote.trips;S.leave=remote.leave||S.leave;
-        S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
-        S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified;
-        try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
-        applyTheme();render();
-        updateSyncStatus('Connected & synced (pulled '+remote.trips.length+' trips)');
-        toast('Connected & synced from cloud');
-      }else{
-        await pushToGist();
-        updateSyncStatus('Connected & synced (pushed '+S.trips.length+' trips)');
-        toast('Connected & synced to cloud');
-      }
+      // First-time connect: always pull from cloud (cloud is source of truth)
+      S.trips=remote.trips||S.trips;S.leave=remote.leave||S.leave;
+      S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
+      S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
+      try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+      applyTheme();render();
+      updateSyncStatus('Connected & synced (pulled '+remote.trips.length+' trips)');
+      toast('Connected & synced from cloud');
     }else{
       await pushToGist();
       updateSyncStatus('Connected & initial sync done ('+S.trips.length+' trips)');
