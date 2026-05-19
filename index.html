@@ -321,7 +321,7 @@ async function pullFromGist(){
   try{
     let gist;
     if(c.gistId){gist=await gistAPI('/gists/'+c.gistId);}
-    else{gist=await findExistingGist();if(gist){c.gistId=gist.id;setSyncConfig(c);}else return false;}
+    else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}else return false;}
     if(!gist||!gist.files||!gist.files[GIST_FILE])return false;
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
@@ -349,7 +349,7 @@ async function fullSync(){
     // Try pull first
     let gist;
     if(c.gistId){gist=await gistAPI('/gists/'+c.gistId);}
-    else{gist=await findExistingGist();if(gist){c.gistId=gist.id;setSyncConfig(c);}}
+    else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}}
     if(gist&&gist.files&&gist.files[GIST_FILE]){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
       if(remote.lastModified&&remote.lastModified>S.lastModified){
@@ -386,7 +386,8 @@ async function connectSync(){
     const existing=await findExistingGist();
     if(existing){
       c.gistId=existing.id;setSyncConfig(c);
-      const remote=JSON.parse(existing.files[GIST_FILE].content);
+      const fullGist=await gistAPI('/gists/'+existing.id);
+      const remote=JSON.parse(fullGist.files[GIST_FILE].content);
       if(remote.trips&&remote.trips.length>S.trips.length){
         // Remote has more data — pull it
         S.trips=remote.trips;S.leave=remote.leave||S.leave;
