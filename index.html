@@ -258,7 +258,7 @@ function loadS(){
     try{const d=localStorage.getItem(key);if(d){const p=JSON.parse(d);if(p.trips&&p.trips.length&&p.leave&&typeof p.leave==='object'){
       // Migrate to current key
       if(key!=='htV4')try{localStorage.setItem('htV4',d);}catch(e2){}
-      if(!p.lastModified)p.lastModified=Date.now();
+      if(!p.lastModified)p.lastModified=1;
       return p;
     }}}catch(e){console.error('Load error ('+key+'):',e);}
   }
@@ -388,10 +388,11 @@ async function connectSync(){
       c.gistId=existing.id;setSyncConfig(c);
       const fullGist=await gistAPI('/gists/'+existing.id);
       const remote=JSON.parse(fullGist.files[GIST_FILE].content);
-      if(remote.trips&&remote.trips.length>S.trips.length){
-        // Remote has more data — pull it
+      if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
+        // Remote is newer — pull it
         S.trips=remote.trips;S.leave=remote.leave||S.leave;
-        S.rates=remote.rates||S.rates;S.lastModified=remote.lastModified||Date.now();
+        S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
+        S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified;
         try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
         applyTheme();render();
         updateSyncStatus('Connected & synced (pulled '+remote.trips.length+' trips)');
@@ -420,7 +421,7 @@ function disconnectSync(){
   render();
   toast('Sync disconnected');
 }
-function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:'dark',rates:{...DRATES},trips:importTrips(),leave:importLeave()}}
+function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:'dark',rates:{...DRATES},trips:importTrips(),leave:importLeave(),lastModified:1}}
 function tCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency)));return s;}
 function allCost(){return S.trips.reduce((s,t)=>s+tCost(t),0);}
 function upcoming(){const td=new Date().toISOString().slice(0,10);return S.trips.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
