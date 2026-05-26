@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -210,11 +210,93 @@ textarea.fc{resize:vertical;min-height:50px}
 .rate-item input{flex:1;padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--input-bg);color:var(--text)}
 
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text3)}
-@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.page-content{padding:14px}.fg{grid-template-columns:1fr}.trip-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+
+/* ========== HAMBURGER MENU ========== */
+.hamburger{display:none;position:fixed;top:12px;left:12px;z-index:110;width:40px;height:40px;border:none;background:var(--card);border-radius:10px;cursor:pointer;color:var(--text);box-shadow:var(--shadow);align-items:center;justify-content:center}
+.hamburger svg{width:20px;height:20px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:95;backdrop-filter:blur(2px)}
+.sidebar-overlay.open{display:block}
+
+/* ========== UNDO TOAST ========== */
+.toast-undo{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:10px;font-size:13px;z-index:300;animation:tIn .3s;box-shadow:var(--shadow2);display:flex;align-items:center;gap:12px}
+.toast-undo .undo-btn{background:var(--primary);color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit}
+.toast-undo .undo-btn:hover{filter:brightness(1.15)}
+.toast-undo .undo-timer{width:60px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.toast-undo .undo-timer-bar{height:100%;background:var(--primary);transition:width linear}
+
+/* ========== STATUS BADGES ========== */
+.badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.badge-upcoming{background:var(--primary-dim);color:var(--primary)}
+.badge-active{background:var(--green-dim);color:var(--green);animation:pulse 2s infinite}
+.badge-completed{background:var(--bg2);color:var(--text3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* ========== SEARCH BAR ========== */
+.search-bar{position:relative;flex:1;max-width:320px}
+.search-bar input{width:100%;padding:7px 12px 7px 32px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:var(--input-bg);color:var(--text);outline:none;font-family:inherit}
+.search-bar input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.search-bar svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text3)}
+
+/* ========== TIMELINE ========== */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border);border-radius:1px}
+.tl-item{position:relative;margin-bottom:16px;padding-left:12px}
+.tl-item::before{content:'';position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;border:2px solid var(--primary);background:var(--card)}
+.tl-item.tl-flight::before{border-color:var(--primary);background:var(--primary-dim)}
+.tl-item.tl-hotel::before{border-color:var(--green);background:var(--green-dim)}
+.tl-item.tl-activity::before{border-color:var(--orange);background:var(--orange-dim)}
+.tl-item.tl-transport::before{border-color:var(--purple);background:var(--purple-dim)}
+.tl-date{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.tl-content{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px}
+.tl-content h4{font-size:12px;font-weight:600;margin-bottom:2px}
+.tl-content .tl-sub{color:var(--text2);font-size:11px}
+
+/* ========== BUDGET CHART ========== */
+.budget-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.budget-bar .bb-label{min-width:80px;color:var(--text2);font-weight:500;text-align:right}
+.budget-bar .bb-track{flex:1;height:20px;background:var(--bg2);border-radius:4px;overflow:hidden;position:relative}
+.budget-bar .bb-fill{height:100%;border-radius:4px;transition:width .3s}
+.budget-bar .bb-val{min-width:80px;font-weight:600}
+
+/* ========== SYNC INDICATOR ========== */
+.sync-dot{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);padding:3px 8px;border-radius:6px;background:var(--bg2)}
+.sync-dot.connected{color:var(--green)}
+.sync-dot .sd-icon{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ========== COUNTDOWN ========== */
+.countdown{display:flex;gap:8px;align-items:baseline}
+.cd-num{font-size:28px;font-weight:700;color:var(--primary);line-height:1}
+.cd-unit{font-size:11px;color:var(--text3);text-transform:uppercase}
+
+/* ========== LEAVE CALENDAR DOTS ========== */
+.cal-day .d-leave{font-size:9px;color:var(--purple);font-weight:500;margin-bottom:1px}
+
+/* ========== ATTACHMENT LINK ========== */
+.attach-link{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--primary-dim);border-radius:6px;font-size:11px;color:var(--primary);cursor:pointer;margin-top:4px}
+.attach-link:hover{background:var(--primary-glow)}
+
+/* ========== KEYBOARD SHORTCUT HINT ========== */
+.kbd{display:inline-flex;padding:1px 5px;border:1px solid var(--border);border-radius:4px;font-size:10px;font-family:'SF Mono',Monaco,monospace;color:var(--text3);background:var(--bg2)}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:flex}
+  .main{margin-left:0}
+  .page-header{padding-left:56px}
+  .page-content{padding:14px}
+  .fg{grid-template-columns:1fr}
+  .trip-grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .search-bar{max-width:100%}
+  .fab{bottom:16px;right:16px}
+}
 </style>
 </head>
 <body>
 
+<button class="hamburger" id="hamburger" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
 <nav class="sidebar" id="sidebar"></nav>
 <div class="main" id="app"></div>
 <button class="fab" id="fab" title="Quick Upload — Drop a PDF/image to auto-detect trip info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
@@ -249,6 +331,10 @@ const days=(a,b)=>!a||!b?0:Math.max(0,Math.ceil((new Date(b+'T00:00:00')-new Dat
 const nights=(a,b)=>Math.max(0,days(a,b)-1);
 const toSGD=(amt,cur)=>(parseFloat(amt)||0)*(S.rates[cur]||1);
 const fmtM=(n,c)=>(c||'')+' '+(parseFloat(n)||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtDT=dt=>{if(!dt)return '—';try{const d=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d))return esc(dt);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return esc(dt);}};
+function tripStatus(t){const td=new Date().toISOString().slice(0,10);if(t.startDate<=td&&t.endDate>=td)return 'active';if(t.startDate>td)return 'upcoming';return 'completed';}
+function daysUntil(dateStr){const td=new Date();td.setHours(0,0,0,0);const d=new Date(dateStr+'T00:00:00');return Math.ceil((d-td)/864e5);}
+function toastUndo(msg,undoFn,duration=5000){const el=document.createElement('div');el.className='toast-undo';el.innerHTML=`<span>${esc(msg)}</span><button class="undo-btn">Undo</button><div class="undo-timer"><div class="undo-timer-bar" style="width:100%"></div></div>`;document.body.appendChild(el);const bar=el.querySelector('.undo-timer-bar');let cancelled=false;const start=Date.now();const anim=()=>{if(cancelled)return;const elapsed=Date.now()-start;const pct=Math.max(0,100-elapsed/duration*100);bar.style.width=pct+'%';if(pct>0)requestAnimationFrame(anim);else{el.remove();}};requestAnimationFrame(anim);el.querySelector('.undo-btn').onclick=()=>{cancelled=true;el.remove();undoFn();toast('Undone');};setTimeout(()=>{if(!cancelled)el.remove();},duration);}
 
 // ===== STATE =====
 let S=loadS();
@@ -522,15 +608,30 @@ async function fetchLiveRates(){
 fetchLiveRates();
 
 // ===== RENDER =====
+function toggleMobileMenu(){
+  const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');ov.classList.toggle('open');
+}
+function closeMobileMenu(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+function syncIndicatorHtml(){
+  const c=getSyncConfig();
+  if(!c.token)return '<div class="sync-dot"><div class="sd-icon"></div>Offline</div>';
+  return '<div class="sync-dot connected"><div class="sd-icon"></div>Synced</div>';
+}
+
 function renderSidebar(){
   const isDark=S.theme==='dark';
   document.getElementById('sidebar').innerHTML=`
     <div class="sidebar-brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg></div><h1>HOLIDAY TRACKER</h1></div>
     <div class="nav">
       <div class="nav-section">Menu</div>
-      ${NAVS.map(n=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='trips')?' active':''}" data-nav="${n.id}">${n.icon}<span>${n.label}</span></div>`).join('')}
+      ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='trips')?' active':''}" data-nav="${n.id}" role="button" tabindex="0" aria-label="${n.label} (${i+1})">${n.icon}<span>${n.label}</span><span class="kbd" style="margin-left:auto">${i+1}</span></div>`).join('')}
     </div>
     <div class="sidebar-footer">
+      ${syncIndicatorHtml()}
       <div class="theme-toggle" onclick="toggleTheme()">
         ${isDark?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light Mode':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> Dark Mode'}
       </div>
@@ -560,28 +661,31 @@ function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveS();render();window.scrollTo
 // ===== DASHBOARD =====
 function vDash(){
   const u=upcoming(),p=past(),ly=S.leave[2026]||{},tot=(ly.al||0)+(ly.bp||0)+(ly.ot||0)+(ly.ph||0),bal=tot-(ly.taken||0);
+  const nextTrip=u.length?u[0]:null;
+  const dLeft=nextTrip?daysUntil(nextTrip.startDate):0;
+  const countdownHtml=nextTrip?(dLeft===0?'<span style="color:var(--green);font-weight:600">Today!</span>':dLeft<0?'<span style="color:var(--green);font-weight:600">In progress</span>':`<div class="countdown"><span class="cd-num">${dLeft}</span><span class="cd-unit">day${dLeft!==1?'s':''} away</span></div>`):'—';
   return `
-  <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back, Irene</div></div></div>
+  <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back, Irene</div></div><div>${syncIndicatorHtml()}</div></div>
   <div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Total Trips</div><div class="s-val">${S.trips.length}</div><div class="s-sub">${u.length} upcoming</div></div>
       <div class="stat green"><div class="s-label">Total Spend</div><div class="s-val">${fmtM(allCost(),'')}</div><div class="s-sub">SGD equivalent</div></div>
       <div class="stat orange"><div class="s-label">Leave Balance '26</div><div class="s-val">${bal}</div><div class="s-sub">${ly.taken||0} of ${tot} used</div></div>
-      <div class="stat purple"><div class="s-label">Next Trip</div><div class="s-val" style="font-size:18px">${u.length?esc(u[0].name):'—'}</div><div class="s-sub">${u.length?fmt(u[0].startDate):''}</div></div>
+      <div class="stat purple"><div class="s-label">Next Trip</div><div class="s-val" style="font-size:16px">${nextTrip?esc(nextTrip.name):'—'}</div><div class="s-sub">${countdownHtml}</div></div>
     </div>
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>Upcoming Trips</h3><button class="btn btn-p" data-action="add-trip">+ New Trip</button></div>
       <div class="card-body" style="padding:12px">
-      ${u.length?u.map(t=>`
+      ${u.length?u.map(t=>{const st=tripStatus(t);return`
         <div class="entry" style="cursor:pointer;border-left:3px solid ${tColor(t)}" data-action="view" data-id="${t.id}">
-          <div class="entry-top"><h4>${esc(t.name)}</h4><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div>
+          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center"><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
           <div class="entry-grid">
             <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)} — ${fmtS(t.endDate)}</span></div>
             <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
             <div class="eg"><span class="ek">Bookings</span><span class="ev">${(t.flights||[]).length}F · ${(t.hotels||[]).length}H · ${(t.activities||[]).length}A</span></div>
             ${tCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(tCost(t),'SGD')}</span></div>`:''}
           </div>
-        </div>`).join(''):'<div class="empty"><p>No upcoming trips planned</p><button class="btn btn-p" data-action="add-trip">Plan a Trip</button></div>'}
+        </div>`;}).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg><p>No upcoming trips yet</p><p style="font-size:11px;color:var(--text3);margin-bottom:12px">Start planning your next adventure</p><button class="btn btn-p" data-action="add-trip">+ Plan a Trip</button></div>'}
       </div>
     </div>
     ${p.length?`<div class="card"><div class="card-header"><h3>Recent Past Trips</h3></div><div class="card-body" style="padding:12px">${p.slice(0,4).map(t=>`
@@ -595,19 +699,25 @@ function vDash(){
 // ===== TRIPS LIST =====
 function vTrips(){
   const yrs=[...new Set(S.trips.map(t=>t.year||new Date(t.startDate).getFullYear()))].sort((a,b)=>b-a);
-  const filtered=sortTrips(S.trips.filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY));
+  const q=(S._searchQ||'').toLowerCase();
+  let filtered=S.trips.filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY);
+  if(q)filtered=filtered.filter(t=>t.name.toLowerCase().includes(q)||t.locations.some(l=>l.toLowerCase().includes(q))||(t.notes||'').toLowerCase().includes(q));
+  filtered=sortTrips(filtered);
   return `
   <div class="page-header"><div><h2>My Trips</h2><div class="subtitle">${S.trips.length} trips across ${yrs.length} years</div></div><button class="btn btn-p" data-action="add-trip">+ New Trip</button></div>
   <div class="page-content">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
       <div class="ytabs" style="margin-bottom:0"><div class="yt${!S.tfY?' active':''}" data-action="fy" data-y="">All</div>${yrs.map(y=>`<div class="yt${S.tfY==y?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
-      ${sortCtrlHtml('trip',tripSortKey,tripSortDir)}
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search trips…" value="${esc(S._searchQ||'')}" data-action="search-trips"></div>
+        ${sortCtrlHtml('trip',tripSortKey,tripSortDir)}
+      </div>
     </div>
-    <div class="trip-grid">${filtered.map(t=>`
+    <div class="trip-grid">${filtered.map(t=>{const st=tripStatus(t);return`
       <div class="trip-card" data-action="view" data-id="${t.id}">
         <div class="trip-accent" style="background:linear-gradient(90deg,${tColor(t)},${TRIP_COLORS[((t.name||'').length+3)%TRIP_COLORS.length]})"></div>
         <div class="trip-body">
-          <div class="trip-name">${esc(t.name)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><span class="badge badge-${st}">${st}</span></div>
           <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
           <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}</div>
           <div class="trip-foot">
@@ -618,9 +728,9 @@ function vTrips(){
             ${tCost(t)?`<span style="color:var(--green)"><b>${fmtM(tCost(t),'')}</b> SGD</span>`:''}
           </div>
         </div>
-      </div>`).join('')}
+      </div>`;}).join('')}
     </div>
-    ${!filtered.length?'<div class="empty"><p>No trips found</p></div>':''}
+    ${!filtered.length?'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No trips found</p><p style="font-size:11px;color:var(--text3)">Try a different search or filter</p></div>':''}
   </div>`;
 }
 
@@ -651,9 +761,9 @@ function vDetail(){
     ${t.sharedLink?`<div class="shared-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg><a href="${esc(t.sharedLink)}" target="_blank">${esc(t.sharedLink)}</a></div>`:''}
     ${t.notes?`<div style="margin:8px 0 16px;padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text2)">${esc(t.notes)}</div>`:''}
     <div class="tabs">
-      ${['flights','hotels','activities','transport'].map(k=>`<div class="tab${tab===k?' active':''}" data-action="tab" data-t="${k}">${k.charAt(0).toUpperCase()+k.slice(1)} (${(t[k]||[]).length})</div>`).join('')}
+      ${['timeline','flights','hotels','activities','transport'].map(k=>`<div class="tab${tab===k?' active':''}" data-action="tab" data-t="${k}">${k==='timeline'?'Timeline':k.charAt(0).toUpperCase()+k.slice(1)} ${k!=='timeline'?'('+((t[k]||[]).length)+')':''}</div>`).join('')}
     </div>
-    ${tab==='flights'?rFlights(t):tab==='hotels'?rHotels(t):tab==='activities'?rActs(t):rTrans(t)}
+    ${tab==='timeline'?rTimeline(t):tab==='flights'?rFlights(t):tab==='hotels'?rHotels(t):tab==='activities'?rActs(t):rTrans(t)}
   </div>`;
 }
 
@@ -667,13 +777,14 @@ function rFlights(t){
         ${f.from||f.to?`<div class="eg"><span class="ek">Route</span><span class="ev">${esc(f.from||'?')} → ${esc(f.to||'?')}</span></div>`:''}
         ${f.pnr?`<div class="eg"><span class="ek">PNR</span><span class="ev" style="font-family:monospace">${esc(f.pnr)}</span></div>`:''}
         ${f.seat?`<div class="eg"><span class="ek">Seat</span><span class="ev">${esc(f.seat)}</span></div>`:''}
-        ${f.departureTime?`<div class="eg"><span class="ek">Depart</span><span class="ev">${esc(f.departureTime)}</span></div>`:''}
-        ${f.arrivalTime?`<div class="eg"><span class="ek">Arrive</span><span class="ev">${esc(f.arrivalTime)}</span></div>`:''}
+        ${f.departureTime?`<div class="eg"><span class="ek">Depart</span><span class="ev">${fmtDT(f.departureTime)}</span></div>`:''}
+        ${f.arrivalTime?`<div class="eg"><span class="ek">Arrive</span><span class="ev">${fmtDT(f.arrivalTime)}</span></div>`:''}
         ${f.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(f.currency)} ${parseFloat(f.cost).toLocaleString()}</span></div>`:''}
       </div>
       ${f.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(f.notes)}</div>`:''}
+      ${f.attachUrl?`<a href="${esc(f.attachUrl)}" target="_blank" class="attach-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Attachment</a>`:''}
       ${f.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(f.ocrText)}</div></details>`:''}
-    </div>`).join(''):'<div class="empty"><p>No flights yet</p></div>'}`;
+    </div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg><p>No flights added yet</p><p style="font-size:11px;color:var(--text3)">Add your first flight or scan a booking</p></div>'}`;
 }
 function rHotels(t){
   const sorted=sortEntries(t.hotels||[],'hotels');
@@ -691,7 +802,7 @@ function rHotels(t){
       </div>
       ${h.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(h.notes)}</div>`:''}
       ${h.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(h.ocrText)}</div></details>`:''}
-    </div>`).join(''):'<div class="empty"><p>No hotels yet</p></div>'}`;
+    </div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><p>No hotels added yet</p><p style="font-size:11px;color:var(--text3)">Add accommodation details for this trip</p></div>'}`;
 }
 function rActs(t){
   const sorted=sortEntries(t.activities||[],'activities');
@@ -709,7 +820,7 @@ function rActs(t){
       </div>
       ${a.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(a.notes)}</div>`:''}
       ${a.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(a.ocrText)}</div></details>`:''}
-    </div>`).join(''):'<div class="empty"><p>No activities yet</p></div>'}`;
+    </div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><p>No activities yet</p><p style="font-size:11px;color:var(--text3)">Add tours, experiences, or events</p></div>'}`;
 }
 function rTrans(t){
   const sorted=sortEntries(t.transport||[],'transport');
@@ -727,7 +838,24 @@ function rTrans(t){
       </div>
       ${x.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(x.notes)}</div>`:''}
       ${x.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(x.ocrText)}</div></details>`:''}
-    </div>`).join(''):'<div class="empty"><p>No transport entries yet</p></div>'}`;
+    </div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><p>No transport entries yet</p><p style="font-size:11px;color:var(--text3)">Add trains, buses, ferries, or car rentals</p></div>'}`;
+}
+
+// ===== TIMELINE =====
+function rTimeline(t){
+  // Collect all entries with dates
+  const items=[];
+  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}`,cost:f.cost?`${f.currency} ${parseFloat(f.cost).toLocaleString()}`:''});});
+  (t.hotels||[]).forEach(h=>{items.push({type:'hotel',date:h.checkIn||t.startDate,time:'',label:h.name||'Hotel',sub:`${fmt(h.checkIn)} — ${fmt(h.checkOut)} (${nights(h.checkIn,h.checkOut)}n)`,cost:h.cost?`${h.currency} ${parseFloat(h.cost).toLocaleString()}`:''});});
+  (t.activities||[]).forEach(a=>{items.push({type:'activity',date:a.date||t.startDate,time:a.time||'',label:a.name||'Activity',sub:a.location||'',cost:a.cost?`${a.currency} ${parseFloat(a.cost).toLocaleString()}`:''});});
+  (t.transport||[]).forEach(x=>{items.push({type:'transport',date:x.date||t.startDate,time:x.time||'',label:`${x.type||''} ${x.name||''}`.trim()||'Transport',sub:x.location||'',cost:x.cost?`${x.currency} ${parseFloat(x.cost).toLocaleString()}`:''});});
+  items.sort((a,b)=>(a.date+' '+(a.time||'99')).localeCompare(b.date+' '+(b.time||'99')));
+  if(!items.length)return '<div class="empty"><p>No entries yet — add flights, hotels, or activities to see your itinerary</p></div>';
+  let lastDate='';
+  return `<h3 style="font-size:14px;margin-bottom:12px">Itinerary Timeline</h3><div class="timeline">${items.map(it=>{
+    const showDate=it.date!==lastDate;lastDate=it.date;
+    return `${showDate?`<div class="tl-date" style="margin-top:${showDate&&lastDate?'8':'0'}px">${fmt(it.date)} · ${dayN(it.date)}</div>`:''}<div class="tl-item tl-${it.type}"><div class="tl-content"><div style="display:flex;justify-content:space-between;align-items:center"><h4>${esc(it.label)}</h4>${it.cost?`<span style="font-size:11px;font-weight:600;color:var(--green)">${it.cost}</span>`:''}</div>${it.sub?`<div class="tl-sub">${esc(it.sub)}</div>`:''}</div></div>`;
+  }).join('')}</div>`;
 }
 
 // ===== CALENDAR =====
@@ -741,6 +869,17 @@ function vCal(){
   // Get holidays for this month
   const ly=S.leave[y]||{};
   const phMap={};(ly.holidays||[]).forEach(h=>{phMap[h.d]=h.n;});
+  // Build leave days set: workdays that fall within trip dates (auto-calculated)
+  const leaveDays=new Set();
+  S.trips.forEach(t=>{
+    const ts=t.startDate,te=t.endDate;if(!ts||!te)return;
+    let cur=new Date(ts+'T00:00:00');const end=new Date(te+'T00:00:00');
+    while(cur<=end){
+      const ds=cur.toISOString().slice(0,10);const dow=cur.getDay();
+      if(dow!==0&&dow!==6&&!phMap[ds])leaveDays.add(ds);
+      cur.setDate(cur.getDate()+1);
+    }
+  });
   // Build calendar grid
   let cells='';
   // Previous month padding
@@ -761,6 +900,7 @@ function vCal(){
     cells+=`<div class="cal-day${isToday?' today':''}" data-date="${ds}">
       <div class="d-num${isWknd?' weekend':''}">${d}</div>
       ${ph?`<div class="d-ph">${esc(ph)}</div>`:''}
+      ${leaveDays.has(ds)&&!ph?`<div class="d-leave">Leave</div>`:''}
       ${tripsOn.slice(0,3).map(t=>`<div class="cal-trip" style="background:${tColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
       ${tripsOn.length>3?`<div style="font-size:9px;color:var(--text3)">+${tripsOn.length-3} more</div>`:''}
     </div>`;
@@ -791,11 +931,27 @@ function vCal(){
 }
 
 // ===== LEAVE =====
+function calcLeaveDaysForYear(year){
+  const yStr=String(year);const ly=S.leave[year]||{};
+  const phMap={};(ly.holidays||[]).forEach(h=>{phMap[h.d]=h.n;});
+  let count=0;
+  S.trips.forEach(t=>{
+    if(!t.startDate||!t.endDate)return;
+    let cur=new Date(t.startDate+'T00:00:00');const end=new Date(t.endDate+'T00:00:00');
+    while(cur<=end){
+      const ds=cur.toISOString().slice(0,10);const dow=cur.getDay();
+      if(ds.startsWith(yStr)&&dow!==0&&dow!==6&&!phMap[ds])count++;
+      cur.setDate(cur.getDate()+1);
+    }
+  });
+  return count;
+}
 function vLeave(){
   const yrs=Object.keys(S.leave).sort((a,b)=>b-a);
   const y=S.ly||yrs[0]||2026;
   const l=S.leave[y]||{};
   const tot=(l.al||0)+(l.bp||0)+(l.ot||0)+(l.ph||0),bal=tot-(l.taken||0);
+  const autoCalc=calcLeaveDaysForYear(y);
   return `
   <div class="page-header"><div><h2>Leave Tracker</h2><div class="subtitle">${l.employer||'—'} · ${y}</div></div></div>
   <div class="page-content">
@@ -806,8 +962,9 @@ function vLeave(){
       <div class="lb t-ot"><div class="lv">${l.ot||0}</div><div class="ll">OT Leave</div></div>
       <div class="lb t-ot"><div class="lv">${l.ph||0}</div><div class="ll">PH Sub</div></div>
       <div class="lb t-total"><div class="lv">${tot}</div><div class="ll">Total</div></div>
-      <div class="lb t-taken"><div class="lv">${l.taken||0}</div><div class="ll">Taken</div></div>
+      <div class="lb t-taken"><div class="lv">${l.taken||0}</div><div class="ll">Taken (manual)</div></div>
       <div class="lb t-bal"><div class="lv">${bal}</div><div class="ll">Balance</div></div>
+      <div class="lb" style="background:var(--purple-dim);color:var(--purple)"><div class="lv">${autoCalc}</div><div class="ll">From Trips</div></div>
     </div>
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Edit Leave</h3></div><div class="card-body">
       <div class="fg">
@@ -826,18 +983,25 @@ function vLeave(){
 // ===== BUDGET =====
 function vBudget(){
   const byCur={};
-  S.trips.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||'SGD';byCur[c]=(byCur[c]||0)+parseFloat(e.cost);}})));
+  const byCat={flights:0,hotels:0,activities:0,transport:0};
+  S.trips.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||'SGD';byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toSGD(e.cost,c);}})));
   const wc=S.trips.filter(t=>tCost(t)>0).sort((a,b)=>tCost(b)-tCost(a));
+  const total=allCost();
+  const catColors={flights:'var(--primary)',hotels:'var(--green)',activities:'var(--orange)',transport:'var(--purple)'};
+  const maxCat=Math.max(...Object.values(byCat),1);
   return `
   <div class="page-header"><div><h2>Budget</h2><div class="subtitle">Spending overview</div></div></div>
   <div class="page-content">
     <div class="stats">
-      <div class="stat green"><div class="s-label">Total (SGD)</div><div class="s-val">${fmtM(allCost(),'')}</div></div>
+      <div class="stat green"><div class="s-label">Total (SGD)</div><div class="s-val">${fmtM(total,'')}</div></div>
       ${Object.entries(byCur).map(([c,v])=>`<div class="stat"><div class="s-label">${c}</div><div class="s-val" style="font-size:20px">${parseFloat(v).toLocaleString('en',{minimumFractionDigits:2})}</div></div>`).join('')}
     </div>
+    ${total>0?`<div class="card" style="margin-bottom:16px"><div class="card-header"><h3>By Category</h3></div><div class="card-body">
+      ${Object.entries(byCat).map(([k,v])=>`<div class="budget-bar"><span class="bb-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bb-track"><div class="bb-fill" style="width:${(v/maxCat*100).toFixed(1)}%;background:${catColors[k]}"></div></div><span class="bb-val">${fmtM(v,'SGD')}</span></div>`).join('')}
+    </div></div>`:''}
     <div class="card">
       <div class="card-header"><h3>By Trip</h3></div>
-      ${wc.length?wc.map(t=>`<div class="b-row"><div><span style="font-weight:500">${esc(t.name)}</span> <span style="font-size:11px;color:var(--text3)">${fmtS(t.startDate)}</span></div><div style="font-weight:600">${fmtM(tCost(t),'SGD')}</div></div>`).join('')+'<div class="b-total"><span>Total</span><span>'+fmtM(allCost(),'SGD')+'</span></div>':'<div class="card-body"><div class="empty"><p>No costs recorded yet</p></div></div>'}
+      ${wc.length?wc.map(t=>{const c=tCost(t);return`<div class="b-row"><div style="flex:1"><span style="font-weight:500">${esc(t.name)}</span> <span style="font-size:11px;color:var(--text3)">${fmtS(t.startDate)}</span><div style="margin-top:4px;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${(c/total*100).toFixed(1)}%;background:${tColor(t)};border-radius:2px"></div></div></div><div style="font-weight:600;min-width:100px;text-align:right">${fmtM(c,'SGD')}</div></div>`;}).join('')+'<div class="b-total"><span>Total</span><span>'+fmtM(total,'SGD')+'</span></div>':'<div class="card-body"><div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><p>No costs recorded yet</p><p style="font-size:11px;color:var(--text3)">Add costs to your trip bookings to see spending breakdown</p></div></div>'}
     </div>
   </div>`;
 }
@@ -1397,11 +1561,12 @@ function fFlight(trip,f){
     <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${f.cost||''}"></div>
     <div class="fi"><label>Currency</label>${curSel(f.currency)}</div>
     <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(f.notes||'')}</textarea></div>
+    <div class="fi full"><label>Attachment URL</label><input class="fc" name="attach" value="${esc(f.attachUrl||'')}" placeholder="Link to doc, PDF, or image"></div>
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),cost:g('cost'),currency:g('currency'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||''};
+    const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),cost:g('cost'),currency:g('currency'),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||''};
     if(e)Object.assign(f,d);else trip.flights.push({id:uid(),...d});
     saveS();render();toast(e?'Flight updated':'Flight added');
   });
@@ -1469,33 +1634,33 @@ document.addEventListener('click',e=>{
   const a=el.dataset.action,trip=S.trips.find(t=>t.id===S.tid);
   switch(a){
     case 'nav':nav(el.dataset.to);break;
-    case 'view':nav('detail',{tid:el.dataset.id,tab:'flights'});break;
+    case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
     case 'add-trip':fTrip();break;
     case 'edit-trip':{const t=S.trips.find(x=>x.id===el.dataset.id);if(t)fTrip(t);break;}
-    case 'del-trip':if(confirm('Delete this trip?')){S.trips=S.trips.filter(t=>t.id!==el.dataset.id);saveS();nav('trips');toast('Deleted');}break;
+    case 'del-trip':{const delId=el.dataset.id;const delTrip=S.trips.find(t=>t.id===delId);if(delTrip){const idx=S.trips.indexOf(delTrip);S.trips.splice(idx,1);saveS();nav('trips');toastUndo('Trip deleted',()=>{S.trips.splice(idx,0,delTrip);saveS();render();});}}break;
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
     case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;saveS();render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
     case 'aly':{const y=prompt('Year:');if(y&&parseInt(y)){S.leave[parseInt(y)]={employer:'',al:0,bp:0,ot:0,ph:0,taken:0,holidays:[]};S.ly=parseInt(y);saveS();render();}break;}
     case 'add-flight':if(trip)fFlight(trip);break;
     case 'edit-flight':{if(trip){const f=trip.flights.find(x=>x.id===el.dataset.eid);if(f)fFlight(trip,f);}break;}
-    case 'del-flight':if(trip&&confirm('Delete?')){trip.flights=trip.flights.filter(x=>x.id!==el.dataset.eid);saveS();render();}break;
+    case 'del-flight':{if(trip){const eid=el.dataset.eid;const entry=trip.flights.find(x=>x.id===eid);if(entry){const idx=trip.flights.indexOf(entry);trip.flights.splice(idx,1);saveS();render();toastUndo('Flight deleted',()=>{trip.flights.splice(idx,0,entry);saveS();render();});}}}break;
     case 'add-hotel':if(trip)fHotel(trip);break;
     case 'edit-hotel':{if(trip){const h=trip.hotels.find(x=>x.id===el.dataset.eid);if(h)fHotel(trip,h);}break;}
-    case 'del-hotel':if(trip&&confirm('Delete?')){trip.hotels=trip.hotels.filter(x=>x.id!==el.dataset.eid);saveS();render();}break;
+    case 'del-hotel':{if(trip){const eid=el.dataset.eid;const entry=trip.hotels.find(x=>x.id===eid);if(entry){const idx=trip.hotels.indexOf(entry);trip.hotels.splice(idx,1);saveS();render();toastUndo('Hotel deleted',()=>{trip.hotels.splice(idx,0,entry);saveS();render();});}}}break;
     case 'add-act':if(trip)fAct(trip);break;
     case 'edit-act':{if(trip){const x=trip.activities.find(x=>x.id===el.dataset.eid);if(x)fAct(trip,x);}break;}
-    case 'del-act':if(trip&&confirm('Delete?')){trip.activities=trip.activities.filter(x=>x.id!==el.dataset.eid);saveS();render();}break;
+    case 'del-act':{if(trip){const eid=el.dataset.eid;const entry=trip.activities.find(x=>x.id===eid);if(entry){const idx=trip.activities.indexOf(entry);trip.activities.splice(idx,1);saveS();render();toastUndo('Activity deleted',()=>{trip.activities.splice(idx,0,entry);saveS();render();});}}}break;
     case 'add-trans':if(trip)fTrans(trip);break;
     case 'edit-trans':{if(trip){const x=trip.transport.find(x=>x.id===el.dataset.eid);if(x)fTrans(trip,x);}break;}
-    case 'del-trans':if(trip&&confirm('Delete?')){trip.transport=trip.transport.filter(x=>x.id!==el.dataset.eid);saveS();render();}break;
+    case 'del-trans':{if(trip){const eid=el.dataset.eid;const entry=trip.transport.find(x=>x.id===eid);if(entry){const idx=trip.transport.indexOf(entry);trip.transport.splice(idx,1);saveS();render();toastUndo('Transport deleted',()=>{trip.transport.splice(idx,0,entry);saveS();render();});}}}break;
     case 'xm':xm();break;
     case 'cal-prev':if(S.calM===0){S.calM=11;S.calY--;}else S.calM--;saveS();render();break;
     case 'cal-next':if(S.calM===11){S.calM=0;S.calY++;}else S.calM++;saveS();render();break;
     case 'cal-today':{const now=new Date();S.calM=now.getMonth();S.calY=now.getFullYear();saveS();render();break;}
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
     case 'import':document.getElementById('imp-f').click();break;
-    case 'reset':if(confirm('Reset all data?')){localStorage.removeItem('htV3');localStorage.removeItem('htV4');S=defS();saveS();render();toast('Reset');}break;
+    case 'reset':if(confirm('Reset ALL data? This cannot be undone.')){localStorage.removeItem('htV3');localStorage.removeItem('htV4');S=defS();saveS();render();toast('Data reset');}break;
     case 'sync-connect':connectSync();break;
     case 'sync-disconnect':disconnectSync();break;
     case 'sync-now':fullSync();break;
@@ -1512,7 +1677,36 @@ document.addEventListener('change',e=>{
 });
 
 document.addEventListener('change',e=>{if(e.target.id==='imp-f'&&e.target.files.length){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.trips){S=d;saveS();render();toast('Imported');}}catch(e2){toast('Error');}};r.readAsText(e.target.files[0]);}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')xm();});
+// Search input handler
+document.addEventListener('input',e=>{
+  if(e.target.matches('[data-action="search-trips"]')){S._searchQ=e.target.value;render();
+    // Re-focus after render
+    setTimeout(()=>{const inp=document.querySelector('[data-action="search-trips"]');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}},10);
+  }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){xm();closeMobileMenu();}
+  // Don't trigger shortcuts when typing in inputs
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if(e.key==='1')nav('dashboard');
+  else if(e.key==='2')nav('trips');
+  else if(e.key==='3')nav('calendar');
+  else if(e.key==='4')nav('leave');
+  else if(e.key==='5')nav('budget');
+  else if(e.key==='6')nav('settings');
+  else if(e.key==='n'&&!e.ctrlKey&&!e.metaKey)fTrip();
+  else if(e.key==='u'&&!e.ctrlKey&&!e.metaKey)showSmartUpload();
+  else if(e.key==='/'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();const si=document.querySelector('[data-action="search-trips"]');if(si)si.focus();else nav('trips');}
+});
+
+// Hamburger
+document.getElementById('hamburger').onclick=toggleMobileMenu;
+document.getElementById('sidebar-overlay').onclick=closeMobileMenu;
+// Close mobile menu when navigating
+const origNav=nav;
+nav=function(v,x){closeMobileMenu();origNav(v,x);};
 
 // FAB
 document.getElementById('fab').onclick=()=>showSmartUpload();
