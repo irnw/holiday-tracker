@@ -423,6 +423,47 @@ function past(){const td=new Date().toISOString().slice(0,10);return S.trips.fil
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
 function tColor(t){return TRIP_COLORS[(t.name||'').length%TRIP_COLORS.length];}
 
+// ===== SORT STATE =====
+let sortKey='date',sortDir='asc';// Applies to trip detail entries
+let tripSortKey='date',tripSortDir='desc';// Applies to trips list
+
+function sortEntries(arr,type){
+  const k=sortKey,d=sortDir==='asc'?1:-1;
+  return [...arr].sort((a,b)=>{
+    if(k==='date'){
+      const da=type==='flights'?(a.departureTime||''):type==='hotels'?(a.checkIn||''):(a.date||'');
+      const db=type==='flights'?(b.departureTime||''):type==='hotels'?(b.checkIn||''):(b.date||'');
+      return (da.localeCompare(db))*d;
+    }
+    if(k==='cost')return ((parseFloat(a.cost)||0)-(parseFloat(b.cost)||0))*d;
+    if(k==='name'){
+      const na=type==='flights'?((a.airline||'')+' '+(a.flightNumber||'')):type==='hotels'?(a.name||''):(a.name||'');
+      const nb=type==='flights'?((b.airline||'')+' '+(b.flightNumber||'')):type==='hotels'?(b.name||''):(b.name||'');
+      return na.localeCompare(nb)*d;
+    }
+    return 0;
+  });
+}
+function sortTrips(arr){
+  const k=tripSortKey,d=tripSortDir==='asc'?1:-1;
+  return [...arr].sort((a,b)=>{
+    if(k==='date')return a.startDate.localeCompare(b.startDate)*d;
+    if(k==='cost')return (tCost(a)-tCost(b))*d;
+    if(k==='name')return a.name.localeCompare(b.name)*d;
+    return 0;
+  });
+}
+function sortCtrlHtml(prefix,curKey,curDir){
+  const opts=[{v:'date',l:'Date'},{v:'cost',l:'Cost'},{v:'name',l:'Name'}];
+  return `<div class="sort-ctrl" style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--text2)">
+    <span>Sort:</span>
+    <select class="fc" style="font-size:11px;padding:3px 6px;min-width:auto" data-action="${prefix}-sort-key">
+      ${opts.map(o=>`<option value="${o.v}"${o.v===curKey?' selected':''}>${o.l}</option>`).join('')}
+    </select>
+    <button class="btn btn-ghost" style="font-size:11px;padding:2px 6px" data-action="${prefix}-sort-dir">${curDir==='asc'?'↑ Asc':'↓ Desc'}</button>
+  </div>`;
+}
+
 // ===== IMPORT DATA =====
 function importTrips(){return[
 {id:uid(),name:'Copenhagen, Iceland & Oslo',startDate:'2024-01-02',endDate:'2024-01-14',locations:['Copenhagen','Iceland','Oslo'],sharedLink:'',notes:'Grab era. 8 leave days.',year:2024,hotels:[],flights:[],activities:[],transport:[]},
@@ -554,11 +595,14 @@ function vDash(){
 // ===== TRIPS LIST =====
 function vTrips(){
   const yrs=[...new Set(S.trips.map(t=>t.year||new Date(t.startDate).getFullYear()))].sort((a,b)=>b-a);
-  const filtered=S.trips.filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY).sort((a,b)=>b.startDate.localeCompare(a.startDate));
+  const filtered=sortTrips(S.trips.filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY));
   return `
   <div class="page-header"><div><h2>My Trips</h2><div class="subtitle">${S.trips.length} trips across ${yrs.length} years</div></div><button class="btn btn-p" data-action="add-trip">+ New Trip</button></div>
   <div class="page-content">
-    <div class="ytabs"><div class="yt${!S.tfY?' active':''}" data-action="fy" data-y="">All</div>${yrs.map(y=>`<div class="yt${S.tfY==y?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div class="ytabs" style="margin-bottom:0"><div class="yt${!S.tfY?' active':''}" data-action="fy" data-y="">All</div>${yrs.map(y=>`<div class="yt${S.tfY==y?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
+      ${sortCtrlHtml('trip',tripSortKey,tripSortDir)}
+    </div>
     <div class="trip-grid">${filtered.map(t=>`
       <div class="trip-card" data-action="view" data-id="${t.id}">
         <div class="trip-accent" style="background:linear-gradient(90deg,${tColor(t)},${TRIP_COLORS[((t.name||'').length+3)%TRIP_COLORS.length]})"></div>
@@ -614,8 +658,9 @@ function vDetail(){
 }
 
 function rFlights(t){
-  return `<div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3 style="font-size:14px">Flights</h3><button class="btn btn-p" data-action="add-flight">+ Add Flight</button></div>
-  ${(t.flights||[]).length?(t.flights||[]).map(f=>`
+  const sorted=sortEntries(t.flights||[],'flights');
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Flights</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-flight">+ Add Flight</button></div></div>
+  ${sorted.length?sorted.map(f=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-flight" data-eid="${f.id}">Del</button></div></div>
       <div class="entry-grid">
@@ -631,8 +676,9 @@ function rFlights(t){
     </div>`).join(''):'<div class="empty"><p>No flights yet</p></div>'}`;
 }
 function rHotels(t){
-  return `<div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3 style="font-size:14px">Hotels</h3><button class="btn btn-p" data-action="add-hotel">+ Add Hotel</button></div>
-  ${(t.hotels||[]).length?(t.hotels||[]).map(h=>`
+  const sorted=sortEntries(t.hotels||[],'hotels');
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Hotels</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-hotel">+ Add Hotel</button></div></div>
+  ${sorted.length?sorted.map(h=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(h.name||'Hotel')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-hotel" data-eid="${h.id}">Del</button></div></div>
       <div class="entry-grid">
@@ -648,8 +694,9 @@ function rHotels(t){
     </div>`).join(''):'<div class="empty"><p>No hotels yet</p></div>'}`;
 }
 function rActs(t){
-  return `<div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3 style="font-size:14px">Activities</h3><button class="btn btn-p" data-action="add-act">+ Add Activity</button></div>
-  ${(t.activities||[]).length?(t.activities||[]).map(a=>`
+  const sorted=sortEntries(t.activities||[],'activities');
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Activities</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-act">+ Add Activity</button></div></div>
+  ${sorted.length?sorted.map(a=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(a.name||'Activity')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-act" data-eid="${a.id}">Del</button></div></div>
       <div class="entry-grid">
@@ -665,8 +712,9 @@ function rActs(t){
     </div>`).join(''):'<div class="empty"><p>No activities yet</p></div>'}`;
 }
 function rTrans(t){
-  return `<div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3 style="font-size:14px">Transport</h3><button class="btn btn-p" data-action="add-trans">+ Add Transport</button></div>
-  ${(t.transport||[]).length?(t.transport||[]).map(x=>`
+  const sorted=sortEntries(t.transport||[],'transport');
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Transport</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-trans">+ Add Transport</button></div></div>
+  ${sorted.length?sorted.map(x=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-trans" data-eid="${x.id}">Del</button></div></div>
       <div class="entry-grid">
@@ -895,7 +943,41 @@ async function runOCR(file,id){
     }else{txt='Unsupported file type: '+file.type;}
     r.textContent=txt.trim()||'No text detected.';r.style.display='block';
     p.innerHTML='✓ Done — '+file.name;
+    // Auto-fill form fields if inside a modal
+    if(txt.trim())autoFillForm(txt.trim(),id);
   }catch(e){p.innerHTML='Error: '+e.message;console.error('OCR error:',e);r.style.display='none';}
+}
+
+function autoFillForm(txt,dzId){
+  const m=document.querySelector('.modal');if(!m)return;
+  const parsed=parseBookingText(txt);if(!parsed)return;
+  const s=(n,v)=>{const el=m.querySelector(`[name="${n}"]`);if(el&&!el.value&&v)el.value=v;};
+  // Detect form type by checking which fields exist
+  if(m.querySelector('[name="airline"]')){
+    // Flight form
+    s('airline',parsed.airline);s('fn',parsed.flightNumber);s('pnr',parsed.pnr);
+    s('seat',parsed.seat);s('from',parsed.from);s('to',parsed.to);
+    if(parsed.date)s('dep',(parsed.date+'T'+(parsed.departureTime||'00:00')));
+    if(parsed.dateTo||parsed.date)s('arr',((parsed.dateTo||parsed.date)+'T'+(parsed.arrivalTime||'00:00')));
+    s('cost',parsed.cost);
+    if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
+  }else if(m.querySelector('[name="ci"]')){
+    // Hotel form
+    s('name',parsed.hotelName||parsed.name);s('bn',parsed.bookingNumber||parsed.pnr);
+    s('ci',parsed.date);s('co',parsed.dateTo);s('cost',parsed.cost);
+    if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
+  }else if(m.querySelector('[name="loc"]')&&!m.querySelector('[name="type"]')){
+    // Activity form
+    s('name',parsed.name);s('loc',parsed.locations?parsed.locations[0]:'');
+    s('date',parsed.date);s('cost',parsed.cost);s('bd',parsed.pnr||parsed.bookingNumber);
+    if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
+  }else if(m.querySelector('[name="type"]')){
+    // Transport form
+    s('name',parsed.name);s('loc',parsed.locations?parsed.locations[0]:'');
+    s('date',parsed.date);s('cost',parsed.cost);s('bd',parsed.pnr||parsed.bookingNumber);
+    if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
+  }
+  toast('Auto-filled from scan');
 }
 
 // ===== SMART UPLOAD =====
@@ -1419,7 +1501,14 @@ document.addEventListener('click',e=>{
     case 'sync-now':fullSync();break;
     case 'sync-push':pushToGist().then(()=>toast('Pushed to cloud'));break;
     case 'sync-pull':pullFromGist().then(pulled=>{if(pulled)toast('Pulled from cloud');else toast('Already up to date');});break;
+    case 'entry-sort-dir':sortDir=sortDir==='asc'?'desc':'asc';render();break;
+    case 'trip-sort-dir':tripSortDir=tripSortDir==='asc'?'desc':'asc';render();break;
   }
+});
+
+document.addEventListener('change',e=>{
+  if(e.target.matches('[data-action="entry-sort-key"]')){sortKey=e.target.value;render();}
+  if(e.target.matches('[data-action="trip-sort-key"]')){tripSortKey=e.target.value;render();}
 });
 
 document.addEventListener('change',e=>{if(e.target.id==='imp-f'&&e.target.files.length){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.trips){S=d;saveS();render();toast('Imported');}}catch(e2){toast('Error');}};r.readAsText(e.target.files[0]);}});
