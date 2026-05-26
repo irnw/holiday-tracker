@@ -5,94 +5,101 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0e1015">
+<meta name="theme-color" content="#000000">
 <title>Holiday Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 /* ========== THEME VARIABLES ========== */
 [data-theme="dark"]{
-  --bg:#0e1015;--bg2:#161920;--sidebar-bg:#0b0d12;--sidebar-hover:#1a1d27;--sidebar-active:#1f2333;
-  --card:#171a23;--card-hover:#1c1f2a;--primary:#6c8cff;--primary-dim:rgba(108,140,255,.12);--primary-glow:rgba(108,140,255,.25);
-  --accent:#ff6b6b;--accent-dim:rgba(255,107,107,.12);--green:#4ade80;--green-dim:rgba(74,222,128,.12);
-  --orange:#fb923c;--orange-dim:rgba(251,146,60,.12);--purple:#a78bfa;--purple-dim:rgba(167,139,250,.12);
-  --text:#e8e9ed;--text2:#9194a1;--text3:#5d6070;--border:#252833;--border2:#2e3140;
-  --input-bg:#1c1f2a;--radius:12px;--shadow:0 2px 8px rgba(0,0,0,.3);--shadow2:0 8px 24px rgba(0,0,0,.4);
-  --header-bg:#13151c;--overlay:rgba(0,0,0,.7);
+  --bg:#000000;--bg2:#0a0a0b;--sidebar-bg:#050506;--sidebar-hover:rgba(255,255,255,.06);--sidebar-active:rgba(255,255,255,.1);
+  --card:rgba(255,255,255,.03);--card-hover:rgba(255,255,255,.05);--primary:#3b82f6;--primary-dim:rgba(59,130,246,.1);--primary-glow:rgba(59,130,246,.25);
+  --accent:#f43f5e;--accent-dim:rgba(244,63,94,.1);--green:#10b981;--green-dim:rgba(16,185,129,.1);
+  --orange:#f59e0b;--orange-dim:rgba(245,158,11,.1);--purple:#8b5cf6;--purple-dim:rgba(139,92,246,.1);
+  --text:#fafafa;--text2:#a1a1aa;--text3:#52525b;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.12);
+  --input-bg:rgba(255,255,255,.05);--radius:12px;--shadow:0 0 0 1px rgba(255,255,255,.06);--shadow2:0 8px 32px rgba(0,0,0,.6);
+  --header-bg:rgba(0,0,0,.85);--overlay:rgba(0,0,0,.85);
+  --sg:#3b82f6;--sg-dim:rgba(59,130,246,.12);--my:#f59e0b;--my-dim:rgba(245,158,11,.12);
+  --glass:rgba(255,255,255,.03);--glass-border:rgba(255,255,255,.07);
+  --glow-1:#3b82f6;--glow-2:#8b5cf6;
 }
 [data-theme="light"]{
-  --bg:#f3f4f8;--bg2:#eaedf3;--sidebar-bg:#1a1f36;--sidebar-hover:#252b48;--sidebar-active:#2d3561;
-  --card:#fff;--card-hover:#f9fafb;--primary:#3b5bdb;--primary-dim:rgba(59,91,219,.08);--primary-glow:rgba(59,91,219,.15);
-  --accent:#e03131;--accent-dim:rgba(224,49,49,.08);--green:#2f9e44;--green-dim:rgba(47,158,68,.08);
-  --orange:#e8590c;--orange-dim:rgba(232,89,12,.08);--purple:#7048e8;--purple-dim:rgba(112,72,232,.08);
-  --text:#1a1a2e;--text2:#5c5f6e;--text3:#8b8d97;--border:#e1e3e8;--border2:#d5d8e0;
-  --input-bg:#fff;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow2:0 4px 12px rgba(0,0,0,.08);
-  --header-bg:#fff;--overlay:rgba(0,0,0,.45);
+  --bg:#fafafa;--bg2:#f4f4f5;--sidebar-bg:#09090b;--sidebar-hover:rgba(255,255,255,.08);--sidebar-active:rgba(255,255,255,.13);
+  --card:#ffffff;--card-hover:#f8f8f8;--primary:#2563eb;--primary-dim:rgba(37,99,235,.06);--primary-glow:rgba(37,99,235,.15);
+  --accent:#e11d48;--accent-dim:rgba(225,29,72,.06);--green:#059669;--green-dim:rgba(5,150,105,.06);
+  --orange:#d97706;--orange-dim:rgba(217,119,6,.06);--purple:#7c3aed;--purple-dim:rgba(124,58,237,.06);
+  --text:#09090b;--text2:#52525b;--text3:#a1a1aa;--border:rgba(0,0,0,.06);--border2:rgba(0,0,0,.1);
+  --input-bg:#ffffff;--radius:12px;--shadow:0 0 0 1px rgba(0,0,0,.05);--shadow2:0 8px 32px rgba(0,0,0,.08);
+  --header-bg:rgba(255,255,255,.9);--overlay:rgba(0,0,0,.5);
+  --sg:#2563eb;--sg-dim:rgba(37,99,235,.08);--my:#d97706;--my-dim:rgba(217,119,6,.08);
+  --glass:rgba(0,0,0,.02);--glass-border:rgba(0,0,0,.06);
+  --glow-1:#2563eb;--glow-2:#7c3aed;
 }
 
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;transition:background .3s,color .3s}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 a{color:var(--primary);text-decoration:none}
 
 /* ========== SIDEBAR ========== */
-.sidebar{width:220px;background:var(--sidebar-bg);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;border-right:1px solid var(--border)}
-.sidebar-brand{padding:20px 16px;display:flex;align-items:center;gap:10px}
-.sidebar-brand .logo{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center}
+.sidebar{width:220px;background:var(--sidebar-bg);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;border-right:1px solid var(--glass-border)}
+.sidebar-brand{padding:24px 16px 20px;display:flex;align-items:center;gap:10px}
+.sidebar-brand .logo{width:32px;height:32px;background:linear-gradient(135deg,var(--glow-1),var(--glow-2));border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(59,130,246,.3)}
 .sidebar-brand .logo svg{width:18px;height:18px;color:#fff}
-.sidebar-brand h1{font-size:14px;color:#fff;font-weight:700;letter-spacing:.3px}
+.sidebar-brand h1{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .nav{flex:1;padding:8px}
-.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#4a4d5e;padding:16px 12px 6px;font-weight:600}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;transition:all .15s;font-size:13px;border-radius:8px;color:#9194a1;margin-bottom:2px}
-.nav-item:hover{background:var(--sidebar-hover);color:#c8cad0}
-.nav-item.active{background:var(--sidebar-active);color:#fff}
-.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.nav-section{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.25);padding:20px 12px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;transition:all .15s;font-size:13px;border-radius:8px;color:rgba(255,255,255,.45);margin-bottom:2px;font-weight:400}
+.nav-item:hover{background:var(--sidebar-hover);color:rgba(255,255,255,.75)}
+.nav-item.active{background:var(--sidebar-active);color:#fff;font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.6}
 .nav-item.active svg{opacity:1}
-.sidebar-footer{padding:12px 8px;border-top:1px solid var(--border)}
-.theme-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-radius:8px;font-size:12px;color:#9194a1;transition:all .15s}
-.theme-toggle:hover{background:var(--sidebar-hover);color:#c8cad0}
+.sidebar-footer{padding:12px 8px;border-top:1px solid rgba(255,255,255,.06)}
+.theme-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-radius:8px;font-size:12px;color:rgba(255,255,255,.4);transition:all .15s}
+.theme-toggle:hover{background:var(--sidebar-hover);color:rgba(255,255,255,.7)}
 .theme-toggle svg{width:16px;height:16px}
 
 /* ========== MAIN ========== */
 .main{margin-left:220px;flex:1;min-height:100vh}
-.page-header{padding:20px 28px 16px;background:var(--header-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)}
-.page-header h2{font-size:18px;font-weight:700}
-.page-header .subtitle{color:var(--text2);font-size:12px;margin-top:2px}
-.page-content{padding:20px 28px 40px}
+.page-header{padding:24px 32px 20px;background:var(--header-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.page-header h2{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.page-header .subtitle{color:var(--text3);font-size:12px;margin-top:3px;font-weight:400}
+.page-content{padding:24px 32px 48px}
 
 /* ========== CARDS ========== */
-.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);transition:background .3s}
-.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-header h3{font-size:14px;font-weight:600}
-.card-body{padding:18px}
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--glass-border);box-shadow:var(--shadow);transition:background .3s;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-size:13px;font-weight:600;letter-spacing:-.1px}
+.card-body{padding:20px}
 
 /* ========== STATS ========== */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
-.stat{background:var(--card);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border)}
-.stat .s-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.stat .s-val{font-size:26px;font-weight:700;margin-top:4px;line-height:1.2}
-.stat .s-sub{font-size:11px;color:var(--text2);margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--glass-border);backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
+.stat .s-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.stat .s-val{font-size:28px;font-weight:800;margin-top:6px;line-height:1.1;letter-spacing:-.5px}
+.stat .s-sub{font-size:11px;color:var(--text2);margin-top:6px}
 .stat.blue .s-val{color:var(--primary)}.stat.green .s-val{color:var(--green)}.stat.orange .s-val{color:var(--orange)}.stat.red .s-val{color:var(--accent)}.stat.purple .s-val{color:var(--purple)}
 
 /* ========== TRIPS ========== */
 .trip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.trip-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:all .2s;overflow:hidden;position:relative}
-.trip-card:hover{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary),var(--shadow2);transform:translateY(-1px)}
-.trip-accent{height:3px;background:linear-gradient(90deg,var(--primary),var(--purple))}
-.trip-body{padding:16px 18px}
-.trip-name{font-size:15px;font-weight:600;margin-bottom:4px}
-.trip-dates{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.trip-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--glass-border);cursor:pointer;transition:all .25s;overflow:hidden;position:relative;backdrop-filter:blur(12px)}
+.trip-card:hover{border-color:rgba(59,130,246,.3);box-shadow:0 0 0 1px rgba(59,130,246,.15),0 8px 32px rgba(0,0,0,.3);transform:translateY(-2px)}
+.trip-accent{height:2px;background:linear-gradient(90deg,var(--glow-1),var(--glow-2));opacity:.8}
+.trip-body{padding:18px 20px}
+.trip-name{font-size:15px;font-weight:600;margin-bottom:4px;letter-spacing:-.2px}
+.trip-dates{font-size:12px;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .trip-locs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
-.loc{background:var(--primary-dim);color:var(--primary);font-size:11px;padding:2px 8px;border-radius:12px;font-weight:500}
+.loc{background:var(--primary-dim);color:var(--primary);font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600;letter-spacing:.2px;text-transform:uppercase}
 .trip-foot{display:flex;gap:14px;font-size:11px;color:var(--text3)}
 .trip-foot b{color:var(--text);font-weight:600}
 
 /* ========== BUTTONS ========== */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid transparent;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;font-family:inherit}
-.btn-p{background:var(--primary);color:#fff;border-color:var(--primary)}.btn-p:hover{filter:brightness(1.1)}
+.btn-p{background:var(--primary);color:#fff;border-color:var(--primary)}.btn-p:hover{filter:brightness(1.15);box-shadow:0 0 20px rgba(59,130,246,.25)}
 .btn-s{background:var(--input-bg);color:var(--text);border-color:var(--border)}.btn-s:hover{border-color:var(--text3)}
-.btn-d{background:var(--accent-dim);color:var(--accent);border-color:transparent}.btn-d:hover{background:rgba(255,107,107,.2)}
-.btn-ghost{background:none;color:var(--text2);border:none;padding:6px 10px}.btn-ghost:hover{color:var(--text);background:var(--primary-dim)}
+.btn-d{background:var(--accent-dim);color:var(--accent);border-color:transparent}.btn-d:hover{background:rgba(244,63,94,.15)}
+.btn-ghost{background:none;color:var(--text3);border:none;padding:6px 10px}.btn-ghost:hover{color:var(--text);background:var(--primary-dim)}
 
 /* ========== FORMS ========== */
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -100,18 +107,18 @@ a{color:var(--primary);text-decoration:none}
 .fi.full{grid-column:1/-1}
 .fi label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 input.fc,select.fc,textarea.fc{padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--input-bg);color:var(--text);transition:border .15s;outline:none}
-input.fc:focus,select.fc:focus,textarea.fc:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+input.fc:focus,select.fc:focus,textarea.fc:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-glow)}
 textarea.fc{resize:vertical;min-height:50px}
 
 /* ========== TABS ========== */
-.tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg2);border-radius:10px;padding:3px}
+.tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg2);border-radius:10px;padding:3px;border:1px solid var(--glass-border)}
 .tab{padding:7px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:8px;transition:all .15s;text-align:center;flex:1}
 .tab:hover{color:var(--text)}
-.tab.active{background:var(--card);color:var(--primary);box-shadow:var(--shadow)}
+.tab.active{background:var(--card);color:var(--primary);box-shadow:0 0 0 1px var(--glass-border)}
 
 /* ========== ENTRY CARDS ========== */
-.entry{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;transition:border .15s}
-.entry:hover{border-color:var(--primary-dim)}
+.entry{background:var(--card);border:1px solid var(--glass-border);border-radius:10px;padding:14px 16px;margin-bottom:10px;transition:all .2s;backdrop-filter:blur(8px)}
+.entry:hover{border-color:rgba(59,130,246,.2)}
 .entry-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .entry-top h4{font-size:13px;font-weight:600}
 .entry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;font-size:12px}
@@ -120,9 +127,9 @@ textarea.fc{resize:vertical;min-height:50px}
 .eg .ev{font-weight:500;color:var(--text)}
 
 /* ========== MODAL ========== */
-.modal-bg{display:none;position:fixed;inset:0;background:var(--overlay);z-index:200;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;backdrop-filter:blur(4px)}
+.modal-bg{display:none;position:fixed;inset:0;background:var(--overlay);z-index:200;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .modal-bg.open{display:flex}
-.modal{background:var(--card);border-radius:14px;width:100%;max-width:600px;box-shadow:var(--shadow2);border:1px solid var(--border);animation:mIn .2s}
+.modal{background:var(--bg2);border-radius:16px;width:100%;max-width:600px;box-shadow:0 24px 80px rgba(0,0,0,.5);border:1px solid var(--glass-border);animation:mIn .25s}
 @keyframes mIn{from{opacity:0;transform:translateY(-12px) scale(.98)}to{opacity:1;transform:none}}
 .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .modal-head h3{font-size:15px;font-weight:600}
@@ -144,28 +151,33 @@ textarea.fc{resize:vertical;min-height:50px}
 
 /* ========== CALENDAR ========== */
 .cal-nav{display:flex;align-items:center;gap:16px;margin-bottom:16px}
-.cal-nav h3{font-size:16px;font-weight:600;min-width:180px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
-.cal-head{background:var(--bg2);padding:8px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase}
-.cal-day{background:var(--card);min-height:80px;padding:4px 6px;font-size:11px;position:relative;cursor:pointer;transition:background .15s}
+.cal-nav h3{font-size:16px;font-weight:700;min-width:180px;letter-spacing:-.3px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;border:1px solid var(--glass-border)}
+.cal-head{background:var(--bg2);padding:8px;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.cal-day{background:var(--bg);min-height:80px;padding:4px 6px;font-size:11px;position:relative;cursor:pointer;transition:background .15s}
 .cal-day:hover{background:var(--card-hover)}
 .cal-day.today{box-shadow:inset 0 0 0 2px var(--primary)}
-.cal-day.other{opacity:.3}
+.cal-day.other{opacity:.2}
 .cal-day .d-num{font-weight:600;margin-bottom:2px;font-size:12px}
 .cal-day .d-num.weekend{color:var(--accent)}
-.cal-day .d-ph{font-size:9px;color:var(--orange);font-weight:500;margin-bottom:1px}
+.cal-day .d-ph{font-size:8px;font-weight:600;margin-bottom:1px;padding:1px 4px;border-radius:3px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-day .d-ph.ph-sg{background:var(--sg-dim);color:var(--sg)}
+.cal-day .d-ph.ph-my{background:var(--my-dim);color:var(--my)}
 .cal-trip{font-size:9px;padding:1px 4px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;color:#fff}
 
 /* ========== LEAVE ========== */
-.leave-boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
-.lb{padding:14px;border-radius:10px;text-align:center}
-.lb .lv{font-size:22px;font-weight:700}
-.lb .ll{font-size:10px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.leave-boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:24px}
+.lb{padding:18px 14px;border-radius:var(--radius);text-align:center;border:1px solid var(--glass-border);position:relative;overflow:hidden;backdrop-filter:blur(8px)}
+.lb::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
+.lb .lv{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.lb .ll{font-size:9px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
 .lb.t-total{background:var(--primary-dim);color:var(--primary)}
 .lb.t-taken{background:var(--accent-dim);color:var(--accent)}
 .lb.t-bal{background:var(--green-dim);color:var(--green)}
 .lb.t-ot{background:var(--orange-dim);color:var(--orange)}
 .lb.t-al{background:var(--purple-dim);color:var(--purple)}
+.lb.t-req{background:rgba(244,63,94,.06);color:var(--accent);border-color:rgba(244,63,94,.15)}
+.lb.t-applied{background:rgba(16,185,129,.06);color:var(--green);border-color:rgba(16,185,129,.15)}
 
 /* ========== BUDGET ========== */
 .b-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
@@ -181,16 +193,16 @@ textarea.fc{resize:vertical;min-height:50px}
 
 /* ========== YEAR TABS ========== */
 .ytabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.yt{padding:5px 14px;border-radius:16px;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg2);color:var(--text2);border:1px solid var(--border);transition:all .15s}
-.yt:hover{border-color:var(--text3)}.yt.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.yt{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text3);border:1px solid var(--glass-border);transition:all .15s}
+.yt:hover{border-color:var(--text3);color:var(--text2)}.yt.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 16px rgba(59,130,246,.25)}
 
 /* ========== QUICK UPLOAD FAB ========== */
-.fab{position:fixed;bottom:24px;right:28px;width:52px;height:52px;background:linear-gradient(135deg,var(--primary),var(--purple));border:none;border-radius:14px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(108,140,255,.4);transition:all .2s;z-index:90}
-.fab:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(108,140,255,.5)}
+.fab{position:fixed;bottom:24px;right:28px;width:52px;height:52px;background:linear-gradient(135deg,var(--glow-1),var(--glow-2));border:none;border-radius:14px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(59,130,246,.35);transition:all .25s;z-index:90}
+.fab:hover{transform:scale(1.08);box-shadow:0 8px 32px rgba(59,130,246,.45)}
 .fab svg{width:22px;height:22px}
 
 /* ========== TOAST ========== */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:10px;font-size:13px;z-index:300;animation:tIn .3s;box-shadow:var(--shadow2)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--glass-border);color:var(--text);padding:10px 20px;border-radius:10px;font-size:13px;z-index:300;animation:tIn .3s;box-shadow:0 8px 32px rgba(0,0,0,.4);backdrop-filter:blur(12px)}
 @keyframes tIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 
 /* ========== SMART UPLOAD ========== */
@@ -218,7 +230,7 @@ textarea.fc{resize:vertical;min-height:50px}
 .sidebar-overlay.open{display:block}
 
 /* ========== UNDO TOAST ========== */
-.toast-undo{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:10px;font-size:13px;z-index:300;animation:tIn .3s;box-shadow:var(--shadow2);display:flex;align-items:center;gap:12px}
+.toast-undo{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--glass-border);color:var(--text);padding:10px 16px;border-radius:10px;font-size:13px;z-index:300;animation:tIn .3s;box-shadow:0 8px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;backdrop-filter:blur(12px)}
 .toast-undo .undo-btn{background:var(--primary);color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit}
 .toast-undo .undo-btn:hover{filter:brightness(1.15)}
 .toast-undo .undo-timer{width:60px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
@@ -265,8 +277,8 @@ textarea.fc{resize:vertical;min-height:50px}
 
 /* ========== COUNTDOWN ========== */
 .countdown{display:flex;gap:8px;align-items:baseline}
-.cd-num{font-size:28px;font-weight:700;color:var(--primary);line-height:1}
-.cd-unit{font-size:11px;color:var(--text3);text-transform:uppercase}
+.cd-num{font-size:28px;font-weight:800;color:var(--primary);line-height:1;letter-spacing:-.5px}
+.cd-unit{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
 
 /* ========== LEAVE CALENDAR DOTS ========== */
 .cal-day .d-leave{font-size:9px;color:var(--purple);font-weight:500;margin-bottom:1px}
@@ -276,7 +288,20 @@ textarea.fc{resize:vertical;min-height:50px}
 .attach-link:hover{background:var(--primary-glow)}
 
 /* ========== KEYBOARD SHORTCUT HINT ========== */
-.kbd{display:inline-flex;padding:1px 5px;border:1px solid var(--border);border-radius:4px;font-size:10px;font-family:'SF Mono',Monaco,monospace;color:var(--text3);background:var(--bg2)}
+.kbd{display:inline-flex;padding:1px 5px;border:1px solid var(--glass-border);border-radius:4px;font-size:10px;font-family:'JetBrains Mono','SF Mono',Monaco,monospace;color:var(--text3);background:transparent}
+
+/* ========== PH LEGEND ========== */
+.ph-legend{display:flex;gap:16px;margin-top:16px;padding:12px 16px;background:var(--card);border:1px solid var(--glass-border);border-radius:8px;font-size:11px;flex-wrap:wrap}
+.ph-legend-item{display:flex;align-items:center;gap:6px}
+.ph-dot{width:8px;height:8px;border-radius:50%}
+.ph-dot.sg{background:var(--sg)}.ph-dot.my{background:var(--my)}
+
+/* ========== LEAVE APPLIED TABLE ========== */
+.la-table{width:100%;font-size:12px;border-collapse:collapse}
+.la-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:8px 12px;border-bottom:1px solid var(--border);font-weight:600}
+.la-table td{padding:8px 12px;border-bottom:1px solid var(--glass-border)}
+.la-table tr:hover td{background:var(--card)}
+.la-add-row{display:flex;gap:8px;padding:12px;align-items:flex-end;flex-wrap:wrap}
 
 /* ========== TIME PERIOD FILTER ========== */
 .tp-filter{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -299,6 +324,9 @@ textarea.fc{resize:vertical;min-height:50px}
   .tp-sel{min-width:100px;font-size:11px;padding:5px 6px}
   .tp-date{font-size:10px;padding:4px 6px;max-width:120px}
   .page-header{flex-wrap:wrap;gap:8px}
+  .leave-boxes{grid-template-columns:repeat(2,1fr)}
+  .la-table{font-size:11px}
+  .la-table th,.la-table td{padding:6px 8px}
 }
 </style>
 </head>
@@ -329,6 +357,152 @@ const NAVS=[
   {id:'budget',label:'Budget',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'},
   {id:'settings',label:'Settings',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'}
 ];
+
+// ===== PUBLIC HOLIDAYS (SG + MY) =====
+// MY state codes: JHR=Johor, KDH=Kedah, KTN=Kelantan, MLK=Melaka, NSN=N.Sembilan, PHG=Pahang,
+// PRK=Perak, PLS=Perlis, PNG=Penang, SBH=Sabah, SWK=Sarawak, SGR=Selangor, TRG=Terengganu,
+// KUL=KL, PJY=Putrajaya, LBN=Labuan. 'all'=national holiday.
+const MY_STATES=['JHR','KDH','KTN','MLK','NSN','PHG','PRK','PLS','PNG','SBH','SWK','SGR','TRG','KUL','PJY','LBN'];
+const PH_DATA={
+SG:{
+2025:[{d:'2025-01-01',n:"New Year's Day"},{d:'2025-01-29',n:'Chinese New Year'},{d:'2025-01-30',n:'Chinese New Year'},{d:'2025-03-31',n:'Hari Raya Puasa'},{d:'2025-04-18',n:'Good Friday'},{d:'2025-05-01',n:'Labour Day'},{d:'2025-05-12',n:'Vesak Day'},{d:'2025-06-06',n:'Hari Raya Haji'},{d:'2025-08-09',n:'National Day'},{d:'2025-10-20',n:'Deepavali'},{d:'2025-12-25',n:'Christmas Day'}],
+2026:[{d:'2026-01-01',n:"New Year's Day"},{d:'2026-02-17',n:'Chinese New Year'},{d:'2026-02-18',n:'Chinese New Year'},{d:'2026-03-21',n:'Hari Raya Puasa'},{d:'2026-04-03',n:'Good Friday'},{d:'2026-05-01',n:'Labour Day'},{d:'2026-05-27',n:'Hari Raya Haji'},{d:'2026-05-31',n:'Vesak Day'},{d:'2026-08-10',n:'National Day (observed)'},{d:'2026-11-09',n:'Deepavali (observed)'},{d:'2026-12-25',n:'Christmas Day'}],
+2027:[{d:'2027-01-01',n:"New Year's Day"},{d:'2027-02-06',n:'Chinese New Year'},{d:'2027-02-08',n:'Chinese New Year (observed)'},{d:'2027-03-11',n:'Hari Raya Puasa'},{d:'2027-03-26',n:'Good Friday'},{d:'2027-05-01',n:'Labour Day'},{d:'2027-05-16',n:'Hari Raya Haji'},{d:'2027-05-20',n:'Vesak Day'},{d:'2027-08-09',n:'National Day'},{d:'2027-11-07',n:'Deepavali (observed)'},{d:'2027-12-25',n:'Christmas Day'}]
+},
+MY:{
+2025:[
+{d:'2025-01-01',n:"New Year's Day",s:'all'},{d:'2025-01-14',n:'Thaipusam',s:'all'},
+{d:'2025-01-29',n:'Chinese New Year',s:'all'},{d:'2025-01-30',n:'Chinese New Year',s:'all'},
+{d:'2025-02-01',n:'Federal Territory Day',s:['KUL','PJY','LBN']},
+{d:'2025-02-12',n:"Israk Mi'raj",s:'all'},
+{d:'2025-03-23',n:'Birthday of Sultan of Johor',s:['JHR']},
+{d:'2025-03-29',n:'Nuzul Al-Quran',s:'all'},
+{d:'2025-03-31',n:'Hari Raya Aidilfitri',s:'all'},{d:'2025-04-01',n:'Hari Raya Aidilfitri',s:'all'},
+{d:'2025-04-07',n:'Declaration of Melaka',s:['MLK']},
+{d:'2025-04-15',n:'Declaration of Penang',s:['PNG']},
+{d:'2025-04-19',n:'Birthday of Sultan of Terengganu',s:['TRG']},
+{d:'2025-04-26',n:'Birthday of Sultan of Perak',s:['PRK']},
+{d:'2025-05-01',n:'Labour Day',s:'all'},
+{d:'2025-05-12',n:'Vesak Day',s:'all'},
+{d:'2025-05-17',n:'Birthday of Raja of Perlis',s:['PLS']},
+{d:'2025-05-22',n:'Pahang Hol Day',s:['PHG']},
+{d:'2025-05-30',n:'Harvest Festival',s:['SBH','LBN']},{d:'2025-05-31',n:'Harvest Festival',s:['SBH','LBN']},
+{d:'2025-06-01',n:'Gawai Dayak',s:['SWK']},{d:'2025-06-02',n:'Gawai Dayak',s:['SWK']},
+{d:'2025-06-02',n:"Agong's Birthday",s:'all'},
+{d:'2025-06-06',n:'Hari Raya Haji',s:'all'},{d:'2025-06-07',n:'Hari Raya Haji',s:'all'},
+{d:'2025-06-27',n:'Awal Muharram',s:'all'},
+{d:'2025-07-07',n:'Georgetown World Heritage Day',s:['PNG']},
+{d:'2025-07-22',n:'Sarawak Independence Day',s:['SWK']},
+{d:'2025-07-30',n:'Birthday of Sultan of Pahang',s:['PHG']},
+{d:'2025-08-24',n:'Birthday of Governor of Melaka',s:['MLK']},
+{d:'2025-08-31',n:'Merdeka Day',s:'all'},
+{d:'2025-09-05',n:'Maulidur Rasul',s:'all'},
+{d:'2025-09-16',n:'Malaysia Day',s:'all'},
+{d:'2025-10-04',n:'Sabah Governor Birthday',s:['SBH']},
+{d:'2025-10-13',n:'Birthday of Governor of Penang',s:['PNG']},
+{d:'2025-10-13',n:'Birthday of Sultan of Selangor',s:['SGR']},
+{d:'2025-10-20',n:'Deepavali',s:'all'},
+{d:'2025-11-11',n:'Birthday of Sultan of Kelantan',s:['KTN']},{d:'2025-11-12',n:'Birthday of Sultan of Kelantan',s:['KTN']},
+{d:'2025-11-14',n:'Birthday of Governor of N.Sembilan',s:['NSN']},
+{d:'2025-12-11',n:'Birthday of Sultan of Kedah',s:['KDH']},
+{d:'2025-12-24',n:'Christmas Eve',s:['SBH','SWK']},
+{d:'2025-12-25',n:'Christmas Day',s:'all'}
+],
+2026:[
+{d:'2026-01-01',n:"New Year's Day",s:'all'},
+{d:'2026-01-14',n:'Thaipusam',s:'all'},
+{d:'2026-02-01',n:'Federal Territory Day',s:['KUL','PJY','LBN']},
+{d:'2026-02-02',n:"Israk Mi'raj",s:'all'},
+{d:'2026-02-17',n:'Chinese New Year',s:'all'},{d:'2026-02-18',n:'Chinese New Year',s:'all'},
+{d:'2026-03-19',n:'Nuzul Al-Quran',s:'all'},
+{d:'2026-03-21',n:'Hari Raya Aidilfitri',s:'all'},{d:'2026-03-22',n:'Hari Raya Aidilfitri',s:'all'},
+{d:'2026-03-23',n:'Birthday of Sultan of Johor',s:['JHR']},
+{d:'2026-04-07',n:'Declaration of Melaka',s:['MLK']},
+{d:'2026-04-15',n:'Declaration of Penang',s:['PNG']},
+{d:'2026-04-19',n:'Birthday of Sultan of Terengganu',s:['TRG']},
+{d:'2026-04-26',n:'Birthday of Sultan of Perak',s:['PRK']},
+{d:'2026-05-01',n:'Labour Day',s:'all'},
+{d:'2026-05-17',n:'Birthday of Raja of Perlis',s:['PLS']},
+{d:'2026-05-22',n:'Pahang Hol Day',s:['PHG']},
+{d:'2026-05-27',n:'Hari Raya Haji',s:'all'},{d:'2026-05-28',n:'Hari Raya Haji',s:'all'},
+{d:'2026-05-30',n:'Harvest Festival',s:['SBH','LBN']},{d:'2026-05-31',n:'Harvest Festival',s:['SBH','LBN']},
+{d:'2026-05-31',n:'Vesak Day',s:'all'},
+{d:'2026-06-01',n:'Gawai Dayak',s:['SWK']},{d:'2026-06-02',n:'Gawai Dayak',s:['SWK']},
+{d:'2026-06-01',n:"Agong's Birthday",s:'all'},
+{d:'2026-06-17',n:'Awal Muharram',s:'all'},
+{d:'2026-07-07',n:'Georgetown World Heritage Day',s:['PNG']},
+{d:'2026-07-22',n:'Sarawak Independence Day',s:['SWK']},
+{d:'2026-07-30',n:'Birthday of Sultan of Pahang',s:['PHG']},
+{d:'2026-08-24',n:'Birthday of Governor of Melaka',s:['MLK']},
+{d:'2026-08-26',n:'Maulidur Rasul',s:'all'},
+{d:'2026-08-31',n:'Merdeka Day',s:'all'},
+{d:'2026-09-16',n:'Malaysia Day',s:'all'},
+{d:'2026-10-04',n:'Sabah Governor Birthday',s:['SBH']},
+{d:'2026-10-13',n:'Birthday of Governor of Penang',s:['PNG']},
+{d:'2026-10-13',n:'Birthday of Sultan of Selangor',s:['SGR']},
+{d:'2026-11-08',n:'Deepavali',s:'all'},
+{d:'2026-11-11',n:'Birthday of Sultan of Kelantan',s:['KTN']},{d:'2026-11-12',n:'Birthday of Sultan of Kelantan',s:['KTN']},
+{d:'2026-11-14',n:'Birthday of Governor of N.Sembilan',s:['NSN']},
+{d:'2026-12-11',n:'Birthday of Sultan of Kedah',s:['KDH']},
+{d:'2026-12-24',n:'Christmas Eve',s:['SBH','SWK']},
+{d:'2026-12-25',n:'Christmas Day',s:'all'}
+],
+2027:[
+{d:'2027-01-01',n:"New Year's Day",s:'all'},
+{d:'2027-01-14',n:'Thaipusam',s:'all'},
+{d:'2027-01-22',n:"Israk Mi'raj",s:'all'},
+{d:'2027-02-01',n:'Federal Territory Day',s:['KUL','PJY','LBN']},
+{d:'2027-02-06',n:'Chinese New Year',s:'all'},{d:'2027-02-07',n:'Chinese New Year',s:'all'},
+{d:'2027-03-08',n:'Nuzul Al-Quran',s:'all'},
+{d:'2027-03-11',n:'Hari Raya Aidilfitri',s:'all'},{d:'2027-03-12',n:'Hari Raya Aidilfitri',s:'all'},
+{d:'2027-03-23',n:'Birthday of Sultan of Johor',s:['JHR']},
+{d:'2027-04-07',n:'Declaration of Melaka',s:['MLK']},
+{d:'2027-04-15',n:'Declaration of Penang',s:['PNG']},
+{d:'2027-04-19',n:'Birthday of Sultan of Terengganu',s:['TRG']},
+{d:'2027-04-26',n:'Birthday of Sultan of Perak',s:['PRK']},
+{d:'2027-05-01',n:'Labour Day',s:'all'},
+{d:'2027-05-16',n:'Hari Raya Haji',s:'all'},{d:'2027-05-17',n:'Hari Raya Haji',s:'all'},
+{d:'2027-05-17',n:'Birthday of Raja of Perlis',s:['PLS']},
+{d:'2027-05-20',n:'Vesak Day',s:'all'},
+{d:'2027-05-22',n:'Pahang Hol Day',s:['PHG']},
+{d:'2027-05-30',n:'Harvest Festival',s:['SBH','LBN']},{d:'2027-05-31',n:'Harvest Festival',s:['SBH','LBN']},
+{d:'2027-06-01',n:'Gawai Dayak',s:['SWK']},{d:'2027-06-02',n:'Gawai Dayak',s:['SWK']},
+{d:'2027-06-06',n:'Awal Muharram',s:'all'},
+{d:'2027-06-07',n:"Agong's Birthday",s:'all'},
+{d:'2027-07-07',n:'Georgetown World Heritage Day',s:['PNG']},
+{d:'2027-07-22',n:'Sarawak Independence Day',s:['SWK']},
+{d:'2027-07-30',n:'Birthday of Sultan of Pahang',s:['PHG']},
+{d:'2027-08-15',n:'Maulidur Rasul',s:'all'},
+{d:'2027-08-24',n:'Birthday of Governor of Melaka',s:['MLK']},
+{d:'2027-08-31',n:'Merdeka Day',s:'all'},
+{d:'2027-09-16',n:'Malaysia Day',s:'all'},
+{d:'2027-10-04',n:'Sabah Governor Birthday',s:['SBH']},
+{d:'2027-10-13',n:'Birthday of Governor of Penang',s:['PNG']},
+{d:'2027-10-13',n:'Birthday of Sultan of Selangor',s:['SGR']},
+{d:'2027-10-28',n:'Deepavali',s:'all'},
+{d:'2027-11-11',n:'Birthday of Sultan of Kelantan',s:['KTN']},{d:'2027-11-12',n:'Birthday of Sultan of Kelantan',s:['KTN']},
+{d:'2027-11-14',n:'Birthday of Governor of N.Sembilan',s:['NSN']},
+{d:'2027-12-11',n:'Birthday of Sultan of Kedah',s:['KDH']},
+{d:'2027-12-24',n:'Christmas Eve',s:['SBH','SWK']},
+{d:'2027-12-25',n:'Christmas Day',s:'all'}
+]
+}
+};
+// Helper: get all PH for a date (returns [{n, country, states}])
+function getPH(dateStr){
+  const y=parseInt(dateStr.slice(0,4)),res=[];
+  const sgList=(PH_DATA.SG[y]||[]);
+  sgList.forEach(h=>{if(h.d===dateStr)res.push({n:h.n,country:'SG'});});
+  const myList=(PH_DATA.MY[y]||[]);
+  myList.forEach(h=>{if(h.d===dateStr)res.push({n:h.n,country:'MY',states:h.s});});
+  return res;
+}
+// Helper: is date a PH in SG?
+function isSGPH(dateStr){return(PH_DATA.SG[parseInt(dateStr.slice(0,4))]||[]).some(h=>h.d===dateStr);}
+// Helper: is date a national MY PH?
+function isMYPH(dateStr){return(PH_DATA.MY[parseInt(dateStr.slice(0,4))]||[]).some(h=>h.d===dateStr&&h.s==='all');}
+// Helper: format MY states for display
+function fmtStates(s){return s==='all'?'National':Array.isArray(s)?s.join(', '):s;}
 
 // ===== UTILS (must be before STATE since importTrips uses uid) =====
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -650,10 +824,10 @@ function importTrips(){return[
 ];}
 
 function importLeave(){return{
-2024:{employer:'Grab',al:11,bp:0,ot:0,ph:0,taken:9,holidays:[{d:'2024-01-01',n:'New Year'},{d:'2024-02-10',n:'CNY'},{d:'2024-02-12',n:'CNY PH'},{d:'2024-03-29',n:'Good Friday'},{d:'2024-04-10',n:'Hari Raya Puasa'},{d:'2024-05-01',n:'Labour Day'},{d:'2024-05-22',n:'Wesak Day'},{d:'2024-06-17',n:'Hari Raya Haji'},{d:'2024-08-09',n:'National Day'},{d:'2024-10-31',n:'Deepavali'},{d:'2024-12-25',n:'Christmas'}]},
-2025:{employer:'ByteDance',al:11,bp:0,ot:6.5,ph:2,taken:28,holidays:[{d:'2025-01-01',n:'New Year'},{d:'2025-01-29',n:'CNY'},{d:'2025-01-30',n:'CNY'},{d:'2025-03-31',n:'Hari Raya Puasa'},{d:'2025-04-18',n:'Good Friday'},{d:'2025-05-01',n:'Labour Day'},{d:'2025-05-12',n:'Wesak Day'},{d:'2025-06-06',n:'Hari Raya Haji'},{d:'2025-08-09',n:'National Day'},{d:'2025-10-20',n:'Deepavali'},{d:'2025-12-25',n:'Christmas'}]},
-2026:{employer:'ByteDance',al:19,bp:1.5,ot:0,ph:0,taken:11,holidays:[{d:'2026-01-01',n:'New Year'},{d:'2026-02-17',n:'CNY'},{d:'2026-02-18',n:'CNY'},{d:'2026-03-21',n:'Hari Raya Puasa'},{d:'2026-04-03',n:'Good Friday'},{d:'2026-05-01',n:'Labour Day'},{d:'2026-05-27',n:'Hari Raya Haji'},{d:'2026-05-31',n:'Wesak Day'},{d:'2026-08-09',n:'National Day'},{d:'2026-08-10',n:'National Day (obs)'},{d:'2026-11-08',n:'Deepavali'},{d:'2026-11-09',n:'Deepavali (obs)'},{d:'2026-12-25',n:'Christmas'}]},
-2027:{employer:'ByteDance',al:20,bp:1.5,ot:0,ph:0,taken:0,holidays:[]},
+2024:{employer:'Grab',al:11,bp:0,ot:0,ph:0,taken:9,holidays:[],applied:[],jobs:[{employer:'Grab',al:11,bp:0,ot:0,ph:0,taken:9}]},
+2025:{employer:'ByteDance',al:11,bp:0,ot:6.5,ph:2,taken:28,holidays:[],applied:[],jobs:[{employer:'ByteDance',al:11,bp:0,ot:6.5,ph:2,taken:28}]},
+2026:{employer:'ByteDance',al:19,bp:1.5,ot:0,ph:0,taken:11,holidays:[],applied:[],jobs:[{employer:'ByteDance',al:19,bp:1.5,ot:0,ph:0,taken:11}]},
+2027:{employer:'ByteDance',al:20,bp:1.5,ot:0,ph:0,taken:0,holidays:[],applied:[],jobs:[{employer:'ByteDance',al:20,bp:1.5,ot:0,ph:0,taken:0}]},
 };}
 
 // ===== THEME =====
@@ -743,6 +917,7 @@ function vDash(){
   const lyJobs=(lyRaw.jobs||[{al:lyRaw.al||0,bp:lyRaw.bp||0,ot:lyRaw.ot||0,ph:lyRaw.ph||0,taken:lyRaw.taken||0}]);
   const lyTotals=leaveJobTotals(lyJobs);
   const tot=lyTotals.tot,bal=lyTotals.bal;
+  const leaveReq=Math.max(0,calcLeaveDaysForYear(curYear,false)-calcAppliedDays(curYear));
   const nextTrip=upcoming().length?upcoming()[0]:null;
   const dLeft=nextTrip?daysUntil(nextTrip.startDate):0;
   const countdownHtml=nextTrip?(dLeft===0?'<span style="color:var(--green);font-weight:600">Today!</span>':dLeft<0?'<span style="color:var(--green);font-weight:600">In progress</span>':`<div class="countdown"><span class="cd-num">${dLeft}</span><span class="cd-unit">day${dLeft!==1?'s':''} away</span></div>`):'—';
@@ -755,7 +930,7 @@ function vDash(){
     <div class="stats">
       <div class="stat blue"><div class="s-label">Trips</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
       <div class="stat green"><div class="s-label">Total Spend</div><div class="s-val">${fmtM(ftCost,'')}</div><div class="s-sub">SGD equivalent</div></div>
-      <div class="stat orange"><div class="s-label">Leave Balance '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${lyTotals.taken} of ${tot} used</div></div>
+      <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${leaveReq>0?leaveReq+' still required · ':''}${lyTotals.taken} of ${tot} used</div></div>
       <div class="stat purple"><div class="s-label">Next Trip</div><div class="s-val" style="font-size:16px">${nextTrip?esc(nextTrip.name):'—'}</div><div class="s-sub">${countdownHtml}</div></div>
     </div>
     <div class="card" style="margin-bottom:16px">
@@ -952,50 +1127,50 @@ function vCal(){
   const startDay=first.getDay()||7;// Mon=1
   const daysInMonth=last.getDate();
   const today=new Date().toISOString().slice(0,10);
-  // Get holidays for this month
-  const ly=S.leave[y]||{};
-  const phMap={};(ly.holidays||[]).forEach(h=>{phMap[h.d]=h.n;});
-  // Build leave days set: workdays that fall within trip dates (auto-calculated)
+  // Build leave days set using centralized PH data
   const leaveDays=new Set();
   S.trips.forEach(t=>{
     const ts=t.startDate,te=t.endDate;if(!ts||!te)return;
     let cur=new Date(ts+'T00:00:00');const end=new Date(te+'T00:00:00');
     while(cur<=end){
       const ds=cur.toISOString().slice(0,10);const dow=cur.getDay();
-      if(dow!==0&&dow!==6&&!phMap[ds])leaveDays.add(ds);
+      if(dow!==0&&dow!==6&&!isSGPH(ds))leaveDays.add(ds);
       cur.setDate(cur.getDate()+1);
     }
   });
   // Build calendar grid
   let cells='';
-  // Previous month padding
   const prevLast=new Date(y,m,0).getDate();
   for(let i=startDay-2;i>=0;i--){
     const d=prevLast-i;
     cells+=`<div class="cal-day other"><div class="d-num">${d}</div></div>`;
   }
-  // Current month days
   for(let d=1;d<=daysInMonth;d++){
     const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday=ds===today;
     const dow=new Date(y,m,d).getDay();
     const isWknd=dow===0||dow===6;
-    const ph=phMap[ds]||'';
-    // Find trips on this date
+    const phs=getPH(ds);
     const tripsOn=tpFilter(S.trips).filter(t=>t.startDate<=ds&&t.endDate>=ds);
+    const isApplied=getAppliedForDate(ds,y);
     cells+=`<div class="cal-day${isToday?' today':''}" data-date="${ds}">
       <div class="d-num${isWknd?' weekend':''}">${d}</div>
-      ${ph?`<div class="d-ph">${esc(ph)}</div>`:''}
-      ${leaveDays.has(ds)&&!ph?`<div class="d-leave">Leave</div>`:''}
-      ${tripsOn.slice(0,3).map(t=>`<div class="cal-trip" style="background:${tColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
-      ${tripsOn.length>3?`<div style="font-size:9px;color:var(--text3)">+${tripsOn.length-3} more</div>`:''}
+      ${phs.map(ph=>`<div class="d-ph ph-${ph.country.toLowerCase()}" title="${esc(ph.n)}${ph.country==='MY'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n.length>14?ph.n.slice(0,12)+'…':ph.n)}</div>`).join('')}
+      ${leaveDays.has(ds)&&!phs.some(p=>p.country==='SG')?`<div class="d-leave" style="font-size:8px;color:var(--purple);font-weight:500">${isApplied?'Applied':'Leave'}</div>`:''}
+      ${tripsOn.slice(0,2).map(t=>`<div class="cal-trip" style="background:${tColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
+      ${tripsOn.length>2?`<div style="font-size:8px;color:var(--text3)">+${tripsOn.length-2}</div>`:''}
     </div>`;
   }
-  // Next month padding
   const totalCells=(startDay-1)+daysInMonth;
   const remaining=(7-totalCells%7)%7;
   for(let i=1;i<=remaining;i++){
     cells+=`<div class="cal-day other"><div class="d-num">${i}</div></div>`;
+  }
+  // Collect PH in this month for legend
+  const monthPHs=[];
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    getPH(ds).forEach(ph=>monthPHs.push({...ph,d:ds}));
   }
   return `
   <div class="page-header"><div><h2>Calendar</h2><div class="subtitle">${mn[m]} ${y}</div></div><div>${tpHtml()}</div></div>
@@ -1010,33 +1185,58 @@ function vCal(){
       <div class="cal-head">Mon</div><div class="cal-head">Tue</div><div class="cal-head">Wed</div><div class="cal-head">Thu</div><div class="cal-head">Fri</div><div class="cal-head">Sat</div><div class="cal-head">Sun</div>
       ${cells}
     </div>
-    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px">
+    <div class="ph-legend">
+      <div class="ph-legend-item"><div class="ph-dot sg"></div><span style="font-weight:600">SG</span> Singapore</div>
+      <div class="ph-legend-item"><div class="ph-dot my"></div><span style="font-weight:600">MY</span> Malaysia</div>
+    </div>
+    ${monthPHs.length?`<div class="card" style="margin-top:12px"><div class="card-header"><h3>Public Holidays This Month</h3></div><div class="card-body" style="padding:8px 16px">${monthPHs.map(ph=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><div style="display:flex;align-items:center;gap:8px"><span class="d-ph ph-${ph.country.toLowerCase()}" style="display:inline-block;margin:0">${ph.country}</span><span>${esc(ph.n)}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--text3);font-size:11px">${ph.country==='MY'?fmtStates(ph.states):''}</span><span style="color:var(--text3)">${fmt(ph.d)}</span></div></div>`).join('')}</div></div>`:''}
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
       ${tpFilter(S.trips).filter(t=>{const ts=new Date(t.startDate),te=new Date(t.endDate);return(ts.getFullYear()===y&&ts.getMonth()===m)||(te.getFullYear()===y&&te.getMonth()===m)||(ts<=first&&te>=last);}).map(t=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer" data-action="view" data-id="${t.id}"><div style="width:10px;height:10px;border-radius:3px;background:${tColor(t)}"></div>${esc(t.name)}</div>`).join('')}
     </div>
   </div>`;
 }
 
 // ===== LEAVE =====
+// Calculate total workdays needed for all trips in a year (trip days - weekends - SG PH)
 function calcLeaveDaysForYear(year,useFilter){
-  const yStr=String(year);const ly=S.leave[year]||{};
-  const phMap={};(ly.holidays||[]).forEach(h=>{phMap[h.d]=h.n;});
+  const yStr=String(year);
   let count=0;
   (useFilter?tpFilter(S.trips):S.trips).forEach(t=>{
     if(!t.startDate||!t.endDate)return;
     let cur=new Date(t.startDate+'T00:00:00');const end=new Date(t.endDate+'T00:00:00');
     while(cur<=end){
       const ds=cur.toISOString().slice(0,10);const dow=cur.getDay();
-      if(ds.startsWith(yStr)&&dow!==0&&dow!==6&&!phMap[ds])count++;
+      if(ds.startsWith(yStr)&&dow!==0&&dow!==6&&!isSGPH(ds))count++;
       cur.setDate(cur.getDate()+1);
     }
   });
   return count;
 }
+// Count applied leave days for a year
+function calcAppliedDays(year){
+  const l=S.leave[year];if(!l||!l.applied)return 0;
+  let count=0;
+  l.applied.forEach(a=>{
+    if(!a.from||!a.to)return;
+    let cur=new Date(a.from+'T00:00:00');const end=new Date(a.to+'T00:00:00');
+    while(cur<=end){
+      const dow=cur.getDay();
+      if(dow!==0&&dow!==6)count+=a.half?0.5:1;
+      cur.setDate(cur.getDate()+1);
+    }
+  });
+  return count;
+}
+// Check if a specific date has applied leave
+function getAppliedForDate(dateStr,year){
+  const l=S.leave[year||parseInt(dateStr.slice(0,4))];if(!l||!l.applied)return false;
+  return l.applied.some(a=>a.from<=dateStr&&a.to>=dateStr);
+}
 // Migrate flat leave data → jobs array
 function migrateLeaveJobs(l){
   if(l.jobs)return l;
   const job={employer:l.employer||'',startDate:'',endDate:'',al:l.al||0,bp:l.bp||0,ot:l.ot||0,ph:l.ph||0,taken:l.taken||0};
-  return{...l,jobs:[job]};
+  return{...l,jobs:[job],applied:l.applied||[]};
 }
 function leaveJobTotals(jobs){
   let al=0,bp=0,ot=0,ph=0,taken=0;
@@ -1050,24 +1250,47 @@ function vLeave(){
   let l=S.leave[y]||{};
   // Auto-migrate
   if(!l.jobs){l=migrateLeaveJobs(l);S.leave[y]=l;}
+  if(!l.applied)l.applied=[];
   const jobs=l.jobs||[];
   const totals=leaveJobTotals(jobs);
-  const autoCalc=calcLeaveDaysForYear(y,true);
+  const tripWorkdays=calcLeaveDaysForYear(y,false);
+  const appliedDays=calcAppliedDays(y);
+  const leaveRequired=Math.max(0,tripWorkdays-appliedDays);
   const activeEmployers=jobs.filter(j=>j.employer).map(j=>j.employer).join(' → ')||'—';
+  // SG public holidays for this year
+  const sgPH=PH_DATA.SG[y]||[];
+  // MY national public holidays for this year
+  const myPH=(PH_DATA.MY[y]||[]);
   return `
   <div class="page-header"><div><h2>Leave Tracker</h2><div class="subtitle">${activeEmployers} · ${y}</div></div><div>${tpHtml()}</div></div>
   <div class="page-content">
     <div class="ytabs">${yrs.map(yr=>`<div class="yt${y==yr?' active':''}" data-action="sly" data-y="${yr}">${yr}</div>`).join('')}<button class="btn btn-s" style="font-size:11px" data-action="aly">+ Year</button></div>
     <div class="leave-boxes">
+      <div class="lb t-total"><div class="lv">${totals.tot}</div><div class="ll">Balance</div></div>
       <div class="lb t-al"><div class="lv">${totals.al}</div><div class="ll">Annual Leave</div></div>
-      <div class="lb t-ot"><div class="lv">${totals.bp}</div><div class="ll">Carried Over</div></div>
-      <div class="lb t-ot"><div class="lv">${totals.ot}</div><div class="ll">OT Leave</div></div>
-      <div class="lb t-ot"><div class="lv">${totals.ph}</div><div class="ll">PH Sub</div></div>
-      <div class="lb t-total"><div class="lv">${totals.tot}</div><div class="ll">Total</div></div>
+      <div class="lb t-ot"><div class="lv">${totals.bp+totals.ot+totals.ph}</div><div class="ll">Carry/OT/PH</div></div>
+      <div class="lb" style="background:var(--purple-dim);color:var(--purple)"><div class="lv">${tripWorkdays}</div><div class="ll">From Trips</div></div>
+      <div class="lb t-applied"><div class="lv">${appliedDays}</div><div class="ll">Applied</div></div>
+      <div class="lb t-req"><div class="lv">${leaveRequired}</div><div class="ll">Still Required</div></div>
       <div class="lb t-taken"><div class="lv">${totals.taken}</div><div class="ll">Taken</div></div>
-      <div class="lb t-bal"><div class="lv">${totals.bal}</div><div class="ll">Balance</div></div>
-      <div class="lb" style="background:var(--purple-dim);color:var(--purple)"><div class="lv">${autoCalc}</div><div class="ll">From Trips</div></div>
+      <div class="lb t-bal"><div class="lv">${totals.bal}</div><div class="ll">Remaining</div></div>
     </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>Leave Applied</h3><button class="btn btn-p" data-action="add-applied" style="font-size:11px">+ Add Leave</button></div>
+      <div class="card-body" style="padding:0">
+        ${l.applied.length?`<table class="la-table"><thead><tr><th>From</th><th>To</th><th>Days</th><th>Note</th><th></th></tr></thead><tbody>
+          ${l.applied.map((a,i)=>{
+            let d=0;if(a.from&&a.to){let c=new Date(a.from+'T00:00:00');const e=new Date(a.to+'T00:00:00');while(c<=e){if(c.getDay()!==0&&c.getDay()!==6)d+=a.half?0.5:1;c.setDate(c.getDate()+1);}}
+            return`<tr><td>${fmt(a.from)}</td><td>${fmt(a.to)}</td><td style="font-weight:600">${d}</td><td style="color:var(--text2)">${esc(a.note||'')}</td><td><button class="btn btn-ghost" style="color:var(--accent);font-size:11px;padding:2px 6px" data-action="del-applied" data-ai="${i}">×</button></td></tr>`;}).join('')}
+        </tbody></table>`:`<div class="empty" style="padding:24px"><p style="font-size:12px">No leave applied yet</p><p style="font-size:11px;color:var(--text3)">Track your leave applications to see what's still needed</p></div>`}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px">
+      <button class="btn btn-s" data-action="add-job" style="font-size:11px">+ Add Job</button>
+    </div>
+
     ${jobs.map((j,i)=>`
     <div class="card" style="margin-bottom:12px"><div class="card-header"><h3>${j.employer||'Job '+(i+1)}${j.startDate||j.endDate?' <span style="font-weight:400;font-size:11px;color:var(--text3)">'+(j.startDate?fmtS(j.startDate):'?')+' — '+(j.endDate?fmtS(j.endDate):'present')+'</span>':''}</h3>${jobs.length>1?`<button class="btn btn-ghost" style="color:var(--accent);font-size:11px" data-action="del-job" data-ji="${i}">Remove</button>`:''}</div><div class="card-body">
       <div class="fg">
@@ -1081,8 +1304,15 @@ function vLeave(){
         <div class="fi"><label>Days Taken</label><input class="fc" type="number" step="0.5" data-lj="${i}" data-jf="taken" value="${j.taken||0}"></div>
       </div>
     </div></div>`).join('')}
-    <button class="btn btn-s" data-action="add-job" style="margin-bottom:16px">+ Add Job</button>
-    ${(l.holidays||[]).length?`<div class="card"><div class="card-header"><h3>Public Holidays ${y}</h3></div><div class="card-body">${l.holidays.map(h=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span>${esc(h.n)}</span><span style="color:var(--text3)">${fmt(h.d)}</span></div>`).join('')}</div></div>`:''}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot sg" style="width:8px;height:8px;border-radius:50%;background:var(--sg);display:inline-block"></span>Singapore PH ${y}</span></h3></div><div class="card-body" style="padding:8px 16px">
+        ${sgPH.length?sgPH.map(h=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><span>${esc(h.n)}</span><span style="color:var(--text3)">${fmt(h.d)}</span></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No data for this year</div>'}
+      </div></div>
+      <div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot my" style="width:8px;height:8px;border-radius:50%;background:var(--my);display:inline-block"></span>Malaysia PH ${y}</span></h3></div><div class="card-body" style="padding:8px 16px;max-height:400px;overflow-y:auto">
+        ${myPH.length?myPH.map(h=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><span>${esc(h.n)}</span><div style="display:flex;gap:8px;align-items:center"><span style="font-size:10px;color:var(--text3);background:var(--my-dim);padding:1px 6px;border-radius:4px">${fmtStates(h.s)}</span><span style="color:var(--text3)">${fmt(h.d)}</span></div></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No data for this year</div>'}
+      </div></div>
+    </div>
   </div>`;
 }
 
@@ -1925,8 +2155,15 @@ document.addEventListener('click',e=>{
     case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;saveS();render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
     case 'aly':{const y=prompt('Year:');if(y&&parseInt(y)){S.leave[parseInt(y)]={jobs:[{employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0}],holidays:[]};S.ly=parseInt(y);saveS();render();}break;}
-    case 'add-job':{const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[],holidays:[]};if(!S.leave[y].jobs)S.leave[y]=migrateLeaveJobs(S.leave[y]);S.leave[y].jobs.push({employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0});saveS();render();break;}
+    case 'add-job':{const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[],holidays:[],applied:[]};if(!S.leave[y].jobs)S.leave[y]=migrateLeaveJobs(S.leave[y]);S.leave[y].jobs.push({employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0});saveS();render();break;}
     case 'del-job':{const y=S.ly||2026;const ji=parseInt(el.dataset.ji);if(S.leave[y]&&S.leave[y].jobs&&S.leave[y].jobs.length>1){S.leave[y].jobs.splice(ji,1);saveS();render();}break;}
+    case 'add-applied':{const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[{employer:'',al:0,bp:0,ot:0,ph:0,taken:0}],holidays:[],applied:[]};if(!S.leave[y].applied)S.leave[y].applied=[];
+      modal('Add Leave Applied',`<div class="fg">
+        <div class="fi"><label>From</label><input class="fc" type="date" name="la-from"></div>
+        <div class="fi"><label>To</label><input class="fc" type="date" name="la-to"></div>
+        <div class="fi full"><label>Note</label><input class="fc" name="la-note" placeholder="e.g. Japan trip, Sick leave"></div>
+      </div>`,()=>{const m=document.querySelector('.modal');const f=m.querySelector('[name="la-from"]').value;const t=m.querySelector('[name="la-to"]').value;const n=m.querySelector('[name="la-note"]').value;if(f){S.leave[y].applied.push({from:f,to:t||f,note:n});saveS();render();toast('Leave added');}});break;}
+    case 'del-applied':{const y=S.ly||2026;const ai=parseInt(el.dataset.ai);if(S.leave[y]&&S.leave[y].applied){const entry=S.leave[y].applied[ai];S.leave[y].applied.splice(ai,1);saveS();render();toastUndo('Leave entry removed',()=>{S.leave[y].applied.splice(ai,0,entry);saveS();render();});}break;}
     case 'add-flight':if(trip)fFlight(trip);break;
     case 'edit-flight':{if(trip){const f=trip.flights.find(x=>x.id===el.dataset.eid);if(f)fFlight(trip,f);}break;}
     case 'del-flight':{if(trip){const eid=el.dataset.eid;const entry=trip.flights.find(x=>x.id===eid);if(entry){const idx=trip.flights.indexOf(entry);trip.flights.splice(idx,1);saveS();render();toastUndo('Flight deleted',()=>{trip.flights.splice(idx,0,entry);saveS();render();});}}}break;
