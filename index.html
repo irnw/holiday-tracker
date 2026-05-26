@@ -1561,8 +1561,8 @@ function parseBookingText(rawTxt){
     .replace(/cancellation\s*(?:policy|cost|fee|deadline)[\s\S]*?(?=\n\s*\n|\bYour\s*reservation\b|\bGuest\s*name\b|\bPrice\s*detail|\bTotal\s*price|$)/gi,'')
     .replace(/(?:no.show\s*fee|free\s*cancellation\s*(?:available|until))[\s\S]*?(?=\n\s*\n|$)/gi,'')
     .replace(/(?:prepayment|payment\s*policy)[\s\S]*?(?=\n\s*\n|\bYour\s*reservation\b|$)/gi,'')
-    .replace(/Booking\s*date\s*[:]\s*[\w\s,]+\d{4}/gi,'')
-    .replace(/Date\s*of\s*Issue\s*[:]\s*[\w\s]+\d{4}/gi,'');
+    .replace(/Booking\s*date\s*[:]\s*\n?\s*[\w\s,]{1,30}?\d{4}/gi,'')
+    .replace(/Date\s*of\s*Issue\s*[:]\s*\n?\s*\d{1,2}\s+\w+\s+\d{4}/gi,'');
 
   // ===== 3. PNR / Booking reference =====
   const pnrPats=[
@@ -1644,6 +1644,9 @@ function parseBookingText(rawTxt){
     if(depM){const d=parseDate(depM[1]);if(d)r.date=d;}
     const arrM=txt.match(/(?:Arriv(?:al|ing)?|ARRIVING)\s*[:\s]*[\s\S]*?(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})/i);
     if(arrM){const d=parseDate(arrM[1]);if(d)r.dateTo=d;}
+    // SQ e-ticket: "Saturday 25 Jul 2026" on its own line after airport codes
+    if(!r.date){const sqDateM=txt.match(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})/i);
+      if(sqDateM){const d=parseDate(sqDateM[1]);if(d)r.date=d;}}
   }
   // Generic date extraction as fallback
   if(!r.date){
@@ -1680,11 +1683,14 @@ function parseBookingText(rawTxt){
 
   // ===== 9. Times (flights only) =====
   if(r.type==='flight'){
-    // Try structured patterns first: "06:35" near SZB and "08:00" near XSP
+    // Try structured patterns first
     const depTimeM=txt.match(/(?:Depart(?:ing|ure)?\s*(?:At|Time)?\s*[:#]?\s*|DEPARTING\s*\n?\s*)(\d{1,2}:\d{2}\s*(?:am|pm)?)/i);
     const arrTimeM=txt.match(/(?:Arriv(?:al|ing)\s*(?:At|Time)?\s*[:#]?\s*|ARRIVING\s*\n?\s*)(\d{1,2}:\d{2}\s*(?:am|pm)?)/i);
     if(depTimeM)r.departureTime=depTimeM[1].trim();
     if(arrTimeM)r.arrivalTime=arrTimeM[1].trim();
+    // Airport-code-prefixed times: "DPS 12:10" / "SIN 14:55" (SQ e-ticket format)
+    if(!r.departureTime&&r.fromCode){const acM=txt.match(new RegExp(r.fromCode+'\\s+(\\d{1,2}:\\d{2})'));if(acM)r.departureTime=acM[1];}
+    if(!r.arrivalTime&&r.toCode){const acM=txt.match(new RegExp(r.toCode+'\\s+(\\d{1,2}:\\d{2})'));if(acM)r.arrivalTime=acM[1];}
     // Fallback: first two times in text
     if(!r.departureTime){
       const times=[];const seenT=new Set();let m2;
