@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#0a0a0f">
 <title>Holiday Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -14,28 +14,28 @@
 
 /* ========== THEME VARIABLES ========== */
 [data-theme="dark"]{
-  --bg:#000000;--bg2:#0a0a0b;--sidebar-bg:#050506;--sidebar-hover:rgba(255,255,255,.06);--sidebar-active:rgba(255,255,255,.1);
-  --card:rgba(255,255,255,.03);--card-hover:rgba(255,255,255,.05);--primary:#3b82f6;--primary-dim:rgba(59,130,246,.1);--primary-glow:rgba(59,130,246,.25);
-  --accent:#f43f5e;--accent-dim:rgba(244,63,94,.1);--green:#10b981;--green-dim:rgba(16,185,129,.1);
-  --orange:#f59e0b;--orange-dim:rgba(245,158,11,.1);--purple:#8b5cf6;--purple-dim:rgba(139,92,246,.1);
-  --text:#fafafa;--text2:#a1a1aa;--text3:#52525b;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.12);
-  --input-bg:rgba(255,255,255,.05);--radius:12px;--shadow:0 0 0 1px rgba(255,255,255,.06);--shadow2:0 8px 32px rgba(0,0,0,.6);
-  --header-bg:rgba(0,0,0,.85);--overlay:rgba(0,0,0,.85);
-  --sg:#3b82f6;--sg-dim:rgba(59,130,246,.12);--my:#f59e0b;--my-dim:rgba(245,158,11,.12);
-  --glass:rgba(255,255,255,.03);--glass-border:rgba(255,255,255,.07);
-  --glow-1:#3b82f6;--glow-2:#8b5cf6;
+  --bg:#0a0a0f;--bg2:#12121a;--sidebar-bg:#08080d;--sidebar-hover:rgba(255,255,255,.06);--sidebar-active:rgba(108,140,255,.12);
+  --card:rgba(255,255,255,.04);--card-hover:rgba(255,255,255,.07);--primary:#6c8cff;--primary-dim:rgba(108,140,255,.12);--primary-glow:rgba(108,140,255,.3);
+  --accent:#ff6b6b;--accent-dim:rgba(255,107,107,.12);--green:#4ade80;--green-dim:rgba(74,222,128,.12);
+  --orange:#fb923c;--orange-dim:rgba(251,146,60,.12);--purple:#a78bfa;--purple-dim:rgba(167,139,250,.12);
+  --text:#f0f0f5;--text2:#8888a0;--text3:#4a4a60;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --input-bg:rgba(255,255,255,.06);--radius:14px;--shadow:0 0 0 1px rgba(255,255,255,.06);--shadow2:0 12px 40px rgba(0,0,0,.7);
+  --header-bg:rgba(10,10,15,.9);--overlay:rgba(0,0,0,.85);
+  --sg:#6c8cff;--sg-dim:rgba(108,140,255,.14);--my:#fb923c;--my-dim:rgba(251,146,60,.14);
+  --glass:rgba(255,255,255,.04);--glass-border:rgba(255,255,255,.08);
+  --glow-1:#6c8cff;--glow-2:#a78bfa;
 }
 [data-theme="light"]{
-  --bg:#fafafa;--bg2:#f4f4f5;--sidebar-bg:#09090b;--sidebar-hover:rgba(255,255,255,.08);--sidebar-active:rgba(255,255,255,.13);
-  --card:#ffffff;--card-hover:#f8f8f8;--primary:#2563eb;--primary-dim:rgba(37,99,235,.06);--primary-glow:rgba(37,99,235,.15);
-  --accent:#e11d48;--accent-dim:rgba(225,29,72,.06);--green:#059669;--green-dim:rgba(5,150,105,.06);
-  --orange:#d97706;--orange-dim:rgba(217,119,6,.06);--purple:#7c3aed;--purple-dim:rgba(124,58,237,.06);
-  --text:#09090b;--text2:#52525b;--text3:#a1a1aa;--border:rgba(0,0,0,.06);--border2:rgba(0,0,0,.1);
-  --input-bg:#ffffff;--radius:12px;--shadow:0 0 0 1px rgba(0,0,0,.05);--shadow2:0 8px 32px rgba(0,0,0,.08);
-  --header-bg:rgba(255,255,255,.9);--overlay:rgba(0,0,0,.5);
-  --sg:#2563eb;--sg-dim:rgba(37,99,235,.08);--my:#d97706;--my-dim:rgba(217,119,6,.08);
+  --bg:#f8f8fc;--bg2:#ededf4;--sidebar-bg:#0c0c14;--sidebar-hover:rgba(255,255,255,.08);--sidebar-active:rgba(108,140,255,.15);
+  --card:#ffffff;--card-hover:#f5f5fa;--primary:#4a6cf7;--primary-dim:rgba(74,108,247,.07);--primary-glow:rgba(74,108,247,.18);
+  --accent:#e84057;--accent-dim:rgba(232,64,87,.07);--green:#16a34a;--green-dim:rgba(22,163,74,.07);
+  --orange:#ea7e2e;--orange-dim:rgba(234,126,46,.07);--purple:#7c3aed;--purple-dim:rgba(124,58,237,.07);
+  --text:#0c0c14;--text2:#52526a;--text3:#9898ae;--border:rgba(0,0,0,.07);--border2:rgba(0,0,0,.12);
+  --input-bg:#ffffff;--radius:14px;--shadow:0 0 0 1px rgba(0,0,0,.05);--shadow2:0 12px 40px rgba(0,0,0,.1);
+  --header-bg:rgba(248,248,252,.92);--overlay:rgba(0,0,0,.5);
+  --sg:#4a6cf7;--sg-dim:rgba(74,108,247,.1);--my:#ea7e2e;--my-dim:rgba(234,126,46,.1);
   --glass:rgba(0,0,0,.02);--glass-border:rgba(0,0,0,.06);
-  --glow-1:#2563eb;--glow-2:#7c3aed;
+  --glow-1:#4a6cf7;--glow-2:#7c3aed;
 }
 
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
