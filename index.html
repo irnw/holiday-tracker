@@ -387,31 +387,54 @@ async function findExistingGist(){
   return gists.find(g=>g.files&&g.files[GIST_FILE]);
 }
 
-async function pushToGist(){
+async function pushToGist(retried){
   const c=getSyncConfig();if(!c.token)return;
   const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)}}};
   try{
     if(c.gistId){
       await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
     }else{
-      const g=await gistAPI('/gists',{method:'POST',body:JSON.stringify({...payload,public:false})});
-      c.gistId=g.id;setSyncConfig(c);
+      // Try to find existing gist first before creating new
+      const existing=await findExistingGist();
+      if(existing){
+        c.gistId=existing.id;setSyncConfig(c);
+        await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
+      }else{
+        const g=await gistAPI('/gists',{method:'POST',body:JSON.stringify({...payload,public:false})});
+        c.gistId=g.id;setSyncConfig(c);
+      }
     }
     c.lastPush=Date.now();setSyncConfig(c);
     updateSyncStatus('Synced just now');
-  }catch(e){console.error('Push failed:',e);updateSyncStatus('Sync error: '+e.message);}
+  }catch(e){
+    // 409 = conflict / stale gist ID — clear it and retry once
+    if(!retried&&(e.message.includes('409')||e.message.includes('cannot be updated'))){
+      console.warn('Gist conflict, clearing cached ID and retrying…');
+      c.gistId=null;setSyncConfig(c);
+      return pushToGist(true);
+    }
+    console.error('Push failed:',e);updateSyncStatus('Sync error: '+e.message);
+  }
 }
 
-async function pullFromGist(){
+async function pullFromGist(retried){
   const c=getSyncConfig();if(!c.token)return false;
   try{
     let gist;
-    if(c.gistId){gist=await gistAPI('/gists/'+c.gistId);}
+    if(c.gistId){
+      try{gist=await gistAPI('/gists/'+c.gistId);}
+      catch(e2){
+        if(!retried&&(e2.message.includes('404')||e2.message.includes('409'))){
+          console.warn('Gist not found/conflict, re-searching…');
+          c.gistId=null;setSyncConfig(c);return pullFromGist(true);
+        }
+        throw e2;
+      }
+    }
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}else return false;}
     if(!gist||!gist.files||!gist.files[GIST_FILE])return false;
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
-      // Remote is newer — merge
       S.trips=remote.trips||S.trips;
       S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;
@@ -428,13 +451,21 @@ async function pullFromGist(){
   }catch(e){console.error('Pull failed:',e);updateSyncStatus('Sync error: '+e.message);return false;}
 }
 
-async function fullSync(){
+async function fullSync(retried){
   updateSyncStatus('Syncing…');
   const c=getSyncConfig();if(!c.token){updateSyncStatus('No token set');return;}
   try{
-    // Try pull first
     let gist;
-    if(c.gistId){gist=await gistAPI('/gists/'+c.gistId);}
+    if(c.gistId){
+      try{gist=await gistAPI('/gists/'+c.gistId);}
+      catch(e2){
+        if(!retried&&(e2.message.includes('404')||e2.message.includes('409'))){
+          console.warn('Gist stale, clearing and retrying…');
+          c.gistId=null;setSyncConfig(c);return fullSync(true);
+        }
+        throw e2;
+      }
+    }
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}}
     if(gist&&gist.files&&gist.files[GIST_FILE]){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
@@ -447,7 +478,6 @@ async function fullSync(){
         updateSyncStatus('Pulled newer data from cloud');toast('Synced from cloud');return;
       }
     }
-    // Local is newer or same — push
     await pushToGist();toast('Synced to cloud');
   }catch(e){console.error('Sync failed:',e);updateSyncStatus('Error: '+e.message);}
 }
