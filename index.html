@@ -1343,6 +1343,39 @@ function vBudget(){
   </div>`;
 }
 
+// ===== CALENDAR EXPORT (.ics) =====
+function icsDate(d){return d.replace(/[-:]/g,'').replace(/\.\d+/,'').slice(0,8);}
+function icsDateTime(d){if(!d)return'';const s=d.replace(/[-:T ]/g,'').replace(/\.\d+/,'');return s.length>=12?s.slice(0,15)+'Z':s.slice(0,8)+'T000000Z';}
+function icsUid(){return 'ht-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'@holiday-tracker';}
+function icsEscape(s){return(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
+function generateICS(){
+  const events=[];const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'').slice(0,15)+'Z';
+  S.trips.forEach(t=>{
+    events.push('BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+icsDate(t.startDate)+'\r\nDTEND;VALUE=DATE:'+icsDate(new Date(new Date(t.endDate+'T00:00:00').getTime()+86400000).toISOString())+'\r\nSUMMARY:'+icsEscape(t.name)+'\r\nDESCRIPTION:'+icsEscape('Locations: '+(t.locations||[]).join(', ')+(t.notes?'. '+t.notes:''))+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(t.name+' in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(t.name+' tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+    (t.flights||[]).forEach(f=>{
+      const dt=f.departureTime||t.startDate;const label=(f.airline?f.airline+' ':'')+(f.flightNumber||'');
+      const sm=label+': '+f.from+' > '+f.to;const startD=dt.length>10?icsDateTime(dt):icsDate(dt);const isA=dt.length<=10;
+      events.push('BEGIN:VEVENT\r\n'+(isA?'DTSTART;VALUE=DATE:'+startD:'DTSTART:'+startD)+'\r\n'+(isA?'DTEND;VALUE=DATE:'+startD:'DTEND:'+(f.arrivalTime?icsDateTime(f.arrivalTime):startD))+'\r\nSUMMARY:Flight '+icsEscape(sm)+'\r\nDESCRIPTION:'+icsEscape('Trip: '+t.name+(f.pnr?'. PNR: '+f.pnr:'')+(f.seat?'. Seat: '+f.seat:'')+(f.notes?'. '+f.notes:''))+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(sm+' in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(sm+' tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+    });
+    (t.hotels||[]).forEach(h=>{
+      if(!h.checkIn)return;
+      events.push('BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+icsDate(h.checkIn)+'\r\nDTEND;VALUE=DATE:'+icsDate(h.checkOut||h.checkIn)+'\r\nSUMMARY:Hotel '+icsEscape(h.name)+'\r\nDESCRIPTION:'+icsEscape('Trip: '+t.name+(h.notes?'. '+h.notes:''))+'\r\nLOCATION:'+icsEscape(h.name||'')+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(h.name+' check-in in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(h.name+' check-in tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+    });
+    (t.activities||[]).forEach(a=>{
+      if(!a.date)return;
+      events.push('BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+icsDate(a.date)+'\r\nDTEND;VALUE=DATE:'+icsDate(a.date)+'\r\nSUMMARY:'+icsEscape(a.name||'Activity')+'\r\nDESCRIPTION:'+icsEscape('Trip: '+t.name+(a.notes?'. '+a.notes:''))+'\r\nLOCATION:'+icsEscape(a.location||'')+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape((a.name||'Activity')+' in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape((a.name||'Activity')+' tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+    });
+  });
+  const cal='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Holiday Tracker//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Holiday Tracker\r\nX-WR-TIMEZONE:Asia/Singapore\r\n'+events.join('\r\n')+'\r\nEND:VCALENDAR';
+  const blob2=new Blob([cal],{type:'text/calendar;charset=utf-8'});
+  const a2=document.createElement('a');a2.href=URL.createObjectURL(blob2);a2.download='holiday-tracker-events.ics';a2.click();
+  toast('Calendar exported');
+}
+function exportUpcomingICS(){
+  const today=new Date().toISOString().slice(0,10);const orig=S.trips;
+  S.trips=S.trips.filter(t=>t.endDate>=today);generateICS();S.trips=orig;
+}
+
 // ===== SETTINGS =====
 function vSettings(){
   return `
@@ -1370,6 +1403,13 @@ function vSettings(){
           <button class="btn btn-p" data-action="sync-connect" style="font-size:12px">Connect & Sync</button>
           <span id="sync-status" style="font-size:11px;color:var(--text3)"></span>
         </div>`;})()}
+    </div></div>
+    <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Calendar Reminders</h3></div><div class="card-body">
+      <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Export trips, flights, and hotels as calendar events with built-in reminders (7 days and 1 day before). Import the .ics file into Outlook, Google Calendar, or Apple Calendar.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-p" data-action="ics-upcoming">Export Upcoming Events</button>
+        <button class="btn btn-s" data-action="ics-all">Export All Events</button>
+      </div>
     </div></div>
     <div class="card"><div class="card-header"><h3>Data</h3></div><div class="card-body" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-s" data-action="export">Export JSON</button>
@@ -2181,6 +2221,8 @@ document.addEventListener('click',e=>{
     case 'cal-prev':if(S.calM===0){S.calM=11;S.calY--;}else S.calM--;saveS();render();break;
     case 'cal-next':if(S.calM===11){S.calM=0;S.calY++;}else S.calM++;saveS();render();break;
     case 'cal-today':{const now=new Date();S.calM=now.getMonth();S.calY=now.getFullYear();saveS();render();break;}
+    case 'ics-upcoming':exportUpcomingICS();break;
+    case 'ics-all':generateICS();break;
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
     case 'import':document.getElementById('imp-f').click();break;
     case 'reset':if(confirm('Reset ALL data? This cannot be undone.')){localStorage.removeItem('htV3');localStorage.removeItem('htV4');S=defS();saveS();render();toast('Data reset');}break;
