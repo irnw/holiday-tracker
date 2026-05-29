@@ -1,9 +1,11 @@
 name: Trip Reminders
 
+
 on:
   schedule:
-    - cron: '0 0 * * *'  # UTC midnight = 8 AM SGT
+    - cron: '0 0 * * *'→ Runs at 00:00  # UTC midnight = 8 AM SGT
   workflow_dispatch: # Allow manual trigger
+
 
 jobs:
   check-reminders:
@@ -11,7 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: surfaceinterval
+          ref: holiday-tracker
+
 
       - name: Check upcoming events and send reminders
         uses: actions/github-script@v7
@@ -23,9 +26,11 @@ jobs:
             const fs = require('fs');
             const html = fs.readFileSync('index.html', 'utf8');
 
+
             // Extract trip data from importTrips() function
             const match = html.match(/function importTrips\(\)\{return\[([\s\S]*?)\];\}/);
             if (!match) { console.log('No trip data found'); return; }
+
 
             // Parse dates
             const today = new Date();
@@ -34,72 +39,3 @@ jobs:
             const tomorrow = new Date(today.getTime() + 86400000);
             const tomorrowStr = tomorrow.toISOString().slice(0,10);
             const in7days = new Date(today.getTime() + 7*86400000);
-            const in7Str = in7days.toISOString().slice(0,10);
-
-            // Extract dates from the raw JS
-            const tripRegex = /name:'([^']*)'[^}]*startDate:'([^']*)'[^}]*endDate:'([^']*)'[^}]*locations:\[([^\]]*)\]/g;
-            const flightRegex = /airline:'([^']*)'[^}]*flightNumber:'([^']*)'[^}]*departureTime:'([^']*)'[^}]*from:'([^']*)'[^}]*to:'([^']*)'/g;
-            const hotelRegex = /hotels:\[\{[^}]*name:'([^']*)'[^}]*checkIn:'([^']*)'[^}]*checkOut:'([^']*)'/g;
-
-            const reminders = { today: [], tomorrow: [], week: [] };
-            const tripData = match[1];
-
-            // Find trips
-            let m;
-            while ((m = tripRegex.exec(tripData)) !== null) {
-              const [, name, start, end, locs] = m;
-              if (start === todayStr) reminders.today.push(`🌍 Trip: ${name} starts TODAY! (${start} to ${end})`);
-              else if (start === tomorrowStr) reminders.tomorrow.push(`🌍 Trip: ${name} starts TOMORROW (${start} to ${end})`);
-              else if (start === in7Str) reminders.week.push(`🌍 Trip: ${name} in 7 days (${start} to ${end})`);
-            }
-
-            // Find flights
-            while ((m = flightRegex.exec(tripData)) !== null) {
-              const [, airline, num, dept, from, to] = m;
-              const dt = (dept || '').slice(0,10);
-              if (dt === todayStr) reminders.today.push(`✈️ Flight: ${airline} ${num} ${from} → ${to} TODAY!`);
-              else if (dt === tomorrowStr) reminders.tomorrow.push(`✈️ Flight: ${airline} ${num} ${from} → ${to} TOMORROW`);
-              else if (dt === in7Str) reminders.week.push(`✈️ Flight: ${airline} ${num} ${from} → ${to} in 7 days`);
-            }
-
-            const allReminders = [...reminders.today, ...reminders.tomorrow, ...reminders.week];
-            if (allReminders.length === 0) {
-              console.log('No reminders for today.');
-              return;
-            }
-
-            // Build email body
-            let body = '<h2>🔔 Holiday Tracker Reminders</h2>';
-            if (reminders.today.length) body += '<h3 style="color:#ff6b6b">⚡ TODAY</h3><ul>' + reminders.today.map(r => `<li>${r}</li>`).join('') + '</ul>';
-            if (reminders.tomorrow.length) body += '<h3 style="color:#fb923c">📅 Tomorrow</h3><ul>' + reminders.tomorrow.map(r => `<li>${r}</li>`).join('') + '</ul>';
-            if (reminders.week.length) body += '<h3 style="color:#6c8cff">🗓️ In 7 Days</h3><ul>' + reminders.week.map(r => `<li>${r}</li>`).join('') + '</ul>';
-            body += '<p style="color:#888;font-size:12px">— Holiday Tracker</p>';
-
-            console.log('Reminders found:', allReminders.length);
-            console.log(body);
-
-            // Send email via Resend API
-            const apiKey = process.env.RESEND_API_KEY;
-            const email = process.env.REMINDER_EMAIL || 'irene.wsh@live.com';
-
-            if (!apiKey) {
-              console.log('RESEND_API_KEY not set. Skipping email send.');
-              console.log('To enable email reminders:');
-              console.log('1. Sign up at https://resend.com (free: 100 emails/day)');
-              console.log('2. Add RESEND_API_KEY to repo secrets');
-              console.log('3. Add REMINDER_EMAIL to repo secrets');
-              return;
-            }
-
-            const resp = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                from: 'Holiday Tracker <onboarding@resend.dev>',
-                to: [email],
-                subject: `🔔 ${allReminders.length} travel reminder${allReminders.length>1?'s':''}`,
-                html: body
-              })
-            });
-            const result = await resp.json();
-            console.log('Email sent:', JSON.stringify(result));
