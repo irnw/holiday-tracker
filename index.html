@@ -34,7 +34,7 @@
   --input-bg:#ffffff;--radius:14px;--shadow:0 0 0 1px rgba(0,0,0,.05);--shadow2:0 12px 40px rgba(0,0,0,.1);
   --header-bg:rgba(248,248,252,.92);--overlay:rgba(0,0,0,.5);
   --sg:#4a6cf7;--sg-dim:rgba(74,108,247,.1);--my:#ea7e2e;--my-dim:rgba(234,126,46,.1);
-  --glass:rgba(0,0,0,.02);--glass-border:rgba(0,0,0,.06);
+  --glass:rgba(0,0,0,.02);--glass-border:rgba(0,0,0,.07);
   --glow-1:#4a6cf7;--glow-2:#7c3aed;
 }
 
@@ -71,6 +71,9 @@ a{color:var(--primary);text-decoration:none}
 .card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .card-header h3{font-size:13px;font-weight:600;letter-spacing:-.1px}
 .card-body{padding:20px}
+
+#app{animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
 /* ========== STATS ========== */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
@@ -274,6 +277,10 @@ textarea.fc{resize:vertical;min-height:50px}
 .sync-dot{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);padding:3px 8px;border-radius:6px;background:var(--bg2)}
 .sync-dot.connected{color:var(--green)}
 .sync-dot .sd-icon{width:6px;height:6px;border-radius:50%;background:currentColor}
+.sync-dot.syncing .sd-icon{animation:syncPulse 1s infinite}
+@keyframes syncPulse{0%,100%{opacity:1}50%{opacity:.3}}
+.offline-banner{position:fixed;top:0;left:0;right:0;padding:8px;background:#ff6b6b;color:#fff;text-align:center;font-size:12px;font-weight:600;z-index:999;transform:translateY(-100%);transition:transform .3s}
+.offline-banner.show{transform:translateY(0)}
 
 /* ========== COUNTDOWN ========== */
 .countdown{display:flex;gap:8px;align-items:baseline}
@@ -329,6 +336,10 @@ textarea.fc{resize:vertical;min-height:50px}
   .la-table th,.la-table td{padding:6px 8px}
 }
 </style>
+<script>
+const _m={name:'Holiday Tracker',short_name:'HoliTracker',start_url:'.',display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%236c8cff'/%3E%3Cpath d='M350 200l-85-85-85 85M265 115v200M145 340h222' stroke='white' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}]};
+const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createObjectURL(new Blob([JSON.stringify(_m)],{type:'application/json'}));document.head.appendChild(_ml);
+</script>
 </head>
 <body>
 
@@ -585,12 +596,23 @@ function debouncedSync(){
   _syncTimer=setTimeout(()=>pushToGist(),3000);
 }
 
+let _pollTimer=null;
+function startSyncPolling(){
+  if(_pollTimer)return;
+  _pollTimer=setInterval(()=>{
+    if(document.visibilityState==='visible'&&getSyncConfig().token){
+      pullFromGist().then(pulled=>{if(pulled)render();});
+    }
+  },30000);
+}
+function stopSyncPolling(){clearInterval(_pollTimer);_pollTimer=null;}
+
 async function gistAPI(path,opts={}){
   const c=getSyncConfig();if(!c.token)throw new Error('No token');
   const hdrs={'Authorization':'Bearer '+c.token,'Accept':'application/vnd.github.v3+json',...(opts.headers||{})};
   if(opts.body)hdrs['Content-Type']='application/json';
   const r=await fetch('https://api.github.com'+path,{...opts,headers:hdrs});
-  if(!r.ok){const t=await r.text().catch(()=>'');throw new Error('GitHub API '+r.status+': '+(t||'unknown error'));}
+  if(!r.ok){const t=await r.text().catch(()=>'');if(r.status===401){updateSyncStatus('⚠️ Token expired — update in Settings');stopSyncPolling();}throw new Error('GitHub API '+r.status+': '+(t||'unknown error'));}
   const txt=await r.text();
   if(!txt)return {};
   return JSON.parse(txt);
@@ -609,6 +631,7 @@ async function findExistingGist(){
 
 async function pushToGist(retried){
   const c=getSyncConfig();if(!c.token)return;
+  document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)}}};
   try{
     if(c.gistId){
@@ -634,7 +657,7 @@ async function pushToGist(retried){
       return pushToGist(true);
     }
     console.error('Push failed:',e);updateSyncStatus('Sync error: '+e.message);
-  }
+  }finally{document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));}
 }
 
 async function pullFromGist(retried){
@@ -673,6 +696,7 @@ async function pullFromGist(retried){
 
 async function fullSync(retried){
   updateSyncStatus('Syncing…');
+  document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   const c=getSyncConfig();if(!c.token){updateSyncStatus('No token set');return;}
   try{
     let gist;
@@ -700,11 +724,13 @@ async function fullSync(retried){
     }
     await pushToGist();toast('Synced to cloud');
   }catch(e){console.error('Sync failed:',e);updateSyncStatus('Error: '+e.message);}
+  finally{document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));}
 }
 
 function updateSyncStatus(msg){
   const el=document.getElementById('sync-status');
   if(el)el.textContent=msg;
+  try{const dots=document.querySelectorAll('.sync-dot');dots.forEach(d=>{const c=getSyncConfig();if(c.token)d.classList.add('connected');else d.classList.remove('connected');});}catch(e){}
 }
 
 async function connectSync(){
@@ -869,7 +895,15 @@ function closeMobileMenu(){
 function syncIndicatorHtml(){
   const c=getSyncConfig();
   if(!c.token)return '<div class="sync-dot"><div class="sd-icon"></div>Offline</div>';
-  return '<div class="sync-dot connected"><div class="sd-icon"></div>Synced</div>';
+  let timeAgo='';
+  if(c.lastPush){
+    const diff=Date.now()-c.lastPush;
+    if(diff<60000)timeAgo='just now';
+    else if(diff<3600000)timeAgo=Math.floor(diff/60000)+'m ago';
+    else if(diff<86400000)timeAgo=Math.floor(diff/3600000)+'h ago';
+    else timeAgo=Math.floor(diff/86400000)+'d ago';
+  }
+  return `<div class="sync-dot connected"><div class="sd-icon"></div>Synced${timeAgo?' · '+timeAgo:''}</div>`;
 }
 
 function renderSidebar(){
@@ -1351,29 +1385,78 @@ function icsEscape(s){return(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').re
 function generateICS(){
   const events=[];const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'').slice(0,15)+'Z';
   S.trips.forEach(t=>{
-    events.push('BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+icsDate(t.startDate)+'\r\nDTEND;VALUE=DATE:'+icsDate(new Date(new Date(t.endDate+'T00:00:00').getTime()+86400000).toISOString())+'\r\nSUMMARY:'+icsEscape(t.name)+'\r\nDESCRIPTION:'+icsEscape('Locations: '+(t.locations||[]).join(', ')+(t.notes?'. '+t.notes:''))+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(t.name+' in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(t.name+' tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+    // Trip event (all-day, start to end)
+    events.push([
+      'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(t.startDate),
+      'DTEND;VALUE=DATE:'+icsDate(new Date(new Date(t.endDate+'T00:00:00').getTime()+86400000).toISOString()),
+      'SUMMARY:'+icsEscape('🌍 '+t.name),
+      'DESCRIPTION:'+icsEscape('Locations: '+(t.locations||[]).join(', ')+(t.notes?'\\n'+t.notes:'')),
+      'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED','TRANSP:OPAQUE',
+      'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(t.name+' in 7 days'),'END:VALARM',
+      'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(t.name+' tomorrow!'),'END:VALARM',
+      'END:VEVENT'
+    ].join('\r\n'));
+    // Flight events
     (t.flights||[]).forEach(f=>{
       const dt=f.departureTime||t.startDate;const label=(f.airline?f.airline+' ':'')+(f.flightNumber||'');
-      const sm=label+': '+f.from+' > '+f.to;const startD=dt.length>10?icsDateTime(dt):icsDate(dt);const isA=dt.length<=10;
-      events.push('BEGIN:VEVENT\r\n'+(isA?'DTSTART;VALUE=DATE:'+startD:'DTSTART:'+startD)+'\r\n'+(isA?'DTEND;VALUE=DATE:'+startD:'DTEND:'+(f.arrivalTime?icsDateTime(f.arrivalTime):startD))+'\r\nSUMMARY:Flight '+icsEscape(sm)+'\r\nDESCRIPTION:'+icsEscape('Trip: '+t.name+(f.pnr?'. PNR: '+f.pnr:'')+(f.seat?'. Seat: '+f.seat:'')+(f.notes?'. '+f.notes:''))+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(sm+' in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(sm+' tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+      const summary='✈️ '+label+': '+f.from+' → '+f.to;
+      const startD=dt.length>10?icsDateTime(dt):(icsDate(dt));
+      const isAllDay=dt.length<=10;
+      events.push([
+        'BEGIN:VEVENT',
+        isAllDay?'DTSTART;VALUE=DATE:'+startD:'DTSTART:'+startD,
+        isAllDay?'DTEND;VALUE=DATE:'+startD:'DTEND:'+(f.arrivalTime?icsDateTime(f.arrivalTime):startD),
+        'SUMMARY:'+icsEscape(summary),
+        'DESCRIPTION:'+icsEscape('Trip: '+t.name+(f.pnr?'\\nPNR: '+f.pnr:'')+(f.seat?'\\nSeat: '+f.seat:'')+(f.notes?'\\n'+f.notes:'')),
+        'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
+        'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(summary+' in 7 days'),'END:VALARM',
+        'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(summary+' tomorrow!'),'END:VALARM',
+        'END:VEVENT'
+      ].join('\r\n'));
     });
+    // Hotel events
     (t.hotels||[]).forEach(h=>{
       if(!h.checkIn)return;
-      events.push('BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+icsDate(h.checkIn)+'\r\nDTEND;VALUE=DATE:'+icsDate(h.checkOut||h.checkIn)+'\r\nSUMMARY:Hotel '+icsEscape(h.name)+'\r\nDESCRIPTION:'+icsEscape('Trip: '+t.name+(h.notes?'. '+h.notes:''))+'\r\nLOCATION:'+icsEscape(h.name||'')+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(h.name+' check-in in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape(h.name+' check-in tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+      events.push([
+        'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(h.checkIn),
+        'DTEND;VALUE=DATE:'+icsDate(h.checkOut||h.checkIn),
+        'SUMMARY:'+icsEscape('🏨 '+h.name),
+        'DESCRIPTION:'+icsEscape('Trip: '+t.name+(h.notes?'\\n'+h.notes:'')),
+        'LOCATION:'+icsEscape(h.name||''),
+        'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
+        'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(h.name+' check-in in 7 days'),'END:VALARM',
+        'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(h.name+' check-in tomorrow!'),'END:VALARM',
+        'END:VEVENT'
+      ].join('\r\n'));
     });
+    // Activity events
     (t.activities||[]).forEach(a=>{
       if(!a.date)return;
-      events.push('BEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+icsDate(a.date)+'\r\nDTEND;VALUE=DATE:'+icsDate(a.date)+'\r\nSUMMARY:'+icsEscape(a.name||'Activity')+'\r\nDESCRIPTION:'+icsEscape('Trip: '+t.name+(a.notes?'. '+a.notes:''))+'\r\nLOCATION:'+icsEscape(a.location||'')+'\r\nUID:'+icsUid()+'\r\nDTSTAMP:'+now+'\r\nSTATUS:CONFIRMED\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape((a.name||'Activity')+' in 7 days')+'\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P1D\r\nACTION:DISPLAY\r\nDESCRIPTION:'+icsEscape((a.name||'Activity')+' tomorrow!')+'\r\nEND:VALARM\r\nEND:VEVENT');
+      events.push([
+        'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(a.date),
+        'DTEND;VALUE=DATE:'+icsDate(a.date),
+        'SUMMARY:'+icsEscape('🎯 '+(a.name||'Activity')),
+        'DESCRIPTION:'+icsEscape('Trip: '+t.name+(a.notes?'\\n'+a.notes:'')),
+        'LOCATION:'+icsEscape(a.location||''),
+        'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
+        'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape((a.name||'Activity')+' in 7 days'),'END:VALARM',
+        'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape((a.name||'Activity')+' tomorrow!'),'END:VALARM',
+        'END:VEVENT'
+      ].join('\r\n'));
     });
   });
-  const cal='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Holiday Tracker//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Holiday Tracker\r\nX-WR-TIMEZONE:Asia/Singapore\r\n'+events.join('\r\n')+'\r\nEND:VCALENDAR';
-  const blob2=new Blob([cal],{type:'text/calendar;charset=utf-8'});
-  const a2=document.createElement('a');a2.href=URL.createObjectURL(blob2);a2.download='holiday-tracker-events.ics';a2.click();
-  toast('Calendar exported');
+  const cal=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Holiday Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'X-WR-CALNAME:Holiday Tracker','X-WR-TIMEZONE:Asia/Singapore',...events,'END:VCALENDAR'].join('\r\n');
+  const blob=new Blob([cal],{type:'text/calendar;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='holiday-tracker-events.ics';a.click();
+  toast('Calendar exported — import into Outlook for reminders');
 }
 function exportUpcomingICS(){
-  const today=new Date().toISOString().slice(0,10);const orig=S.trips;
-  S.trips=S.trips.filter(t=>t.endDate>=today);generateICS();S.trips=orig;
+  const today=new Date().toISOString().slice(0,10);
+  const origTrips=S.trips;
+  S.trips=S.trips.filter(t=>t.endDate>=today);
+  generateICS();
+  S.trips=origTrips;
 }
 
 // ===== SETTINGS =====
@@ -2287,6 +2370,29 @@ try{render();
   // Auto-sync on load if connected
   if(getSyncConfig().token){setTimeout(()=>pullFromGist(),1000);}
 }catch(e){console.error('Render error:',e);document.getElementById('app').innerHTML='<div style="padding:40px;color:#ff6b6b"><h2>Error loading app</h2><pre style="margin-top:12px;font-size:12px;white-space:pre-wrap;color:#e8e9ed">'+e.message+'\n\n'+e.stack+'</pre><button onclick="localStorage.removeItem(\'htV4\');localStorage.removeItem(\'htV3\');location.reload()" style="margin-top:16px;padding:8px 16px;background:#6c8cff;color:#fff;border:none;border-radius:8px;cursor:pointer">Reset &amp; Reload</button></div>';}
+
+// Near-realtime sync: poll + visibility
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&getSyncConfig().token){
+    pullFromGist().then(pulled=>{if(pulled){render();toast('Synced from cloud');}});
+  }
+});
+window.addEventListener('focus',()=>{
+  if(getSyncConfig().token){
+    pullFromGist().then(pulled=>{if(pulled){render();toast('Synced from cloud');}});
+  }
+});
+window.addEventListener('beforeunload',()=>{
+  if(_syncTimer){clearTimeout(_syncTimer);pushToGist();}
+});
+startSyncPolling();
+setInterval(()=>{try{renderSidebar();}catch(e){}},60000);
+
+// Offline detection
+const _ob=document.createElement('div');_ob.className='offline-banner';_ob.textContent='You are offline — changes will sync when reconnected';document.body.appendChild(_ob);
+window.addEventListener('online',()=>{_ob.classList.remove('show');if(getSyncConfig().token)pushToGist();});
+window.addEventListener('offline',()=>_ob.classList.add('show'));
+if(!navigator.onLine)_ob.classList.add('show');
 </script>
 </body>
 </html>
