@@ -214,6 +214,17 @@ textarea.fc{resize:vertical;min-height:50px}
 .su-field{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border)}
 .su-field:last-child{border:none}
 .su-field .k{color:var(--text3)}.su-field .v{font-weight:500;color:var(--text)}
+.dz-tabs{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.dz-tab{flex:1;padding:8px 12px;font-size:12px;text-align:center;cursor:pointer;background:var(--bg2);color:var(--text2);border:none;transition:all .15s;font-weight:500}
+.dz-tab:not(:last-child){border-right:1px solid var(--border)}
+.dz-tab.active{background:var(--primary);color:#fff}
+.dz-tab:hover:not(.active){background:var(--primary-dim)}
+.dz-paste-area{width:100%;min-height:120px;max-height:200px;padding:10px;font-size:12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text);resize:vertical;font-family:inherit;line-height:1.5}
+.dz-paste-area::placeholder{color:var(--text3)}
+.dz-paste-area:focus{outline:none;border-color:var(--primary)}
+.dz-paste-btn{margin-top:8px;width:100%}
+.sync-error-card{border-color:var(--orange)!important}
+.sync-error-card .sync-err-icon{color:var(--orange);font-size:18px}
 
 .shared-link{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--primary-dim);border-radius:8px;font-size:12px;word-break:break-all;margin-top:6px}
 
@@ -609,12 +620,14 @@ function startSyncPolling(){
 }
 function stopSyncPolling(){clearInterval(_pollTimer);_pollTimer=null;}
 
+let _syncErrorState=null; // null = ok, '401' = token expired, 'error' = other error
 async function gistAPI(path,opts={}){
   const c=getSyncConfig();if(!c.token)throw new Error('No token');
   const hdrs={'Authorization':'Bearer '+c.token,'Accept':'application/vnd.github.v3+json',...(opts.headers||{})};
   if(opts.body)hdrs['Content-Type']='application/json';
   const r=await fetch('https://api.github.com'+path,{...opts,headers:hdrs});
-  if(!r.ok){const t=await r.text().catch(()=>'');if(r.status===401){updateSyncStatus('⚠️ Token expired — update in Settings');stopSyncPolling();}throw new Error('GitHub API '+r.status+': '+(t||'unknown error'));}
+  if(!r.ok){const t=await r.text().catch(()=>'');if(r.status===401){_syncErrorState='401';updateSyncStatus('Token expired');stopSyncPolling();render();}else{_syncErrorState='error';}throw new Error('GitHub API '+r.status+': '+(t||'unknown error'));}
+  _syncErrorState=null;
   const txt=await r.text();
   if(!txt)return {};
   return JSON.parse(txt);
@@ -739,6 +752,7 @@ async function connectSync(){
   const inp=document.getElementById('sync-token');
   const token=inp?inp.value.trim():'';
   if(!token){toast('Enter a token');return;}
+  _syncErrorState=null; // Clear error state on reconnect attempt
   updateSyncStatus('Connecting…');
   const c={token};
   setSyncConfig(c);
@@ -832,6 +846,7 @@ async function connectSyncFromDash(){
   const inp=document.getElementById('dash-sync-token');
   const token=inp?inp.value.trim():'';
   if(!token){toast('Enter a GitHub token');return;}
+  _syncErrorState=null; // Clear error state on reconnect attempt
   const btn=document.querySelector('[data-action="dash-sync-connect"]');
   if(btn){btn.disabled=true;btn.textContent='Connecting…';}
   const c=getSyncConfig();// may already have gistId from URL hash
@@ -982,6 +997,7 @@ function closeMobileMenu(){
 }
 function syncIndicatorHtml(){
   const c=getSyncConfig();
+  if(c.token&&_syncErrorState==='401')return '<div class="sync-dot" style="color:var(--orange)"><div class="sd-icon"></div>Token expired</div>';
   if(!c.token&&c.gistId)return '<div class="sync-dot connected" style="opacity:.7"><div class="sd-icon"></div>Read-only</div>';
   if(!c.token)return '<div class="sync-dot"><div class="sd-icon"></div>Offline</div>';
   let timeAgo='';
@@ -1056,7 +1072,25 @@ function vDash(){
       <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${leaveReq>0?leaveReq+' still required · ':''}${lyTotals.taken} of ${tot} used</div></div>
       <div class="stat purple"><div class="s-label">Next Trip</div><div class="s-val" style="font-size:16px">${nextTrip?esc(nextTrip.name):'—'}</div><div class="s-sub">${countdownHtml}</div></div>
     </div>
-    ${(()=>{const sc=getSyncConfig();if(!sc.token)return `
+    ${(()=>{const sc=getSyncConfig();
+      // Token expired state — show recovery card
+      if(sc.token&&_syncErrorState==='401')return `
+    <div class="card sync-error-card" style="margin-bottom:16px;border:1px solid var(--orange);border-radius:12px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(255,160,60,.12),rgba(255,160,60,.04));padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <h3 style="margin:0;font-size:15px;color:var(--orange)">Token Expired</h3>
+        </div>
+        <p style="font-size:12px;color:var(--text2);margin:0 0 12px">Your GitHub token has expired. Generate a new one and paste it below to restore sync. Your data is safe — it's still stored locally and in the cloud.</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input class="fc" id="dash-sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" style="flex:1;min-width:200px;font-size:13px">
+          <button class="btn btn-p" data-action="dash-sync-connect" style="font-size:13px;white-space:nowrap">Update Token</button>
+        </div>
+        <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--orange);display:inline-block;margin-top:8px">Generate new token (gist scope only) →</a>
+      </div>
+    </div>`;
+      // No token — show connect card
+      if(!sc.token)return `
     <div class="card" style="margin-bottom:16px;border:1px solid var(--primary);border-radius:12px;overflow:hidden">
       <div style="background:linear-gradient(135deg,rgba(108,140,255,.15),rgba(108,140,255,.05));padding:16px 20px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
@@ -1574,7 +1608,21 @@ function vSettings(){
     </div></div>
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Cloud Sync</h3></div><div class="card-body">
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Sync your data across devices using a GitHub Gist. Create a <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="color:var(--primary)">Personal Access Token</a> with <strong>gist</strong> scope only.</p>
-      ${(()=>{const c=getSyncConfig();return c.token?`
+      ${(()=>{const c=getSyncConfig();
+        // Token expired state
+        if(c.token&&_syncErrorState==='401')return `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="color:var(--orange);font-size:13px">⚠ Token Expired</span>
+          <span id="sync-status" style="font-size:11px;color:var(--text3)">Sync paused — update your token to resume</span>
+        </div>
+        <div class="fi" style="margin-bottom:8px"><label>New GitHub Token</label><input class="fc" id="sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-p" data-action="sync-connect" style="font-size:12px">Update Token</button>
+          <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary)">Generate new token →</a>
+          <button class="btn btn-d" data-action="sync-disconnect" style="font-size:12px;margin-left:auto">Disconnect</button>
+        </div>`;
+        // Connected state
+        if(c.token)return `
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span style="color:#4ade80;font-size:13px">● Connected</span>
           <span id="sync-status" style="font-size:11px;color:var(--text3)">${c.lastPush?'Last synced: '+new Date(c.lastPush).toLocaleString():''}</span>
@@ -1584,7 +1632,9 @@ function vSettings(){
           <button class="btn btn-p" data-action="sync-now" style="font-size:12px">↻ Sync Now</button>
           <button class="btn btn-s" data-action="link-device" style="font-size:12px">🔗 Link Another Device</button>
           <button class="btn btn-d" data-action="sync-disconnect" style="font-size:12px">Disconnect</button>
-        </div>`:`
+        </div>`;
+        // Not connected
+        return `
         <div class="fi" style="margin-bottom:8px"><label>GitHub Token</label><input class="fc" id="sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off"></div>
         <div style="display:flex;align-items:center;gap:8px">
           <button class="btn btn-p" data-action="sync-connect" style="font-size:12px">Connect & Sync</button>
@@ -1615,6 +1665,7 @@ function modal(title,body,onSave){
   if(onSave)document.getElementById('msave').onclick=()=>{onSave();xm();};
   o.onclick=e=>{if(e.target===o)xm();};
   o.querySelectorAll('.dz').forEach(setupDZ);
+  setupDZTabs(o);
 }
 function xm(){document.getElementById('mbg').classList.remove('open');}
 
@@ -1625,7 +1676,11 @@ function tripCur(trip){
   return 'SGD';
 }
 function curSel(sel='SGD',nm='currency'){return`<select class="fc" name="${nm}">${CUR.map(c=>`<option value="${c}"${c===sel?' selected':''}>${c}</option>`).join('')}</select>`;}
-function dzHtml(id){return`<div class="fi full"><label>Upload PDF / Image (OCR)</label><div class="dz" data-dz="${id}"><div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p>Drop PDF or image here</p><p class="sm">Supports PDF, PNG, JPG</p><input type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none" data-fi="${id}"></div><div class="ocr-prog" id="op-${id}" style="display:none"></div><div class="ocr-out" id="or-${id}" style="display:none"></div></div>`;}
+function dzHtml(id,showTextTab){
+  const tabs=showTextTab?`<div class="dz-tabs"><button class="dz-tab active" data-dztab="file" data-dzid="${id}">Upload / Paste image</button><button class="dz-tab" data-dztab="text" data-dzid="${id}">Paste text</button></div>`:'';
+  const textPane=showTextTab?`<div class="dz-text-pane" data-dzid="${id}" style="display:none"><textarea class="dz-paste-area" data-dztext="${id}" placeholder="Paste your booking confirmation email text here…\n\nSupports flight tickets, hotel reservations, activities, and transport bookings."></textarea><button class="btn btn-p dz-paste-btn" data-dzparse="${id}">Parse text</button></div>`:'';
+  return`<div class="fi full"><label>Upload / Paste booking</label>${tabs}<div class="dz" data-dz="${id}"><div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p>Drop file or paste screenshot here</p><p class="sm">Ctrl+V / ⌘V to paste · Supports PDF, PNG, JPG</p><input type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none" data-fi="${id}"></div>${textPane}<div class="ocr-prog" id="op-${id}" style="display:none"></div><div class="ocr-out" id="or-${id}" style="display:none"></div></div>`;
+}
 
 function setupDZ(dz){
   const id=dz.dataset.dz,inp=dz.querySelector(`[data-fi="${id}"]`);
@@ -1634,6 +1689,77 @@ function setupDZ(dz){
   dz.ondragleave=()=>dz.classList.remove('over');
   dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)runOCR(e.dataTransfer.files[0],id);};
   inp.onchange=e=>{if(e.target.files.length)runOCR(e.target.files[0],id);};
+  // Clipboard paste support — images (screenshots) and text
+  const pasteTarget=dz.closest('.modal')||dz.closest('.fi')||document;
+  if(!pasteTarget._dzPasteSet){
+    pasteTarget._dzPasteSet=true;
+    pasteTarget.addEventListener('paste',e=>{
+      // Find the active/visible drop zone in this context
+      const activeDZ=pasteTarget.querySelector('.dz[data-dz]');
+      const activeId=activeDZ?activeDZ.dataset.dz:id;
+      const items=e.clipboardData&&e.clipboardData.items;
+      if(!items)return;
+      // Check for image data first (screenshot paste)
+      for(let i=0;i<items.length;i++){
+        if(items[i].type.startsWith('image/')){
+          e.preventDefault();
+          const blob=items[i].getAsFile();
+          if(blob)runOCR(blob,activeId);
+          return;
+        }
+      }
+      // Check for text data (email confirmation paste)
+      const txt=e.clipboardData.getData('text/plain');
+      if(txt&&txt.trim().length>20){
+        // Only intercept if the paste target isn't a textarea/input
+        if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')return;
+        e.preventDefault();
+        handleTextPaste(txt.trim(),activeId);
+      }
+    });
+  }
+}
+
+// Handle pasted text — parse directly without OCR
+function handleTextPaste(txt,dzId){
+  const p=document.getElementById('op-'+dzId),r=document.getElementById('or-'+dzId);
+  if(p){p.style.display='flex';p.innerHTML='<div class="spinner"></div> Parsing pasted text…';}
+  if(r)r.style.display='none';
+  setTimeout(()=>{
+    const parsed=parseBookingText(txt);
+    if(r){r.textContent=txt;r.style.display='block';}
+    if(p)p.innerHTML='✓ Parsed from pasted text';
+    if(parsed)autoFillForm(txt,dzId);
+    // Also trigger Smart Upload hooks if present
+    if(window._suTextHook)window._suTextHook(txt,parsed);
+  },100);
+}
+
+// Setup tab switching and text paste buttons for drop zones with text tabs
+function setupDZTabs(container){
+  container.querySelectorAll('.dz-tab').forEach(tab=>{
+    tab.onclick=e=>{
+      e.preventDefault();
+      const dzid=tab.dataset.dzid,mode=tab.dataset.dztab;
+      // Toggle active tab
+      container.querySelectorAll(`.dz-tab[data-dzid="${dzid}"]`).forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      // Show/hide panes
+      const dz=container.querySelector(`.dz[data-dz="${dzid}"]`);
+      const textPane=container.querySelector(`.dz-text-pane[data-dzid="${dzid}"]`);
+      if(mode==='text'){if(dz)dz.style.display='none';if(textPane)textPane.style.display='block';}
+      else{if(dz)dz.style.display='';if(textPane)textPane.style.display='none';}
+    };
+  });
+  container.querySelectorAll('[data-dzparse]').forEach(btn=>{
+    btn.onclick=e=>{
+      e.preventDefault();
+      const dzid=btn.dataset.dzparse;
+      const textarea=container.querySelector(`[data-dztext="${dzid}"]`);
+      if(!textarea||!textarea.value.trim()){toast('Paste some text first');return;}
+      handleTextPaste(textarea.value.trim(),dzid);
+    };
+  });
 }
 
 async function runOCR(file,id){
@@ -1723,7 +1849,7 @@ function autoFillForm(txt,dzId){
 // ===== SMART UPLOAD =====
 function showSmartUpload(){
   const dzid='su-'+uid();
-  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a flight ticket, hotel reservation, or booking confirmation. The app will extract details via OCR and match to an existing trip or create a new one.</p>'+dzHtml(dzid)+`
+  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a booking confirmation, paste a screenshot, or paste email text. The app will extract details and match to an existing trip.</p>'+dzHtml(dzid,true)+`
     <div id="su-result" style="display:none;margin-top:14px">
       <div class="su-match" id="su-parsed"></div>
       <div style="margin-top:12px">
@@ -1827,6 +1953,50 @@ function showSmartUpload(){
   dz.onclick=()=>inp.click();
   dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)hookOCR(e.dataTransfer.files[0]);};
   inp.onchange=e=>{if(e.target.files.length)hookOCR(e.target.files[0]);};
+  // Hook for text paste (from Ctrl+V or textarea) to feed into Smart Upload result display
+  window._suTextHook=(txt,parsed)=>{
+    if(!parsed)parsed=parseBookingText(txt);
+    if(!parsed)return;
+    parsed.rawText=txt;
+    window._suParsed=parsed;
+    const typeEl=document.getElementById('su-type');
+    if(parsed.type&&typeEl)typeEl.value=parsed.type;
+    const tripSel=document.getElementById('su-trip');
+    if(parsed.date&&tripSel){
+      const pd=new Date(parsed.date+'T00:00:00').getTime();
+      let bestMatch=null,bestDist=Infinity;
+      for(const tr of S.trips){
+        const ts=new Date(tr.startDate+'T00:00:00').getTime(),te=new Date(tr.endDate+'T00:00:00').getTime();
+        const buf=3*864e5;
+        if(pd>=(ts-buf)&&pd<=(te+buf)){
+          const dist=Math.min(Math.abs(pd-ts),Math.abs(pd-te));
+          if(dist<bestDist){bestDist=dist;bestMatch=tr;}
+        }
+      }
+      if(!bestMatch&&parsed.locations&&parsed.locations.length){
+        bestMatch=S.trips.find(tr=>tr.locations.some(l=>parsed.locations.some(pl=>l.toUpperCase().includes(pl.toUpperCase())||pl.toUpperCase().includes(l.toUpperCase()))));
+      }
+      if(bestMatch)tripSel.value=bestMatch.id;
+    }
+    document.getElementById('su-result').style.display='block';
+    let parsedHtml='<h4>Extracted Data</h4>';
+    if(parsed.multiLeg&&parsed.legs){
+      parsedHtml+=`<div class="su-field"><span class="k">Type</span><span class="v">Multi-segment flight (${parsed.legs.length} legs)</span></div>`;
+      parsedHtml+=`<div class="su-field"><span class="k">PNR</span><span class="v">${esc(parsed.pnr||'')}</span></div>`;
+      parsedHtml+=`<div class="su-field"><span class="k">Airline</span><span class="v">${esc(parsed.airline||'')}</span></div>`;
+      parsedHtml+=`<div class="su-field"><span class="k">Dates</span><span class="v">${esc(parsed.date||'')} → ${esc(parsed.dateTo||parsed.date||'')}</span></div>`;
+      parsed.legs.forEach((leg,i)=>{
+        parsedHtml+=`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><span style="font-weight:600;font-size:11px;color:var(--primary)">Leg ${i+1}: ${esc(leg.flightNumber||'')}</span></div>`;
+        parsedHtml+=`<div class="su-field"><span class="k">Route</span><span class="v">${esc(leg.from||'?')} → ${esc(leg.to||'?')}</span></div>`;
+        if(leg.date)parsedHtml+=`<div class="su-field"><span class="k">Date</span><span class="v">${esc(leg.date)}</span></div>`;
+        if(leg.departureTime)parsedHtml+=`<div class="su-field"><span class="k">Depart</span><span class="v">${esc(leg.departureTime)}</span></div>`;
+        if(leg.arrivalTime)parsedHtml+=`<div class="su-field"><span class="k">Arrive</span><span class="v">${esc(leg.arrivalTime)}</span></div>`;
+      });
+    }else{
+      parsedHtml+=Object.entries(parsed).filter(([k,v])=>v&&k!=='rawText'&&k!=='type'&&k!=='multiLeg'&&k!=='legs').map(([k,v])=>`<div class="su-field"><span class="k">${k}</span><span class="v">${esc(Array.isArray(v)?v.join(', '):String(v))}</span></div>`).join('');
+    }
+    document.getElementById('su-parsed').innerHTML=parsedHtml;
+  };
 }
 
 // ===== SHARED PARSING HELPERS =====
