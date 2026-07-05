@@ -200,9 +200,9 @@ textarea.fc{resize:vertical;min-height:50px}
 .yt:hover{border-color:var(--text3);color:var(--text2)}.yt.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 16px rgba(59,130,246,.25)}
 
 /* ========== QUICK UPLOAD FAB ========== */
-.fab{position:fixed;bottom:24px;right:28px;width:52px;height:52px;background:linear-gradient(135deg,var(--glow-1),var(--glow-2));border:none;border-radius:14px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(59,130,246,.35);transition:all .25s;z-index:90}
-.fab:hover{transform:scale(1.08);box-shadow:0 8px 32px rgba(59,130,246,.45)}
-.fab svg{width:22px;height:22px}
+.fab{position:fixed;bottom:24px;right:28px;height:46px;padding:0 18px 0 14px;background:linear-gradient(135deg,var(--glow-1),var(--glow-2));border:none;border-radius:23px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 4px 24px rgba(59,130,246,.35);transition:all .25s;z-index:90;font-size:13px;font-weight:600;letter-spacing:.2px}
+.fab:hover{transform:scale(1.05);box-shadow:0 8px 32px rgba(59,130,246,.45)}
+.fab svg{width:18px;height:18px;flex-shrink:0}
 
 /* ========== TOAST ========== */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--glass-border);color:var(--text);padding:10px 20px;border-radius:10px;font-size:13px;z-index:300;animation:tIn .3s;box-shadow:0 8px 32px rgba(0,0,0,.4);backdrop-filter:blur(12px)}
@@ -210,10 +210,13 @@ textarea.fc{resize:vertical;min-height:50px}
 
 /* ========== SMART UPLOAD ========== */
 .su-match{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px}
-.su-match h4{font-size:13px;font-weight:600;margin-bottom:8px}
-.su-field{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border)}
+.su-match h4{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.su-field{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border);align-items:center}
 .su-field:last-child{border:none}
-.su-field .k{color:var(--text3)}.su-field .v{font-weight:500;color:var(--text)}
+.su-field .k{color:var(--text3);min-width:90px}.su-field .v{font-weight:500;color:var(--text)}
+.su-field .v.detected{color:var(--green)}.su-field .v.empty{color:var(--text3);font-style:italic;font-weight:400}
+.su-raw-toggle{font-size:11px;color:var(--primary);cursor:pointer;border:none;background:none;padding:4px 0;margin-top:6px}
+.su-raw-toggle:hover{text-decoration:underline}
 .dz-tabs{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .dz-tab{flex:1;padding:8px 12px;font-size:12px;text-align:center;cursor:pointer;background:var(--bg2);color:var(--text2);border:none;transition:all .15s;font-weight:500}
 .dz-tab:not(:last-child){border-right:1px solid var(--border)}
@@ -225,6 +228,16 @@ textarea.fc{resize:vertical;min-height:50px}
 .dz-paste-btn{margin-top:8px;width:100%}
 .sync-error-card{border-color:var(--orange)!important}
 .sync-error-card .sync-err-icon{color:var(--orange);font-size:18px}
+.form-details{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:0;opacity:0}
+.form-details.open{max-height:600px;opacity:1}
+.form-details-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--primary);cursor:pointer;padding:6px 0;border:none;background:none;font-weight:500;margin-top:4px;grid-column:1/-1}
+.form-details-toggle:hover{color:var(--text)}
+.form-details-toggle .fdt-arrow{transition:transform .2s;font-size:10px}
+.form-details-toggle.open .fdt-arrow{transform:rotate(90deg)}
+.confirm-modal-body{text-align:center;padding:12px 0}
+.confirm-modal-body .cm-icon{font-size:40px;margin-bottom:12px}
+.confirm-modal-body .cm-title{font-size:15px;font-weight:600;margin-bottom:6px}
+.confirm-modal-body .cm-sub{font-size:12px;color:var(--text2);line-height:1.5}
 
 .shared-link{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--primary-dim);border-radius:8px;font-size:12px;word-break:break-all;margin-top:6px}
 
@@ -326,6 +339,15 @@ textarea.fc{resize:vertical;min-height:50px}
 .tp-sel{width:auto;min-width:120px;padding:6px 10px;font-size:12px;border-radius:6px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);cursor:pointer}
 .tp-date{width:auto;padding:5px 8px;font-size:11px;border-radius:6px;background:var(--input-bg);border:1px solid var(--border);color:var(--text)}
 
+@media(max-width:960px){
+  .cal-day{min-height:60px;padding:3px 4px;font-size:10px}
+  .cal-day .d-num{font-size:11px}
+  .cal-day .d-ph{font-size:7px}
+  .cal-trip{font-size:8px;padding:1px 3px}
+  .cal-head{padding:6px 4px;font-size:9px}
+  .cal-head .ch-full{display:none}
+  .cal-head .ch-short{display:inline}
+}
 @media(max-width:768px){
   .sidebar{transform:translateX(-100%);transition:transform .25s}
   .sidebar.open{transform:translateX(0)}
@@ -337,7 +359,7 @@ textarea.fc{resize:vertical;min-height:50px}
   .trip-grid{grid-template-columns:1fr}
   .stats{grid-template-columns:1fr 1fr}
   .search-bar{max-width:100%}
-  .fab{bottom:16px;right:16px}
+  .fab{bottom:16px;right:16px;padding:0 14px 0 12px;height:42px;font-size:12px}
   .tp-filter{flex-wrap:wrap}
   .tp-sel{min-width:100px;font-size:11px;padding:5px 6px}
   .tp-date{font-size:10px;padding:4px 6px;max-width:120px}
@@ -358,7 +380,7 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <nav class="sidebar" id="sidebar"></nav>
 <div class="main" id="app"></div>
-<button class="fab" id="fab" title="Quick Upload — Drop a PDF/image to auto-detect trip info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+<button class="fab" id="fab" title="Quick Upload — Drop a PDF/image to auto-detect trip info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="fab-label">Scan</span></button>
 <div class="modal-bg" id="mbg"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" async></script>
@@ -880,7 +902,7 @@ async function connectSyncFromDash(){
     if(btn){btn.disabled=false;btn.textContent='Connect & Sync';}
   }
 }
-function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:'dark',rates:{...DRATES},trips:importTrips(),leave:importLeave(),lastModified:1}}
+function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},trips:importTrips(),leave:importLeave(),lastModified:1}}
 function tCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency)));return s;}
 function allCost(){return S.trips.reduce((s,t)=>s+tCost(t),0);}
 function upcoming(){const td=new Date().toISOString().slice(0,10);return S.trips.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
@@ -960,9 +982,18 @@ function importLeave(){return{
 };}
 
 // ===== THEME =====
-function applyTheme(){document.documentElement.setAttribute('data-theme',S.theme||'dark');}
-function toggleTheme(){S.theme=S.theme==='dark'?'light':'dark';applyTheme();saveS();renderSidebar();}
+function applyTheme(){
+  if(!S.theme){
+    // First load or no saved preference: detect system preference
+    S.theme=(window.matchMedia&&window.matchMedia('(prefers-color-scheme:light)').matches)?'light':'dark';
+    S._themeSet=true;saveS();
+  }
+  document.documentElement.setAttribute('data-theme',S.theme);
+}
+function toggleTheme(){S.theme=S.theme==='dark'?'light':'dark';S._themeSet=true;applyTheme();saveS();renderSidebar();}
 applyTheme();
+// Listen for system theme changes
+if(window.matchMedia){window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',e=>{if(!S._themeSet){S.theme=e.matches?'dark':'light';applyTheme();saveS();try{renderSidebar();}catch(ex){}}});}
 
 // ===== LIVE CURRENCY RATES =====
 async function fetchLiveRates(){
@@ -1354,7 +1385,7 @@ function vCal(){
       <button class="btn btn-ghost" data-action="cal-today">Today</button>
     </div>
     <div class="cal-grid">
-      <div class="cal-head">Mon</div><div class="cal-head">Tue</div><div class="cal-head">Wed</div><div class="cal-head">Thu</div><div class="cal-head">Fri</div><div class="cal-head">Sat</div><div class="cal-head">Sun</div>
+      <div class="cal-head"><span class="ch-full">Mon</span><span class="ch-short" style="display:none">Mo</span></div><div class="cal-head"><span class="ch-full">Tue</span><span class="ch-short" style="display:none">Tu</span></div><div class="cal-head"><span class="ch-full">Wed</span><span class="ch-short" style="display:none">We</span></div><div class="cal-head"><span class="ch-full">Thu</span><span class="ch-short" style="display:none">Th</span></div><div class="cal-head"><span class="ch-full">Fri</span><span class="ch-short" style="display:none">Fr</span></div><div class="cal-head"><span class="ch-full">Sat</span><span class="ch-short" style="display:none">Sa</span></div><div class="cal-head"><span class="ch-full">Sun</span><span class="ch-short" style="display:none">Su</span></div>
       ${cells}
     </div>
     <div class="ph-legend">
@@ -1447,6 +1478,15 @@ function vLeave(){
       <div class="lb t-taken"><div class="lv">${totals.taken}</div><div class="ll">Taken</div></div>
       <div class="lb t-bal"><div class="lv">${totals.bal}</div><div class="ll">Remaining</div></div>
     </div>
+    ${parseInt(y)>new Date().getFullYear()?(()=>{
+      const projected=totals.tot-tripWorkdays;
+      const projColor=projected>=0?'var(--green)':'var(--accent)';
+      return `<div class="card" style="margin-bottom:16px;border-color:${projColor}30"><div class="card-body" style="display:flex;align-items:center;gap:12px;padding:12px 16px">
+        <div style="font-size:24px">${projected>=0?'✅':'⚠️'}</div>
+        <div><div style="font-size:13px;font-weight:600;color:${projColor}">Projected: ${projected>=0?projected+' days surplus':Math.abs(projected)+' days short'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Based on ${totals.tot} total entitlement − ${tripWorkdays} trip workdays (excludes weekends & SG PH)</div></div>
+      </div></div>`;
+    })():''}
 
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>Leave Applied</h3><button class="btn btn-p" data-action="add-applied" style="font-size:11px">+ Add Leave</button></div>
@@ -1650,6 +1690,7 @@ function vSettings(){
     </div></div>
     <div class="card"><div class="card-header"><h3>Data</h3></div><div class="card-body" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-s" data-action="export">Export JSON</button>
+      <button class="btn btn-s" data-action="export-csv">Export CSV</button>
       <button class="btn btn-s" data-action="import">Import JSON</button>
       <button class="btn btn-d" data-action="reset">Reset All Data</button>
       <input type="file" id="imp-f" accept=".json" style="display:none">
@@ -1847,6 +1888,37 @@ function autoFillForm(txt,dzId){
 }
 
 // ===== SMART UPLOAD =====
+const SU_LABELS={airline:'Airline',flightNumber:'Flight #',pnr:'PNR',seat:'Seat',from:'From',to:'To',date:'Date',dateTo:'End Date',departureTime:'Departure',arrivalTime:'Arrival',duration:'Duration',hotelName:'Hotel',name:'Name',bookingNumber:'Booking #',cost:'Cost',currency:'Currency',locations:'Locations'};
+function suFieldHtml(k,v){
+  const label=SU_LABELS[k]||k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase());
+  const val=Array.isArray(v)?v.join(', '):String(v||'');
+  const cls=val?'detected':'empty';
+  return `<div class="su-field"><span class="k">${label}</span><span class="v ${cls}">${val?esc(val):'Not detected'}</span></div>`;
+}
+function suParsedHtml(parsed){
+  let h='<h4><span style="color:var(--green)">✓</span> Extracted Data</h4>';
+  if(parsed.multiLeg&&parsed.legs){
+    h+=suFieldHtml('Type','Multi-segment flight ('+parsed.legs.length+' legs)');
+    h+=suFieldHtml('pnr',parsed.pnr);h+=suFieldHtml('airline',parsed.airline);
+    h+=suFieldHtml('date',(parsed.date||'')+' → '+(parsed.dateTo||parsed.date||''));
+    parsed.legs.forEach((leg,i)=>{
+      h+=`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><span style="font-weight:600;font-size:11px;color:var(--primary)">Leg ${i+1}: ${esc(leg.flightNumber||'')}</span></div>`;
+      h+=suFieldHtml('Route',(leg.from||'?')+' → '+(leg.to||'?'));
+      if(leg.date)h+=suFieldHtml('date',leg.date);
+      if(leg.departureTime)h+=suFieldHtml('departureTime',leg.departureTime);
+      if(leg.arrivalTime)h+=suFieldHtml('arrivalTime',leg.arrivalTime);
+      if(leg.seat)h+=suFieldHtml('seat',leg.seat);
+      if(leg.duration)h+=suFieldHtml('duration',leg.duration);
+    });
+  }else{
+    const order=['airline','flightNumber','hotelName','name','from','to','date','dateTo','departureTime','arrivalTime','pnr','seat','duration','bookingNumber','cost','currency','locations'];
+    const shown=new Set();
+    order.forEach(k=>{if(parsed[k]){h+=suFieldHtml(k,parsed[k]);shown.add(k);}});
+    Object.entries(parsed).filter(([k,v])=>v&&!shown.has(k)&&k!=='rawText'&&k!=='type'&&k!=='multiLeg'&&k!=='legs').forEach(([k,v])=>{h+=suFieldHtml(k,v);});
+  }
+  if(parsed.rawText)h+=`<button class="su-raw-toggle" onclick="const el=this.nextElementSibling;el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'Show raw text ▸':'Hide raw text ▾'">Show raw text ▸</button><div class="ocr-out" style="display:none;margin-top:4px">${esc(parsed.rawText)}</div>`;
+  return h;
+}
 function showSmartUpload(){
   const dzid='su-'+uid();
   modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a booking confirmation, paste a screenshot, or paste email text. The app will extract details and match to an existing trip.</p>'+dzHtml(dzid,true)+`
@@ -1929,25 +2001,7 @@ function showSmartUpload(){
       }
       // Show results
       document.getElementById('su-result').style.display='block';
-      let parsedHtml='<h4>Extracted Data</h4>';
-      if(parsed.multiLeg&&parsed.legs){
-        parsedHtml+=`<div class="su-field"><span class="k">Type</span><span class="v">Multi-segment flight (${parsed.legs.length} legs)</span></div>`;
-        parsedHtml+=`<div class="su-field"><span class="k">PNR</span><span class="v">${esc(parsed.pnr||'')}</span></div>`;
-        parsedHtml+=`<div class="su-field"><span class="k">Airline</span><span class="v">${esc(parsed.airline||'')}</span></div>`;
-        parsedHtml+=`<div class="su-field"><span class="k">Dates</span><span class="v">${esc(parsed.date||'')} → ${esc(parsed.dateTo||parsed.date||'')}</span></div>`;
-        parsed.legs.forEach((leg,i)=>{
-          parsedHtml+=`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><span style="font-weight:600;font-size:11px;color:var(--primary)">Leg ${i+1}: ${esc(leg.flightNumber||'')}</span></div>`;
-          parsedHtml+=`<div class="su-field"><span class="k">Route</span><span class="v">${esc(leg.from||'?')} → ${esc(leg.to||'?')}</span></div>`;
-          if(leg.date)parsedHtml+=`<div class="su-field"><span class="k">Date</span><span class="v">${esc(leg.date)}</span></div>`;
-          if(leg.departureTime)parsedHtml+=`<div class="su-field"><span class="k">Depart</span><span class="v">${esc(leg.departureTime)}</span></div>`;
-          if(leg.arrivalTime)parsedHtml+=`<div class="su-field"><span class="k">Arrive</span><span class="v">${esc(leg.arrivalTime)}</span></div>`;
-          if(leg.seat)parsedHtml+=`<div class="su-field"><span class="k">Seat</span><span class="v">${esc(leg.seat)}</span></div>`;
-          if(leg.duration)parsedHtml+=`<div class="su-field"><span class="k">Duration</span><span class="v">${esc(leg.duration)}</span></div>`;
-        });
-      }else{
-        parsedHtml+=Object.entries(parsed).filter(([k,v])=>v&&k!=='rawText'&&k!=='type'&&k!=='multiLeg'&&k!=='legs').map(([k,v])=>`<div class="su-field"><span class="k">${k}</span><span class="v">${esc(Array.isArray(v)?v.join(', '):String(v))}</span></div>`).join('');
-      }
-      document.getElementById('su-parsed').innerHTML=parsedHtml;
+      document.getElementById('su-parsed').innerHTML=suParsedHtml(parsed);
     }
   };
   dz.onclick=()=>inp.click();
@@ -1979,23 +2033,7 @@ function showSmartUpload(){
       if(bestMatch)tripSel.value=bestMatch.id;
     }
     document.getElementById('su-result').style.display='block';
-    let parsedHtml='<h4>Extracted Data</h4>';
-    if(parsed.multiLeg&&parsed.legs){
-      parsedHtml+=`<div class="su-field"><span class="k">Type</span><span class="v">Multi-segment flight (${parsed.legs.length} legs)</span></div>`;
-      parsedHtml+=`<div class="su-field"><span class="k">PNR</span><span class="v">${esc(parsed.pnr||'')}</span></div>`;
-      parsedHtml+=`<div class="su-field"><span class="k">Airline</span><span class="v">${esc(parsed.airline||'')}</span></div>`;
-      parsedHtml+=`<div class="su-field"><span class="k">Dates</span><span class="v">${esc(parsed.date||'')} → ${esc(parsed.dateTo||parsed.date||'')}</span></div>`;
-      parsed.legs.forEach((leg,i)=>{
-        parsedHtml+=`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><span style="font-weight:600;font-size:11px;color:var(--primary)">Leg ${i+1}: ${esc(leg.flightNumber||'')}</span></div>`;
-        parsedHtml+=`<div class="su-field"><span class="k">Route</span><span class="v">${esc(leg.from||'?')} → ${esc(leg.to||'?')}</span></div>`;
-        if(leg.date)parsedHtml+=`<div class="su-field"><span class="k">Date</span><span class="v">${esc(leg.date)}</span></div>`;
-        if(leg.departureTime)parsedHtml+=`<div class="su-field"><span class="k">Depart</span><span class="v">${esc(leg.departureTime)}</span></div>`;
-        if(leg.arrivalTime)parsedHtml+=`<div class="su-field"><span class="k">Arrive</span><span class="v">${esc(leg.arrivalTime)}</span></div>`;
-      });
-    }else{
-      parsedHtml+=Object.entries(parsed).filter(([k,v])=>v&&k!=='rawText'&&k!=='type'&&k!=='multiLeg'&&k!=='legs').map(([k,v])=>`<div class="su-field"><span class="k">${k}</span><span class="v">${esc(Array.isArray(v)?v.join(', '):String(v))}</span></div>`).join('');
-    }
-    document.getElementById('su-parsed').innerHTML=parsedHtml;
+    document.getElementById('su-parsed').innerHTML=suParsedHtml(parsed);
   };
 }
 
@@ -2396,16 +2434,20 @@ function fHotel(trip,h){
   const e=!!h;h=h||{name:'',bookingNumber:'',website:'',checkIn:'',checkOut:'',cost:'',currency:tripCur(trip),notes:'',ocrText:''};
   const initNights=calcNights(h.checkIn,h.checkOut);
   const dz='h-'+uid();
+  const hasDetails=!!(h.bookingNumber||h.website||h.cost||h.notes);
   modal(e?'Edit Hotel':'Add Hotel',`<div class="fg">
     <div class="fi full"><label>Hotel Name</label><input class="fc" name="name" value="${esc(h.name)}"></div>
-    <div class="fi"><label>Booking #</label><input class="fc" name="bn" value="${esc(h.bookingNumber||'')}"></div>
-    <div class="fi"><label>Website</label><input class="fc" name="web" value="${esc(h.website||'')}"></div>
     <div class="fi"><label>Check-in</label><input class="fc" type="date" name="ci" value="${h.checkIn||''}"></div>
     <div class="fi"><label>Check-out</label><input class="fc" type="date" name="co" value="${h.checkOut||''}"></div>
     <div class="fi"><label>Nights</label><input class="fc" type="number" name="nights" min="1" value="${initNights}" placeholder="Auto-calculated"></div>
-    <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${h.cost||''}"></div>
-    <div class="fi"><label>Currency</label>${curSel(h.currency)}</div>
-    <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(h.notes||'')}</textarea></div>
+    <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
+    <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
+      <div class="fi"><label>Booking #</label><input class="fc" name="bn" value="${esc(h.bookingNumber||'')}"></div>
+      <div class="fi"><label>Website</label><input class="fc" name="web" value="${esc(h.website||'')}"></div>
+      <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${h.cost||''}"></div>
+      <div class="fi"><label>Currency</label>${curSel(h.currency)}</div>
+      <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(h.notes||'')}</textarea></div>
+    </div></div>
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
@@ -2428,20 +2470,24 @@ function fHotel(trip,h){
 function fFlight(trip,f){
   const e=!!f;f=f||{airline:'',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',duration:'',from:'',to:'',cost:'',currency:tripCur(trip),notes:'',ocrText:''};
   const dz='f-'+uid();
+  const hasDetails=!!(f.pnr||f.seat||f.duration||f.cost||f.notes||f.attachUrl);
   modal(e?'Edit Flight':'Add Flight',`<div class="fg">
     <div class="fi"><label>Airline</label><input class="fc" name="airline" value="${esc(f.airline||'')}"></div>
     <div class="fi"><label>Flight #</label><input class="fc" name="fn" value="${esc(f.flightNumber||'')}"></div>
-    <div class="fi"><label>PNR</label><input class="fc" name="pnr" value="${esc(f.pnr||'')}" style="font-family:monospace"></div>
-    <div class="fi"><label>Seat</label><input class="fc" name="seat" value="${esc(f.seat||'')}"></div>
     <div class="fi"><label>From</label><input class="fc" name="from" value="${esc(f.from||'')}"></div>
     <div class="fi"><label>To</label><input class="fc" name="to" value="${esc(f.to||'')}"></div>
     <div class="fi"><label>Departure</label><input class="fc" type="datetime-local" name="dep" value="${f.departureTime||''}"></div>
     <div class="fi"><label>Arrival</label><input class="fc" type="datetime-local" name="arr" value="${f.arrivalTime||''}"></div>
-    <div class="fi"><label>Duration</label><input class="fc" name="duration" value="${esc(f.duration||'')}" placeholder="Auto-calculated"></div>
-    <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${f.cost||''}"></div>
-    <div class="fi"><label>Currency</label>${curSel(f.currency)}</div>
-    <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(f.notes||'')}</textarea></div>
-    <div class="fi full"><label>Attachment URL</label><input class="fc" name="attach" value="${esc(f.attachUrl||'')}" placeholder="Link to doc, PDF, or image"></div>
+    <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
+    <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
+      <div class="fi"><label>PNR</label><input class="fc" name="pnr" value="${esc(f.pnr||'')}" style="font-family:monospace"></div>
+      <div class="fi"><label>Seat</label><input class="fc" name="seat" value="${esc(f.seat||'')}"></div>
+      <div class="fi"><label>Duration</label><input class="fc" name="duration" value="${esc(f.duration||'')}" placeholder="Auto-calculated"></div>
+      <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${f.cost||''}"></div>
+      <div class="fi"><label>Currency</label>${curSel(f.currency)}</div>
+      <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(f.notes||'')}</textarea></div>
+      <div class="fi full"><label>Attachment URL</label><input class="fc" name="attach" value="${esc(f.attachUrl||'')}" placeholder="Link to doc, PDF, or image"></div>
+    </div></div>
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
@@ -2469,18 +2515,22 @@ function fAct(trip,a){
   const e=!!a;a=a||{name:'',location:'',date:'',endDate:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:tripCur(trip),ocrText:''};
   const dz='a-'+uid();
   const initDays=(a.date&&a.endDate)?calcNights(a.date,a.endDate):'';
+  const hasDetails=!!(a.time||a.duration||a.cost||a.bookingDetails||a.notes);
   modal(e?'Edit Activity':'Add Activity',`<div class="fg">
     <div class="fi full"><label>Name</label><input class="fc" name="name" value="${esc(a.name||'')}"></div>
     <div class="fi"><label>Location</label><input class="fc" name="loc" value="${esc(a.location||'')}"></div>
     <div class="fi"><label>Start Date</label><input class="fc" type="date" name="date" value="${a.date||''}"></div>
     <div class="fi"><label>End Date</label><input class="fc" type="date" name="endDate" value="${a.endDate||''}"></div>
     <div class="fi"><label>Days</label><input class="fc" type="number" name="days" min="1" value="${initDays}" placeholder="Auto-calculated"></div>
-    <div class="fi"><label>Time</label><input class="fc" type="time" name="time" value="${a.time||''}"></div>
-    <div class="fi"><label>Duration</label><input class="fc" name="dur" value="${esc(a.duration||'')}"></div>
-    <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${a.cost||''}"></div>
-    <div class="fi"><label>Currency</label>${curSel(a.currency)}</div>
-    <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(a.bookingDetails||'')}"></div>
-    <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(a.notes||'')}</textarea></div>
+    <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
+    <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
+      <div class="fi"><label>Time</label><input class="fc" type="time" name="time" value="${a.time||''}"></div>
+      <div class="fi"><label>Duration</label><input class="fc" name="dur" value="${esc(a.duration||'')}"></div>
+      <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${a.cost||''}"></div>
+      <div class="fi"><label>Currency</label>${curSel(a.currency)}</div>
+      <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(a.bookingDetails||'')}"></div>
+      <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(a.notes||'')}</textarea></div>
+    </div></div>
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
@@ -2504,17 +2554,21 @@ function fTrans(trip,x){
   const e=!!x;x=x||{type:'',name:'',location:'',date:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:tripCur(trip),ocrText:''};
   const dz='t-'+uid();
   const types=['Train','Bus','Ferry','Car Rental','Taxi/Grab','Boat','Other'];
+  const hasDetails=!!(x.duration||x.cost||x.bookingDetails||x.notes);
   modal(e?'Edit Transport':'Add Transport',`<div class="fg">
     <div class="fi"><label>Type</label><select class="fc" name="type">${types.map(tp=>`<option${tp===x.type?' selected':''}>${tp}</option>`).join('')}</select></div>
     <div class="fi"><label>Name / Provider</label><input class="fc" name="name" value="${esc(x.name||'')}"></div>
     <div class="fi"><label>Location</label><input class="fc" name="loc" value="${esc(x.location||'')}"></div>
     <div class="fi"><label>Date</label><input class="fc" type="date" name="date" value="${x.date||''}"></div>
     <div class="fi"><label>Time</label><input class="fc" type="time" name="time" value="${x.time||''}"></div>
-    <div class="fi"><label>Duration</label><input class="fc" name="dur" value="${esc(x.duration||'')}"></div>
-    <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${x.cost||''}"></div>
-    <div class="fi"><label>Currency</label>${curSel(x.currency)}</div>
-    <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(x.bookingDetails||'')}"></div>
-    <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(x.notes||'')}</textarea></div>
+    <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
+    <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
+      <div class="fi"><label>Duration</label><input class="fc" name="dur" value="${esc(x.duration||'')}"></div>
+      <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${x.cost||''}"></div>
+      <div class="fi"><label>Currency</label>${curSel(x.currency)}</div>
+      <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(x.bookingDetails||'')}"></div>
+      <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(x.notes||'')}</textarea></div>
+    </div></div>
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
@@ -2547,7 +2601,7 @@ document.addEventListener('click',e=>{
     case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
     case 'add-trip':fTrip();break;
     case 'edit-trip':{const t=S.trips.find(x=>x.id===el.dataset.id);if(t)fTrip(t);break;}
-    case 'del-trip':{const delId=el.dataset.id;const delTrip=S.trips.find(t=>t.id===delId);if(delTrip){const idx=S.trips.indexOf(delTrip);S.trips.splice(idx,1);saveS();nav('trips');toastUndo('Trip deleted',()=>{S.trips.splice(idx,0,delTrip);saveS();render();});}}break;
+    case 'del-trip':{const delId=el.dataset.id;const delTrip=S.trips.find(t=>t.id===delId);if(delTrip){const bc=(delTrip.flights||[]).length+(delTrip.hotels||[]).length+(delTrip.activities||[]).length+(delTrip.transport||[]).length;modal('Delete Trip',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delTrip.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.trips.indexOf(delTrip);S.trips.splice(idx,1);saveS();nav('trips');toast('Trip deleted');});}}break;
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
     case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;saveS();render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
@@ -2581,6 +2635,15 @@ document.addEventListener('click',e=>{
     case 'ics-upcoming':exportUpcomingICS();break;
     case 'ics-all':generateICS();break;
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
+    case 'export-csv':{
+      const csvRows=[['Trip','Start','End','Locations','Days','Flights','Hotels','Activities','Transport','Total Cost (SGD)']];
+      S.trips.sort((a2,b2)=>a2.startDate.localeCompare(b2.startDate)).forEach(t2=>{
+        const d2=days(t2.startDate,t2.endDate);
+        const csvEsc=v=>{const s=String(v||'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
+        csvRows.push([csvEsc(t2.name),t2.startDate,t2.endDate,csvEsc(t2.locations.join('; ')),d2,(t2.flights||[]).length,(t2.hotels||[]).length,(t2.activities||[]).length,(t2.transport||[]).length,tCost(t2).toFixed(2)]);
+      });
+      const csvStr=csvRows.map(r=>r.join(',')).join('\n');
+      const b3=new Blob([csvStr],{type:'text/csv'});const a3=document.createElement('a');a3.href=URL.createObjectURL(b3);a3.download='holiday-tracker-trips.csv';a3.click();toast('CSV exported');break;}
     case 'import':document.getElementById('imp-f').click();break;
     case 'reset':if(confirm('Reset ALL data? This cannot be undone.')){localStorage.removeItem('htV3');localStorage.removeItem('htV4');S=defS();saveS();render();toast('Data reset');}break;
     case 'sync-connect':connectSync();break;
