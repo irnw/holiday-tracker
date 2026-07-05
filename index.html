@@ -588,6 +588,8 @@ const GIST_FILE='holiday-tracker-data.json';
 const GIST_DESC='Holiday Tracker Sync Data (do not delete)';
 function getSyncConfig(){try{return JSON.parse(localStorage.getItem('htSync'))||{};}catch(e){return {};}}
 function setSyncConfig(c){try{localStorage.setItem('htSync',JSON.stringify(c));}catch(e){}}
+// Parse URL hash for device linking: #gist=GIST_ID
+(function(){const h=location.hash;if(h.startsWith('#gist=')){const gid=h.slice(6);if(gid){const c=getSyncConfig();if(!c.gistId){c.gistId=gid;setSyncConfig(c);}}history.replaceState(null,'',location.pathname+location.search);}})();
 
 let _syncTimer=null;
 function debouncedSync(){
@@ -643,7 +645,7 @@ async function pushToGist(retried){
         c.gistId=existing.id;setSyncConfig(c);
         await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
       }else{
-        const g=await gistAPI('/gists',{method:'POST',body:JSON.stringify({...payload,public:false})});
+        const g=await gistAPI('/gists',{method:'POST',body:JSON.stringify({...payload,public:true})});
         c.gistId=g.id;setSyncConfig(c);
       }
     }
@@ -748,6 +750,7 @@ async function connectSync(){
     const existing=await findExistingGist();
     if(existing){
       c.gistId=existing.id;setSyncConfig(c);
+      ensureGistPublic(existing.id);
       const fullGist=await gistAPI('/gists/'+existing.id);
       const remote=JSON.parse(fullGist.files[GIST_FILE].content);
       // First-time connect: always pull from cloud (cloud is source of truth)
@@ -776,6 +779,80 @@ function disconnectSync(){
   updateSyncStatus('Disconnected');
   render();
   toast('Sync disconnected');
+}
+
+function linkDevice(){
+  const c=getSyncConfig();
+  if(!c.gistId){toast('Sync not connected');return;}
+  const url=location.origin+location.pathname+'#gist='+c.gistId;
+  navigator.clipboard.writeText(url).then(()=>toast('Link copied! Open it on your other device')).catch(()=>{prompt('Copy this link and open it on your other device:',url);});
+}
+
+// Anonymous read: pull gist data without a token (works for public gists)
+async function pullGistAnon(gistId){
+  if(!gistId)return false;
+  try{
+    const r=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Accept':'application/vnd.github.v3+json'}});
+    if(!r.ok)return false;
+    const gist=await r.json();
+    if(!gist.files||!gist.files[GIST_FILE])return false;
+    const remote=JSON.parse(gist.files[GIST_FILE].content);
+    S.trips=remote.trips||[];S.leave=remote.leave||{};
+    S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
+    S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
+    try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+    applyTheme();render();
+    toast('Loaded '+S.trips.length+' trips from cloud (read-only)');
+    return true;
+  }catch(e){console.error('Anon pull failed:',e);return false;}
+}
+
+// Ensure existing gists are made public for cross-device read access
+async function ensureGistPublic(gistId){
+  try{
+    const gist=await gistAPI('/gists/'+gistId);
+    if(gist&&!gist.public){
+      await gistAPI('/gists/'+gistId,{method:'PATCH',body:JSON.stringify({public:true})});
+    }
+  }catch(e){console.warn('Could not update gist visibility:',e);}
+}
+
+async function connectSyncFromDash(){
+  const inp=document.getElementById('dash-sync-token');
+  const token=inp?inp.value.trim():'';
+  if(!token){toast('Enter a GitHub token');return;}
+  const btn=document.querySelector('[data-action="dash-sync-connect"]');
+  if(btn){btn.disabled=true;btn.textContent='Connecting…';}
+  const c=getSyncConfig();// may already have gistId from URL hash
+  c.token=token;
+  setSyncConfig(c);
+  try{
+    const user=await gistAPI('/user');
+    let gist;
+    if(c.gistId){
+      try{gist=await gistAPI('/gists/'+c.gistId);}catch(e){gist=null;}
+    }
+    if(!gist){const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}}
+    if(gist&&gist.files&&gist.files[GIST_FILE]){
+      // Ensure gist is public for cross-device access
+      ensureGistPublic(c.gistId);
+      const remote=JSON.parse(gist.files[GIST_FILE].content);
+      S.trips=remote.trips||S.trips;S.leave=remote.leave||S.leave;
+      S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
+      S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
+      try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+      applyTheme();
+      toast('Connected & synced '+remote.trips.length+' trips from cloud');
+    }else{
+      await pushToGist();
+      toast('Connected & pushed '+S.trips.length+' trips to cloud');
+    }
+    startSyncPolling();render();
+  }catch(e){
+    c.token=null;setSyncConfig(c);
+    toast('Connection failed: '+e.message);
+    if(btn){btn.disabled=false;btn.textContent='Connect & Sync';}
+  }
 }
 function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:'dark',rates:{...DRATES},trips:importTrips(),leave:importLeave(),lastModified:1}}
 function tCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency)));return s;}
@@ -894,6 +971,7 @@ function closeMobileMenu(){
 }
 function syncIndicatorHtml(){
   const c=getSyncConfig();
+  if(!c.token&&c.gistId)return '<div class="sync-dot connected" style="opacity:.7"><div class="sd-icon"></div>Read-only</div>';
   if(!c.token)return '<div class="sync-dot"><div class="sd-icon"></div>Offline</div>';
   let timeAgo='';
   if(c.lastPush){
@@ -967,6 +1045,21 @@ function vDash(){
       <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${leaveReq>0?leaveReq+' still required · ':''}${lyTotals.taken} of ${tot} used</div></div>
       <div class="stat purple"><div class="s-label">Next Trip</div><div class="s-val" style="font-size:16px">${nextTrip?esc(nextTrip.name):'—'}</div><div class="s-sub">${countdownHtml}</div></div>
     </div>
+    ${(()=>{const sc=getSyncConfig();if(!sc.token)return `
+    <div class="card" style="margin-bottom:16px;border:1px solid var(--primary);border-radius:12px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,rgba(108,140,255,.15),rgba(108,140,255,.05));padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9m-9 9a9 9 0 019-9"/></svg>
+          <h3 style="margin:0;font-size:15px">${sc.gistId?'Read-Only Mode':'Sync Across Devices'}</h3>
+        </div>
+        <p style="font-size:12px;color:var(--text2);margin:0 0 12px">${sc.gistId?'Your data was loaded from the cloud. Add a GitHub token to enable editing and auto-sync on this device.':'Access your trips from any device. Connect with a GitHub token to enable automatic cloud sync.'}</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input class="fc" id="dash-sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" style="flex:1;min-width:200px;font-size:13px">
+          <button class="btn btn-p" data-action="dash-sync-connect" style="font-size:13px;white-space:nowrap">${sc.gistId?'Enable Editing':'Connect & Sync'}</button>
+        </div>
+        <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary);display:inline-block;margin-top:8px">Create a token (gist scope only) →</a>
+      </div>
+    </div>`;return '';})()}
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>Upcoming Trips</h3><button class="btn btn-p" data-action="add-trip">+ New Trip</button></div>
       <div class="card-body" style="padding:12px">
@@ -1475,10 +1568,10 @@ function vSettings(){
           <span style="color:#4ade80;font-size:13px">● Connected</span>
           <span id="sync-status" style="font-size:11px;color:var(--text3)">${c.lastPush?'Last synced: '+new Date(c.lastPush).toLocaleString():''}</span>
         </div>
+        <p style="font-size:11px;color:var(--text3);margin:0 0 10px">Auto-sync is active — changes push automatically after 3s, and pull every 30s or when you switch tabs.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-p" data-action="sync-now" style="font-size:12px">↻ Sync Now</button>
-          <button class="btn btn-s" data-action="sync-push" style="font-size:12px">↑ Force Push</button>
-          <button class="btn btn-s" data-action="sync-pull" style="font-size:12px">↓ Force Pull</button>
+          <button class="btn btn-s" data-action="link-device" style="font-size:12px">🔗 Link Another Device</button>
           <button class="btn btn-d" data-action="sync-disconnect" style="font-size:12px">Disconnect</button>
         </div>`:`
         <div class="fi" style="margin-bottom:8px"><label>GitHub Token</label><input class="fc" id="sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off"></div>
@@ -2310,8 +2403,10 @@ document.addEventListener('click',e=>{
     case 'import':document.getElementById('imp-f').click();break;
     case 'reset':if(confirm('Reset ALL data? This cannot be undone.')){localStorage.removeItem('htV3');localStorage.removeItem('htV4');S=defS();saveS();render();toast('Data reset');}break;
     case 'sync-connect':connectSync();break;
+    case 'dash-sync-connect':connectSyncFromDash();break;
     case 'sync-disconnect':disconnectSync();break;
     case 'sync-now':fullSync();break;
+    case 'link-device':linkDevice();break;
     case 'sync-push':pushToGist().then(()=>toast('Pushed to cloud'));break;
     case 'sync-pull':pullFromGist().then(pulled=>{if(pulled)toast('Pulled from cloud');else toast('Already up to date');});break;
     case 'entry-sort-dir':sortDir=sortDir==='asc'?'desc':'asc';render();break;
@@ -2367,20 +2462,27 @@ document.getElementById('fab').onclick=()=>showSmartUpload();
 
 // Init
 try{render();
-  // Auto-sync on load if connected
-  if(getSyncConfig().token){setTimeout(()=>pullFromGist(),1000);}
+  // Auto-sync on load
+  const _initConf=getSyncConfig();
+  if(_initConf.token){setTimeout(()=>fullSync(),800);}
+  else if(_initConf.gistId){
+    // Arrived via link — pull data anonymously (read-only, no token needed)
+    setTimeout(()=>pullGistAnon(_initConf.gistId),500);
+  }
 }catch(e){console.error('Render error:',e);document.getElementById('app').innerHTML='<div style="padding:40px;color:#ff6b6b"><h2>Error loading app</h2><pre style="margin-top:12px;font-size:12px;white-space:pre-wrap;color:#e8e9ed">'+e.message+'\n\n'+e.stack+'</pre><button onclick="localStorage.removeItem(\'htV4\');localStorage.removeItem(\'htV3\');location.reload()" style="margin-top:16px;padding:8px 16px;background:#6c8cff;color:#fff;border:none;border-radius:8px;cursor:pointer">Reset &amp; Reload</button></div>';}
 
 // Near-realtime sync: poll + visibility
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&getSyncConfig().token){
-    pullFromGist().then(pulled=>{if(pulled){render();toast('Synced from cloud');}});
+  if(document.visibilityState==='visible'){
+    const vc=getSyncConfig();
+    if(vc.token)fullSync();
+    else if(vc.gistId)pullGistAnon(vc.gistId);
   }
 });
 window.addEventListener('focus',()=>{
-  if(getSyncConfig().token){
-    pullFromGist().then(pulled=>{if(pulled){render();toast('Synced from cloud');}});
-  }
+  const fc=getSyncConfig();
+  if(fc.token)pullFromGist().then(pulled=>{if(pulled){render();toast('Synced from cloud');}});
+  else if(fc.gistId)pullGistAnon(fc.gistId);
 });
 window.addEventListener('beforeunload',()=>{
   if(_syncTimer){clearTimeout(_syncTimer);pushToGist();}
