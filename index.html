@@ -384,6 +384,9 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
 <div class="modal-bg" id="mbg"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" async></script>
+<script src="https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js" async></script>
+<script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" async></script>
 <script>
 // ===== PDF.js =====
 function initPdfJs(){if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
@@ -1210,6 +1213,7 @@ function vDetail(){
       <div class="subtitle">${fmt(t.startDate)} — ${fmt(t.endDate)} · ${dayN(t.startDate)} · ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights</div>
     </div>
     <div style="display:flex;gap:6px">
+      <button class="btn btn-s" data-action="export-trip" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Export</button>
       <button class="btn btn-s" data-action="edit-trip" data-id="${t.id}">Edit</button>
       <button class="btn btn-d" data-action="del-trip" data-id="${t.id}">Delete</button>
     </div>
@@ -1696,6 +1700,242 @@ function vSettings(){
       <input type="file" id="imp-f" accept=".json" style="display:none">
     </div></div>
   </div>`;
+}
+
+// ===== ITINERARY EXPORT =====
+function showExportModal(tripId){
+  const t=S.trips.find(x=>x.id===tripId);if(!t)return;
+  modal('Export Itinerary',`<div class="fg">
+    <div class="fi"><label>Format</label>
+      <div style="display:flex;gap:16px;padding:8px 0">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="radio" name="exp-fmt" value="pdf" checked> PDF</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="radio" name="exp-fmt" value="xlsx"> Excel</label>
+      </div>
+    </div>
+    <div class="fi">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:4px 0"><input type="checkbox" id="exp-cost"> Include costs in itinerary</label>
+    </div>
+  </div>`,()=>{
+    const fmt2=document.querySelector('input[name="exp-fmt"]:checked').value;
+    const incCost=document.getElementById('exp-cost').checked;
+    if(fmt2==='pdf') genItineraryPDF(t,incCost); else genItineraryXLSX(t,incCost);
+  },{saveLabel:'Generate'});
+}
+
+function buildItineraryItems(t){
+  const items=[];
+  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+  const fmtT2=dt=>{if(!dt)return '';try{const d2=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d2))return dt;return d2.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return dt;}};
+  (t.flights||[]).forEach(f=>{
+    const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';
+    const det=[];
+    if(f.from||f.to)det.push(['Route',`${f.from||'?'} → ${f.to||'?'}`]);
+    if(f.departureTime)det.push(['Depart',fmtT2(f.departureTime)]);
+    if(f.arrivalTime)det.push(['Arrive',fmtT2(f.arrivalTime)]);
+    if(f.pnr)det.push(['PNR',f.pnr]);
+    if(f.seat)det.push(['Seat',f.seat]);
+    if(f.duration)det.push(['Duration',f.duration]);
+    if(f.notes)det.push(['Notes',f.notes]);
+    items.push({type:'FLIGHT',date:d||t.startDate,sortKey:f.departureTime||d||t.startDate,
+      title:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',
+      details:det,cost:f.cost?parseFloat(f.cost):0,currency:f.currency||'SGD',color:[59,130,246],
+      timeStr:f.departureTime?`${fmtT2(f.departureTime)} - ${fmtT2(f.arrivalTime)}`:'',
+      detailStr:[f.from&&f.to?`${f.from} → ${f.to}`:'',f.pnr?`PNR: ${f.pnr}`:'',f.seat?`Seat: ${f.seat}`:'',f.duration?`Duration: ${f.duration}`:''].filter(Boolean).join(' | ')
+    });
+  });
+  (t.hotels||[]).forEach(h=>{
+    const det=[];
+    if(h.checkIn)det.push(['Check-in',fmtD2(h.checkIn)]);
+    if(h.checkOut)det.push(['Check-out',fmtD2(h.checkOut)]);
+    if(h.checkIn&&h.checkOut)det.push(['Nights',String(nights(h.checkIn,h.checkOut))]);
+    if(h.bookingNumber)det.push(['Booking #',h.bookingNumber]);
+    if(h.notes)det.push(['Notes',h.notes]);
+    items.push({type:'HOTEL',date:h.checkIn||t.startDate,sortKey:h.checkIn||t.startDate,
+      title:h.name||'Hotel',
+      details:det,cost:h.cost?parseFloat(h.cost):0,currency:h.currency||'SGD',color:[168,85,247],
+      timeStr:h.checkIn&&h.checkOut?`${fmtD2(h.checkIn)} - ${fmtD2(h.checkOut)}`:'',
+      detailStr:[h.bookingNumber?`Booking: ${h.bookingNumber}`:'',h.checkIn&&h.checkOut?`${nights(h.checkIn,h.checkOut)} nights`:''].filter(Boolean).join(' | ')
+    });
+  });
+  (t.activities||[]).forEach(a=>{
+    const det=[];
+    if(a.location)det.push(['Location',a.location]);
+    if(a.time)det.push(['Time',a.time]);
+    if(a.duration)det.push(['Duration',a.duration]);
+    if(a.bookingDetails)det.push(['Booking',a.bookingDetails]);
+    if(a.notes)det.push(['Notes',a.notes]);
+    items.push({type:'ACTIVITY',date:a.date||t.startDate,sortKey:(a.date||t.startDate)+' '+(a.time||'99'),
+      title:a.name||'Activity',
+      details:det,cost:a.cost?parseFloat(a.cost):0,currency:a.currency||'SGD',color:[245,158,11],
+      timeStr:a.time||'',
+      detailStr:[a.location||'',a.duration?`Duration: ${a.duration}`:'',a.bookingDetails?`Booking: ${a.bookingDetails}`:''].filter(Boolean).join(' | ')
+    });
+  });
+  (t.transport||[]).forEach(x=>{
+    const det=[];
+    if(x.location)det.push(['Location',x.location]);
+    if(x.time)det.push(['Time',x.time]);
+    if(x.duration)det.push(['Duration',x.duration]);
+    if(x.bookingDetails)det.push(['Booking',x.bookingDetails]);
+    if(x.notes)det.push(['Notes',x.notes]);
+    items.push({type:'TRANSPORT',date:x.date||t.startDate,sortKey:(x.date||t.startDate)+' '+(x.time||'99'),
+      title:`${x.type||''} ${x.name||''}`.trim()||'Transport',
+      details:det,cost:x.cost?parseFloat(x.cost):0,currency:x.currency||'SGD',color:[34,197,94],
+      timeStr:x.time||'',
+      detailStr:[x.location||'',x.duration?`Duration: ${x.duration}`:'',x.bookingDetails?`Booking: ${x.bookingDetails}`:''].filter(Boolean).join(' | ')
+    });
+  });
+  items.sort((a,b)=>a.sortKey.localeCompare(b.sortKey));
+  return items;
+}
+
+function genItineraryPDF(t,incCost){
+  if(typeof window.jspdf==='undefined'){toast('PDF library still loading — try again');return;}
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,M=15,CW=W-2*M;
+  let y=0,pg=1;
+  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+  const fmtDL=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+  const addFoot=()=>{doc.setFontSize(7);doc.setTextColor(160);doc.text('Generated by Holiday Tracker',M,290);doc.text('Page '+pg,W-M,290,{align:'right'});doc.setTextColor(0);};
+  const np=()=>{addFoot();doc.addPage();y=15;pg++;};
+  const ck=h=>{if(y+h>278)np();};
+
+  // Header
+  doc.setFillColor(30,41,59);doc.rect(0,0,W,48,'F');
+  doc.setFillColor(59,130,246);doc.rect(0,48,W,1.5,'F');
+  doc.setTextColor(148,163,184);doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('TRIP ITINERARY',M,14);
+  doc.setTextColor(255);doc.setFontSize(20);doc.setFont('helvetica','bold');
+  const tLines=doc.splitTextToSize(t.name,CW);doc.text(tLines,M,26);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(203,213,225);
+  doc.text(`${fmtD2(t.startDate)} — ${fmtD2(t.endDate)}  |  ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights  |  ${t.locations.join(', ')}`,M,40);
+  if(incCost){doc.setTextColor(134,239,172);doc.text(`Total: SGD ${tCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,W-M,40,{align:'right'});}
+  y=56;doc.setTextColor(0);
+
+  // Build & group items
+  const items=buildItineraryItems(t);
+  const byDate={};items.forEach(it=>{if(!byDate[it.date])byDate[it.date]=[];byDate[it.date].push(it);});
+  const sortedDates=Object.keys(byDate).sort();
+  const tripStart=new Date(t.startDate+'T00:00:00');
+
+  if(!items.length){
+    doc.setFontSize(11);doc.setTextColor(100);doc.text('No bookings added to this trip yet.',M,y);
+    addFoot();doc.save(`${t.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'-').toLowerCase()}-itinerary.pdf`);
+    toast('PDF exported');return;
+  }
+
+  sortedDates.forEach(date=>{
+    const dayNum=Math.max(1,Math.ceil((new Date(date+'T00:00:00')-tripStart)/864e5)+1);
+    ck(20);
+    // Day header
+    doc.setFillColor(241,245,249);doc.roundedRect(M,y,CW,8,1.5,1.5,'F');
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+    doc.text(`Day ${dayNum} — ${fmtDL(date)}`,M+4,y+5.5);
+    y+=12;
+
+    byDate[date].forEach(item=>{
+      const nDet=item.details.length+(incCost&&item.cost?1:0);
+      const estH=14+nDet*4.2;
+      ck(estH+4);
+
+      // Accent border
+      doc.setDrawColor(item.color[0],item.color[1],item.color[2]);doc.setLineWidth(1);
+      doc.line(M+2,y,M+2,y+estH-3);
+
+      // Type
+      doc.setFontSize(7);doc.setFont('helvetica','bold');
+      doc.setTextColor(item.color[0],item.color[1],item.color[2]);
+      doc.text(item.type,M+6,y+3);
+
+      // Title
+      doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+      doc.text(doc.splitTextToSize(item.title,CW-12)[0],M+6,y+8.5);
+
+      // Details
+      let dy=y+14;doc.setFontSize(8);
+      item.details.forEach(([k,v])=>{
+        doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);
+        doc.text(k+':',M+6,dy);
+        doc.setTextColor(51,65,85);
+        const vLines=doc.splitTextToSize(String(v||''),CW-38);
+        doc.text(vLines[0]||'',M+28,dy);
+        if(vLines.length>1){dy+=4;doc.text(vLines[1],M+28,dy);}
+        dy+=4.2;
+      });
+      if(incCost&&item.cost){
+        doc.setFont('helvetica','bold');doc.setTextColor(22,163,74);
+        doc.text('Cost:',M+6,dy);
+        doc.text(`${item.currency} ${item.cost.toLocaleString()}`,M+28,dy);
+        dy+=4.2;
+      }
+      y=dy+3;doc.setDrawColor(0);doc.setLineWidth(0.2);
+    });
+    y+=4;
+  });
+
+  // Cost summary
+  if(incCost){
+    ck(50);y+=4;
+    doc.setDrawColor(200);doc.line(M,y,W-M,y);y+=8;
+    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+    doc.text('Cost Summary',M,y);y+=8;
+    const cats=[{l:'Flights',a:t.flights||[]},{l:'Hotels',a:t.hotels||[]},{l:'Activities',a:t.activities||[]},{l:'Transport',a:t.transport||[]}];
+    doc.setFontSize(9);
+    cats.forEach(c=>{
+      const sm=c.a.reduce((s,e)=>s+toSGD(e.cost,e.currency),0);
+      if(sm>0){
+        doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);doc.text(c.l,M+4,y);
+        doc.setFont('helvetica','normal');doc.setTextColor(51,65,85);
+        doc.text(`SGD ${sm.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);y+=5;
+      }
+    });
+    y+=1;doc.setDrawColor(200);doc.line(M+4,y,M+80,y);y+=6;
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+    doc.text('Total',M+4,y);
+    doc.text(`SGD ${tCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);
+  }
+
+  addFoot();
+  const fn=t.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'-').toLowerCase();
+  doc.save(`${fn}-itinerary.pdf`);toast('PDF exported');
+}
+
+function genItineraryXLSX(t,incCost){
+  if(typeof XLSX==='undefined'){toast('Excel library still loading — try again');return;}
+  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+  const wb=XLSX.utils.book_new();
+
+  // Overview sheet
+  const ov=[['Trip Itinerary'],[],['Trip Name',t.name],['Dates',`${fmtD2(t.startDate)} — ${fmtD2(t.endDate)}`],
+    ['Duration',`${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights`],
+    ['Locations',t.locations.join(', ')],[],
+    ['Flights',(t.flights||[]).length],['Hotels',(t.hotels||[]).length],
+    ['Activities',(t.activities||[]).length],['Transport',(t.transport||[]).length]];
+  if(incCost){ov.push([],['Total Cost (SGD)',tCost(t).toFixed(2)]);}
+  const ws1=XLSX.utils.aoa_to_sheet(ov);ws1['!cols']=[{wch:18},{wch:45}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Overview');
+
+  // Itinerary sheet
+  const hdr=['Day','Date','Type','Name','Details','Time','Notes'];
+  if(incCost)hdr.push('Cost','Currency');
+  const rows=[hdr];
+  const items=buildItineraryItems(t);
+  const tripStart=new Date(t.startDate+'T00:00:00');
+  items.forEach(it=>{
+    const dn=Math.max(1,Math.ceil((new Date(it.date+'T00:00:00')-tripStart)/864e5)+1);
+    const r=[dn,fmtD2(it.date),it.type,it.title,it.detailStr,it.timeStr,it.details.find(d=>d[0]==='Notes')?it.details.find(d=>d[0]==='Notes')[1]:''];
+    if(incCost)r.push(it.cost||'',it.currency);
+    rows.push(r);
+  });
+  if(incCost){rows.push([]);rows.push(['','','','','','','Total (SGD)',tCost(t).toFixed(2)]);}
+  const ws2=XLSX.utils.aoa_to_sheet(rows);
+  ws2['!cols']=[{wch:5},{wch:16},{wch:11},{wch:30},{wch:40},{wch:22},{wch:25}];
+  if(incCost)ws2['!cols'].push({wch:10},{wch:8});
+  XLSX.utils.book_append_sheet(wb,ws2,'Itinerary');
+
+  const fn=t.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'-').toLowerCase();
+  XLSX.writeFile(wb,`${fn}-itinerary.xlsx`);toast('Excel exported');
 }
 
 // ===== MODALS =====
@@ -2603,6 +2843,7 @@ document.addEventListener('click',e=>{
     case 'nav':nav(el.dataset.to);break;
     case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
     case 'add-trip':fTrip();break;
+    case 'export-trip':showExportModal(el.dataset.id);break;
     case 'edit-trip':{const t=S.trips.find(x=>x.id===el.dataset.id);if(t)fTrip(t);break;}
     case 'del-trip':{const delId=el.dataset.id;const delTrip=S.trips.find(t=>t.id===delId);if(delTrip){const bc=(delTrip.flights||[]).length+(delTrip.hotels||[]).length+(delTrip.activities||[]).length+(delTrip.transport||[]).length;modal('Delete Trip',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delTrip.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.trips.indexOf(delTrip);S.trips.splice(idx,1);saveS();nav('trips');toast('Trip deleted');},{saveLabel:'Delete',danger:true});}}break;
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
