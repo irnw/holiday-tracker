@@ -1699,9 +1699,12 @@ function vSettings(){
 }
 
 // ===== MODALS =====
-function modal(title,body,onSave){
+function modal(title,body,onSave,opts){
+  opts=opts||{};
+  const saveLabel=opts.saveLabel||'Save';
+  const saveCls=opts.danger?'btn btn-d':'btn btn-p';
   const o=document.getElementById('mbg');
-  o.innerHTML=`<div class="modal"><div class="modal-head"><h3>${title}</h3><button class="modal-x" data-action="xm">×</button></div><div class="modal-body">${body}</div><div class="modal-foot"><button class="btn btn-s" data-action="xm">Cancel</button><button class="btn btn-p" id="msave">Save</button></div></div>`;
+  o.innerHTML=`<div class="modal"><div class="modal-head"><h3>${title}</h3><button class="modal-x" data-action="xm">×</button></div><div class="modal-body">${body}</div><div class="modal-foot"><button class="btn btn-s" data-action="xm">Cancel</button><button class="${saveCls}" id="msave">${saveLabel}</button></div></div>`;
   o.classList.add('open');
   if(onSave)document.getElementById('msave').onclick=()=>{onSave();xm();};
   o.onclick=e=>{if(e.target===o)xm();};
@@ -2601,7 +2604,7 @@ document.addEventListener('click',e=>{
     case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
     case 'add-trip':fTrip();break;
     case 'edit-trip':{const t=S.trips.find(x=>x.id===el.dataset.id);if(t)fTrip(t);break;}
-    case 'del-trip':{const delId=el.dataset.id;const delTrip=S.trips.find(t=>t.id===delId);if(delTrip){const bc=(delTrip.flights||[]).length+(delTrip.hotels||[]).length+(delTrip.activities||[]).length+(delTrip.transport||[]).length;modal('Delete Trip',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delTrip.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.trips.indexOf(delTrip);S.trips.splice(idx,1);saveS();nav('trips');toast('Trip deleted');});}}break;
+    case 'del-trip':{const delId=el.dataset.id;const delTrip=S.trips.find(t=>t.id===delId);if(delTrip){const bc=(delTrip.flights||[]).length+(delTrip.hotels||[]).length+(delTrip.activities||[]).length+(delTrip.transport||[]).length;modal('Delete Trip',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delTrip.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.trips.indexOf(delTrip);S.trips.splice(idx,1);saveS();nav('trips');toast('Trip deleted');},{saveLabel:'Delete',danger:true});}}break;
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
     case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;saveS();render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
