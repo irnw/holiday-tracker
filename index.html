@@ -807,12 +807,23 @@ async function pullGistAnon(gistId){
   }catch(e){console.error('Anon pull failed:',e);return false;}
 }
 
-// Ensure existing gists are made public for cross-device read access
+// Ensure gist is public for cross-device read access.
+// GitHub API won't let you PATCH private→public, so we recreate it.
 async function ensureGistPublic(gistId){
   try{
     const gist=await gistAPI('/gists/'+gistId);
-    if(gist&&!gist.public){
-      await gistAPI('/gists/'+gistId,{method:'PATCH',body:JSON.stringify({public:true})});
+    if(gist&&gist.public===false){
+      console.log('Gist is private — recreating as public for cross-device access…');
+      const content=gist.files[GIST_FILE]?gist.files[GIST_FILE].content:'{}';
+      const newGist=await gistAPI('/gists',{method:'POST',body:JSON.stringify({
+        description:GIST_DESC,public:true,
+        files:{[GIST_FILE]:{content}}
+      })});
+      // Delete old private gist
+      try{await gistAPI('/gists/'+gistId,{method:'DELETE'});}catch(e2){}
+      // Update config with new public gist ID
+      const c=getSyncConfig();c.gistId=newGist.id;setSyncConfig(c);
+      console.log('Recreated as public gist:',newGist.id);
     }
   }catch(e){console.warn('Could not update gist visibility:',e);}
 }
