@@ -2377,30 +2377,116 @@ function _matchAirlineName(text){
   }
   return '';
 }
+function _tryDirectExtract(txt){
+const routeLinePat=new RegExp('\\b('+_FNCODES+')\\s*(\\d{3,5})\\s+([A-Z]{3})\\s*[-–—]\\s*([A-Z]{3})\\b','g');
+  const routeLines=[];let rlm;
+  while((rlm=routeLinePat.exec(txt))!==null){
+    const fn=(rlm[1]+rlm[2]).replace(/\s/g,'');
+    if(AIRPORTS[rlm[3]]&&AIRPORTS[rlm[4]]&&!routeLines.some(r2=>r2.fn===fn)){
+      // Grab the rest of the line for seat/baggage
+      const lineEnd=txt.indexOf('\n',rlm.index);
+      const lineText=txt.substring(rlm.index,lineEnd>0?lineEnd:rlm.index+200);
+      routeLines.push({fn,code:rlm[1],from:rlm[3],to:rlm[4],pos:rlm.index,lineText});
+    }
+  }
+  if(routeLines.length>=2){
+    // Build legs directly from structured passenger section data
+    let pnr2='';
+    const pnrM2=txt.match(/(?:PNR|RESERVATION\s*CODE|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))\s*[:#]?\s*([A-Z0-9]{4,10})/i);
+    if(pnrM2)pnr2=pnrM2[1];
+    const ga=_matchAirlineName(txt);
+    const yrM2=txt.match(/\b(20[2-3]\d)\b/);
+    const yh=yrM2?parseInt(yrM2[1]):new Date().getFullYear();
+    const directLegs=[];
+    for(const rl of routeLines){
+      const leg={};
+      leg.flightNumber=rl.fn;
+      leg.from=AIRPORTS[rl.from];leg.fromCode=rl.from;
+      leg.to=AIRPORTS[rl.to];leg.toCode=rl.to;
+      leg.airline=AIRLINE_MAP[rl.code]||ga;
+      leg.pnr=pnr2;
+      // Extract seat from same line: "61H (Standard Seat)"
+      const seatM=rl.lineText.match(/\b(\d{1,3}[A-HJ-K])\b/);
+      if(seatM)leg.seat=seatM[1];
+      // Extract baggage from same line: "Free: 30 kg" or "30 kg"
+      const bagM=rl.lineText.match(/(\d+)\s*kg/i);
+      if(bagM)leg.baggage=bagM[1]+'kg';
+      // Find times: search full text for "FROM_CODE HH:MM" patterns
+      // Collect all occurrences and use Nth match (1st flight uses 1st occurrence, etc.)
+      const depTimeAll=[];const arrTimeAll=[];
+      const depRe=new RegExp('\\b'+rl.from+'\\s+(\\d{1,2}:\\d{2})','g');
+      let dtm;while((dtm=depRe.exec(txt))!==null)depTimeAll.push(dtm[1]);
+      const arrRe=new RegExp('\\b'+rl.to+'\\s+(\\d{1,2}:\\d{2})','g');
+      while((dtm=arrRe.exec(txt))!==null)arrTimeAll.push(dtm[1]);
+      const legIdx=directLegs.length;
+      if(depTimeAll.length>legIdx)leg.departureTime=depTimeAll[legIdx];
+      else if(depTimeAll.length>0)leg.departureTime=depTimeAll[0];
+      if(arrTimeAll.length>legIdx)leg.arrivalTime=arrTimeAll[legIdx];
+      else if(arrTimeAll.length>0)leg.arrivalTime=arrTimeAll[0];
+      // Find dates near this flight's airports in the full text
+      const datePatAll=[];
+      const dpRe=/(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/gi;
+      let dpm;while((dpm=dpRe.exec(txt))!==null){const pd=parseDate(dpm[0],yh);if(pd)datePatAll.push(pd);}
+      const uniqueDates=[...new Set(datePatAll)].sort();
+      // Assign dates: first leg gets first date, second leg gets a later date, etc.
+      if(uniqueDates.length>0){
+        // For first leg, use earliest date; for second leg use second unique date or later
+        if(legIdx===0)leg.date=uniqueDates[0];
+        else if(uniqueDates.length>1){
+          // Find a date different from first leg's date
+          const laterDates=uniqueDates.filter(d=>d>directLegs[0].date);
+          leg.date=laterDates.length>0?laterDates[0]:uniqueDates[uniqueDates.length-1];
+        }else leg.date=uniqueDates[0];
+      }
+      // Find arrival date for overnight flights
+      if(leg.arrivalTime&&leg.departureTime&&leg.date){
+        const depH=parseInt(leg.departureTime);const arrH=parseInt(leg.arrivalTime);
+        if(arrH<depH){// Likely overnight
+          const laterDates=uniqueDates.filter(d=>d>leg.date);
+          if(laterDates.length>0)leg.arrivalDate=laterDates[0];
+        }
+      }
+      // Duration: search for "Xhrs Ymins" or "Xh Ym" patterns near this flight
+      const durPats=[
+        /(\d+)\s*h(?:(?:ou)?rs?)?\s*(\d+)\s*m(?:in)?s?/gi
+      ];
+      for(const dp2 of durPats){
+        const durAll=[];let dum;
+        while((dum=dp2.exec(txt))!==null)durAll.push(dum[1]+'h '+dum[2]+'m');
+        if(durAll.length>legIdx)leg.duration=durAll[legIdx];
+        else if(durAll.length>0&&legIdx>0)leg.duration=durAll[durAll.length-1];
+        else if(durAll.length>0)leg.duration=durAll[0];
+      }
+      leg.name=`${leg.airline||''} ${leg.flightNumber}`.trim()+` (${leg.fromCode} → ${leg.toCode})`;
+      directLegs.push(leg);
+    }
+    return directLegs.length>=2?directLegs:null;
+  }
+}
 function parseFlightSegments(txt){
   const t=txt.toUpperCase();
-  let segments=null;
+  let segments=null;let _strat='none';
 
   // Strategy 1: "DEPARTURE:" markers (Ethiopian, some OTAs)
   const depPos=_splitPositions(txt,/DEPARTURE\s*:\s*/gi);
-  if(depPos.length>=2)segments=_segmentsFromPositions(txt,depPos);
+  if(depPos.length>=2){segments=_segmentsFromPositions(txt,depPos);_strat='1-departure';}
 
   // Strategy 2: "Outbound"/"Return"/"Inbound" headers
   if(!segments){
     const orbPos=_splitPositions(txt,/(?:^|\n)\s*(?:OUTBOUND|RETURN|INBOUND|ONWARD|GOING|COMING\s+BACK)\s*(?:FLIGHT|JOURNEY|TRIP)?\s*[:\-]?\s*/gim);
-    if(orbPos.length>=2)segments=_segmentsFromPositions(txt,orbPos);
+    if(orbPos.length>=2){segments=_segmentsFromPositions(txt,orbPos);_strat='2-outbound';}
   }
 
   // Strategy 3: "Flight 1"/"Flight 2" or "Segment 1"/"Segment 2" or "Leg 1" headers
   if(!segments){
     const fltNumPos=_splitPositions(txt,/(?:^|\n)\s*(?:Flight|Segment|Leg|Sector)\s+(\d+)\s*[:\-]?\s*/gim);
-    if(fltNumPos.length>=2)segments=_segmentsFromPositions(txt,fltNumPos);
+    if(fltNumPos.length>=2){segments=_segmentsFromPositions(txt,fltNumPos);_strat='3-flightN';}
   }
 
   // Strategy 3b: Numbered route headers "1. Singapore to Melbourne" / "2. Melbourne to Singapore"
   if(!segments){
     const numRoutePos=_splitPositions(txt,/(?:^|\n)\s*\d+\.\s+\w[\w\s]*?\s+to\s+\w[\w\s]*?(?:\s*[-–—]\s*|$|\n)/gim);
-    if(numRoutePos.length>=2)segments=_segmentsFromPositions(txt,numRoutePos);
+    if(numRoutePos.length>=2){segments=_segmentsFromPositions(txt,numRoutePos);_strat='3b-numRoute';}
   }
 
   // Strategy 4: Multiple distinct flight numbers — split around each
@@ -2423,7 +2509,7 @@ function parseFlightSegments(txt){
       // Deduplicate positions that are too close (within 20 chars)
       const dedupPos=[positions[0]];
       for(let i=1;i<positions.length;i++){if(positions[i]-dedupPos[dedupPos.length-1]>20)dedupPos.push(positions[i]);}
-      if(dedupPos.length>=2)segments=_segmentsFromPositions(txt,dedupPos);
+      if(dedupPos.length>=2){segments=_segmentsFromPositions(txt,dedupPos);_strat='4-flightNums';}
     }
   }
 
@@ -2444,7 +2530,7 @@ function parseFlightSegments(txt){
       });
       const dedupPos=[positions[0]];
       for(let i=1;i<positions.length;i++){if(positions[i]-dedupPos[dedupPos.length-1]>20)dedupPos.push(positions[i]);}
-      if(dedupPos.length>=2)segments=_segmentsFromPositions(txt,dedupPos);
+      if(dedupPos.length>=2){segments=_segmentsFromPositions(txt,dedupPos);_strat='5-routeArrows';}
     }
   }
 
@@ -2464,100 +2550,19 @@ function parseFlightSegments(txt){
         if(nlIdx>=0)start=distinctAps[i].pos-(lookback.length-nlIdx-1);
         pairPositions.push(Math.max(0,start));
       }
-      if(pairPositions.length>=2)segments=_segmentsFromPositions(txt,pairPositions);
+      if(pairPositions.length>=2){segments=_segmentsFromPositions(txt,pairPositions);_strat='6-airportPairs';}
     }
   }
+
+  console.log('parseFlightSegments: strategy='+_strat+', segments='+(segments?segments.length:'null'));
 
   // Strategy 7: Direct extraction from "SQ 237 SIN - MEL" patterns (passenger/seat section)
   // This is the most reliable for airline booking confirmations where the itinerary table may be garbled
   if(!segments||segments.length<2){
-    const routeLinePat=new RegExp('\\b('+_FNCODES+')\\s*(\\d{3,5})\\s+([A-Z]{3})\\s*[-–—]\\s*([A-Z]{3})\\b','g');
-    const routeLines=[];let rlm;
-    while((rlm=routeLinePat.exec(txt))!==null){
-      const fn=(rlm[1]+rlm[2]).replace(/\s/g,'');
-      if(AIRPORTS[rlm[3]]&&AIRPORTS[rlm[4]]&&!routeLines.some(r2=>r2.fn===fn)){
-        // Grab the rest of the line for seat/baggage
-        const lineEnd=txt.indexOf('\n',rlm.index);
-        const lineText=txt.substring(rlm.index,lineEnd>0?lineEnd:rlm.index+200);
-        routeLines.push({fn,code:rlm[1],from:rlm[3],to:rlm[4],pos:rlm.index,lineText});
-      }
-    }
-    if(routeLines.length>=2){
-      // Build legs directly from structured passenger section data
-      let pnr2='';
-      const pnrM2=txt.match(/(?:PNR|RESERVATION\s*CODE|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))\s*[:#]?\s*([A-Z0-9]{4,10})/i);
-      if(pnrM2)pnr2=pnrM2[1];
-      const ga=_matchAirlineName(txt);
-      const yrM2=txt.match(/\b(20[2-3]\d)\b/);
-      const yh=yrM2?parseInt(yrM2[1]):new Date().getFullYear();
-      const directLegs=[];
-      for(const rl of routeLines){
-        const leg={};
-        leg.flightNumber=rl.fn;
-        leg.from=AIRPORTS[rl.from];leg.fromCode=rl.from;
-        leg.to=AIRPORTS[rl.to];leg.toCode=rl.to;
-        leg.airline=AIRLINE_MAP[rl.code]||ga;
-        leg.pnr=pnr2;
-        // Extract seat from same line: "61H (Standard Seat)"
-        const seatM=rl.lineText.match(/\b(\d{1,3}[A-HJ-K])\b/);
-        if(seatM)leg.seat=seatM[1];
-        // Extract baggage from same line: "Free: 30 kg" or "30 kg"
-        const bagM=rl.lineText.match(/(\d+)\s*kg/i);
-        if(bagM)leg.baggage=bagM[1]+'kg';
-        // Find times: search full text for "FROM_CODE HH:MM" patterns
-        // Collect all occurrences and use Nth match (1st flight uses 1st occurrence, etc.)
-        const depTimeAll=[];const arrTimeAll=[];
-        const depRe=new RegExp('\\b'+rl.from+'\\s+(\\d{1,2}:\\d{2})','g');
-        let dtm;while((dtm=depRe.exec(txt))!==null)depTimeAll.push(dtm[1]);
-        const arrRe=new RegExp('\\b'+rl.to+'\\s+(\\d{1,2}:\\d{2})','g');
-        while((dtm=arrRe.exec(txt))!==null)arrTimeAll.push(dtm[1]);
-        const legIdx=directLegs.length;
-        if(depTimeAll.length>legIdx)leg.departureTime=depTimeAll[legIdx];
-        else if(depTimeAll.length>0)leg.departureTime=depTimeAll[0];
-        if(arrTimeAll.length>legIdx)leg.arrivalTime=arrTimeAll[legIdx];
-        else if(arrTimeAll.length>0)leg.arrivalTime=arrTimeAll[0];
-        // Find dates near this flight's airports in the full text
-        const datePatAll=[];
-        const dpRe=/(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/gi;
-        let dpm;while((dpm=dpRe.exec(txt))!==null){const pd=parseDate(dpm[0],yh);if(pd)datePatAll.push(pd);}
-        const uniqueDates=[...new Set(datePatAll)].sort();
-        // Assign dates: first leg gets first date, second leg gets a later date, etc.
-        if(uniqueDates.length>0){
-          // For first leg, use earliest date; for second leg use second unique date or later
-          if(legIdx===0)leg.date=uniqueDates[0];
-          else if(uniqueDates.length>1){
-            // Find a date different from first leg's date
-            const laterDates=uniqueDates.filter(d=>d>directLegs[0].date);
-            leg.date=laterDates.length>0?laterDates[0]:uniqueDates[uniqueDates.length-1];
-          }else leg.date=uniqueDates[0];
-        }
-        // Find arrival date for overnight flights
-        if(leg.arrivalTime&&leg.departureTime&&leg.date){
-          const depH=parseInt(leg.departureTime);const arrH=parseInt(leg.arrivalTime);
-          if(arrH<depH){// Likely overnight
-            const laterDates=uniqueDates.filter(d=>d>leg.date);
-            if(laterDates.length>0)leg.arrivalDate=laterDates[0];
-          }
-        }
-        // Duration: search for "Xhrs Ymins" or "Xh Ym" patterns near this flight
-        const durPats=[
-          /(\d+)\s*h(?:(?:ou)?rs?)?\s*(\d+)\s*m(?:in)?s?/gi
-        ];
-        for(const dp2 of durPats){
-          const durAll=[];let dum;
-          while((dum=dp2.exec(txt))!==null)durAll.push(dum[1]+'h '+dum[2]+'m');
-          if(durAll.length>legIdx)leg.duration=durAll[legIdx];
-          else if(durAll.length>0&&legIdx>0)leg.duration=durAll[durAll.length-1];
-          else if(durAll.length>0)leg.duration=durAll[0];
-        }
-        leg.name=`${leg.airline||''} ${leg.flightNumber}`.trim()+` (${leg.fromCode} → ${leg.toCode})`;
-        directLegs.push(leg);
-      }
-      return directLegs.length>=2?directLegs:null;
-    }
+    const direct=_tryDirectExtract(txt);
+    if(direct)return direct;
+    return null;
   }
-
-  if(!segments||segments.length<2)return null;
 
   // Parse each segment into a flight leg
   const legs=[];
@@ -2644,7 +2649,10 @@ function parseFlightSegments(txt){
     leg.name=`${leg.airline||''} ${leg.flightNumber||''}`.trim()+(leg.from&&leg.to?` (${leg.fromCode||leg.from} → ${leg.toCode||leg.to})`:'');
     if(leg.flightNumber||leg.from)legs.push(leg);
   }
-  return legs.length>=2?legs:null;
+  console.log('parseFlightSegments: segment parsing produced '+legs.length+' legs');
+  if(legs.length>=2)return legs;
+  console.log('parseFlightSegments: falling back to direct extraction (Strategy 7)');
+  return _tryDirectExtract(txt);
 }
 
 function dedupeLines(txt){
