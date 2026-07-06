@@ -2322,6 +2322,12 @@ function parseDate(str,yearHint){
     let yr=curYear;const td2=new Date(yr,parseInt(mm)-1,parseInt(m[1]));if(td2<new Date(Date.now()-90*864e5))yr++;
     return `${yr}-${mm}-${m[1].padStart(2,'0')}`;
   }
+  // "27 Aug" / "01 Sep" / "27 Aug (Thu)" — day-first without year (common in intl bookings)
+  if((m=str.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:\w*)?(?:\s*\(\w+\))?/i))&&!str.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4}/i)){
+    const mm=MMAP[m[2].toLowerCase().slice(0,3)];
+    let yr=curYear;const td2=new Date(yr,parseInt(mm)-1,parseInt(m[1]));if(td2<new Date(Date.now()-90*864e5))yr++;
+    return `${yr}-${mm}-${m[1].padStart(2,'0')}`;
+  }
   // "May 26" / "Sep 23"
   if((m=str.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*[,.]?\s*(\d{1,2})/i))){
     const mm=MMAP[m[1].toLowerCase().slice(0,3)];
@@ -2522,6 +2528,18 @@ function parseFlightSegments(txt){
     else{const durM2=seg.match(/(\d+)h(?:rs?)?\s*(\d+)\s*m(?:in)?s?/i);if(durM2)leg.duration=durM2[1]+'h '+durM2[2]+'m';}
     const cabM=seg.match(/Cabin\s*:\s*([A-Za-z\s\/]+?)(?:\s{2,}|\n|Status)/i);
     if(cabM)leg.cabin=cabM[1].trim().slice(0,30);
+    // Fallback seat: look in full text for "SQ 237 SIN - MEL 61H" pattern
+    if(!leg.seat&&leg.flightNumber){
+      const fnEsc=leg.flightNumber.replace(/(\d)/,'\\s*$1');
+      const seatFromFull=txt.match(new RegExp(fnEsc+'[^\\n]*?(\\d{1,3}[A-HJ-K])\\b','i'));
+      if(seatFromFull)leg.seat=seatFromFull[1];
+    }
+    // Fallback baggage
+    if(!leg.baggage&&leg.flightNumber){
+      const fnEsc=leg.flightNumber.replace(/(\d)/,'\\s*$1');
+      const bagM=txt.match(new RegExp(fnEsc+'[^\\n]*?(\\d+)\\s*kg','i'));
+      if(bagM)leg.baggage=bagM[1]+'kg';
+    }
     leg.name=`${leg.airline||''} ${leg.flightNumber||''}`.trim()+(leg.from&&leg.to?` (${leg.fromCode||leg.from} → ${leg.toCode||leg.to})`:'');
     if(leg.flightNumber||leg.from)legs.push(leg);
   }
