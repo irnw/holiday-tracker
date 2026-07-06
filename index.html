@@ -2087,6 +2087,8 @@ async function runOCR(file,id){
     }else{txt='Unsupported file type: '+file.type;}
     r.textContent=txt.trim()||'No text detected.';r.style.display='block';
     p.innerHTML='✓ Done — '+file.name;
+    // Store for debugging
+    window._lastOCRText=txt.trim();
     // Auto-fill form fields if inside a modal
     if(txt.trim())autoFillForm(txt.trim(),id);
   }catch(e){p.innerHTML='Error: '+e.message;console.error('OCR error:',e);r.style.display='none';}
@@ -2095,6 +2097,7 @@ async function runOCR(file,id){
 function autoFillForm(txt,dzId){
   const m=document.querySelector('.modal');if(!m)return;
   const parsed=parseBookingText(txt);if(!parsed)return;
+  window._lastParsed=parsed;console.log('OCR parsed:',JSON.stringify(parsed,null,2));
   const s=(n,v)=>{const el=m.querySelector(`[name="${n}"]`);if(el&&!el.value&&v)el.value=v;};
   // Detect form type by checking which fields exist
   if(m.querySelector('[name="airline"]')){
@@ -2364,6 +2367,15 @@ function _segmentsFromPositions(txt,positions){
   return segments;
 }
 const _FNCODES=Object.keys(AIRLINE_MAP).map(c=>c.replace(/([.*+?^${}()|[\]\\])/g,'\\$1')).join('|');
+// Word-boundary airline name matching (prevents "MANAGE" matching "ANA" etc.)
+function _matchAirlineName(text){
+  const t=text.toUpperCase();
+  for(const al of AIRLINE_NAMES){
+    const esc=al.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+');
+    if(new RegExp('\\b'+esc+'\\b').test(t))return al;
+  }
+  return '';
+}
 function parseFlightSegments(txt){
   const t=txt.toUpperCase();
   let segments=null;
@@ -2455,6 +2467,95 @@ function parseFlightSegments(txt){
     }
   }
 
+  // Strategy 7: Direct extraction from "SQ 237 SIN - MEL" patterns (passenger/seat section)
+  // This is the most reliable for airline booking confirmations where the itinerary table may be garbled
+  if(!segments||segments.length<2){
+    const routeLinePat=new RegExp('\\b('+_FNCODES+')\\s*(\\d{3,5})\\s+([A-Z]{3})\\s*[-–—]\\s*([A-Z]{3})\\b','g');
+    const routeLines=[];let rlm;
+    while((rlm=routeLinePat.exec(txt))!==null){
+      const fn=(rlm[1]+rlm[2]).replace(/\s/g,'');
+      if(AIRPORTS[rlm[3]]&&AIRPORTS[rlm[4]]&&!routeLines.some(r2=>r2.fn===fn)){
+        // Grab the rest of the line for seat/baggage
+        const lineEnd=txt.indexOf('\n',rlm.index);
+        const lineText=txt.substring(rlm.index,lineEnd>0?lineEnd:rlm.index+200);
+        routeLines.push({fn,code:rlm[1],from:rlm[3],to:rlm[4],pos:rlm.index,lineText});
+      }
+    }
+    if(routeLines.length>=2){
+      // Build legs directly from structured passenger section data
+      let pnr2='';
+      const pnrM2=txt.match(/(?:PNR|RESERVATION\s*CODE|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))\s*[:#]?\s*([A-Z0-9]{4,10})/i);
+      if(pnrM2)pnr2=pnrM2[1];
+      const ga=_matchAirlineName(txt);
+      const yrM2=txt.match(/\b(20[2-3]\d)\b/);
+      const yh=yrM2?parseInt(yrM2[1]):new Date().getFullYear();
+      const directLegs=[];
+      for(const rl of routeLines){
+        const leg={};
+        leg.flightNumber=rl.fn;
+        leg.from=AIRPORTS[rl.from];leg.fromCode=rl.from;
+        leg.to=AIRPORTS[rl.to];leg.toCode=rl.to;
+        leg.airline=AIRLINE_MAP[rl.code]||ga;
+        leg.pnr=pnr2;
+        // Extract seat from same line: "61H (Standard Seat)"
+        const seatM=rl.lineText.match(/\b(\d{1,3}[A-HJ-K])\b/);
+        if(seatM)leg.seat=seatM[1];
+        // Extract baggage from same line: "Free: 30 kg" or "30 kg"
+        const bagM=rl.lineText.match(/(\d+)\s*kg/i);
+        if(bagM)leg.baggage=bagM[1]+'kg';
+        // Find times: search full text for "FROM_CODE HH:MM" patterns
+        // Collect all occurrences and use Nth match (1st flight uses 1st occurrence, etc.)
+        const depTimeAll=[];const arrTimeAll=[];
+        const depRe=new RegExp('\\b'+rl.from+'\\s+(\\d{1,2}:\\d{2})','g');
+        let dtm;while((dtm=depRe.exec(txt))!==null)depTimeAll.push(dtm[1]);
+        const arrRe=new RegExp('\\b'+rl.to+'\\s+(\\d{1,2}:\\d{2})','g');
+        while((dtm=arrRe.exec(txt))!==null)arrTimeAll.push(dtm[1]);
+        const legIdx=directLegs.length;
+        if(depTimeAll.length>legIdx)leg.departureTime=depTimeAll[legIdx];
+        else if(depTimeAll.length>0)leg.departureTime=depTimeAll[0];
+        if(arrTimeAll.length>legIdx)leg.arrivalTime=arrTimeAll[legIdx];
+        else if(arrTimeAll.length>0)leg.arrivalTime=arrTimeAll[0];
+        // Find dates near this flight's airports in the full text
+        const datePatAll=[];
+        const dpRe=/(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/gi;
+        let dpm;while((dpm=dpRe.exec(txt))!==null){const pd=parseDate(dpm[0],yh);if(pd)datePatAll.push(pd);}
+        const uniqueDates=[...new Set(datePatAll)].sort();
+        // Assign dates: first leg gets first date, second leg gets a later date, etc.
+        if(uniqueDates.length>0){
+          // For first leg, use earliest date; for second leg use second unique date or later
+          if(legIdx===0)leg.date=uniqueDates[0];
+          else if(uniqueDates.length>1){
+            // Find a date different from first leg's date
+            const laterDates=uniqueDates.filter(d=>d>directLegs[0].date);
+            leg.date=laterDates.length>0?laterDates[0]:uniqueDates[uniqueDates.length-1];
+          }else leg.date=uniqueDates[0];
+        }
+        // Find arrival date for overnight flights
+        if(leg.arrivalTime&&leg.departureTime&&leg.date){
+          const depH=parseInt(leg.departureTime);const arrH=parseInt(leg.arrivalTime);
+          if(arrH<depH){// Likely overnight
+            const laterDates=uniqueDates.filter(d=>d>leg.date);
+            if(laterDates.length>0)leg.arrivalDate=laterDates[0];
+          }
+        }
+        // Duration: search for "Xhrs Ymins" or "Xh Ym" patterns near this flight
+        const durPats=[
+          /(\d+)\s*h(?:(?:ou)?rs?)?\s*(\d+)\s*m(?:in)?s?/gi
+        ];
+        for(const dp2 of durPats){
+          const durAll=[];let dum;
+          while((dum=dp2.exec(txt))!==null)durAll.push(dum[1]+'h '+dum[2]+'m');
+          if(durAll.length>legIdx)leg.duration=durAll[legIdx];
+          else if(durAll.length>0&&legIdx>0)leg.duration=durAll[durAll.length-1];
+          else if(durAll.length>0)leg.duration=durAll[0];
+        }
+        leg.name=`${leg.airline||''} ${leg.flightNumber}`.trim()+` (${leg.fromCode} → ${leg.toCode})`;
+        directLegs.push(leg);
+      }
+      return directLegs.length>=2?directLegs:null;
+    }
+  }
+
   if(!segments||segments.length<2)return null;
 
   // Parse each segment into a flight leg
@@ -2462,9 +2563,8 @@ function parseFlightSegments(txt){
   let pnr='';
   const pnrM=txt.match(/(?:PNR|RESERVATION\s*CODE|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))\s*[:#]?\s*([A-Z0-9]{4,10})/i);
   if(pnrM)pnr=pnrM[1];
-  let globalAirline='';
-  for(const al of AIRLINE_NAMES){if(t.includes(al.toUpperCase())){globalAirline=al;break;}}
-  const yrM=txt.match(/(\d{4})/);
+  let globalAirline=_matchAirlineName(txt);
+  const yrM=txt.match(/\b(20[2-3]\d)\b/);
   const yearHint=yrM?parseInt(yrM[1]):new Date().getFullYear();
 
   for(const seg of segments){
@@ -2472,15 +2572,15 @@ function parseFlightSegments(txt){
     const su=seg.toUpperCase();
     leg.pnr=pnr;
     leg.airline=globalAirline;
-    const segTop=su.substring(0,Math.min(su.length,250));
-    for(const al of AIRLINE_NAMES){if(segTop.includes(al.toUpperCase())){leg.airline=al;break;}}
+    const segTop=seg.substring(0,Math.min(seg.length,250));
+    const segAl=_matchAirlineName(segTop);if(segAl)leg.airline=segAl;
     const fnPats=[
       new RegExp('\\b('+_FNCODES+')\\s*(\\d{3,5})\\b'),
-      /(?:Flight|Flt)\s*(?:No\.?|#)?\s*[:#]?\s*([A-Z0-9]{2}\s?\d{2,5})/i,
+      /(?:Flight|Flt)\s*(?:No\.?|#)?\s*[:#]?\s*([A-Z0-9]{2}\s*\d{2,5})/i,
     ];
     for(const pat of fnPats){const m=seg.match(pat);if(m){
       leg.flightNumber=m[2]?(m[1]+m[2]).replace(/\s/g,''):m[1].replace(/\s/g,'');
-      if(m[1]&&!leg.airline&&AIRLINE_MAP[m[1]])leg.airline=AIRLINE_MAP[m[1]];
+      if(m[1]&&AIRLINE_MAP[m[1]])leg.airline=AIRLINE_MAP[m[1]];
       break;
     }}
     const aps=findAirports(seg);
@@ -2629,21 +2729,23 @@ function parseBookingText(rawTxt){
 
   // ===== 5. Airline & flight number =====
   if(r.type==='flight'){
-    for(const al of AIRLINE_NAMES){if(t.includes(al.toUpperCase())){r.airline=al;break;}}
-    // Also check "Operated by" and "AirAsia , AK" style
-    if(!r.airline){const opM=txt.match(/(?:Operated\s*by|Depart\s*:)\s*[:\s]*([A-Za-z\s]+?)(?:\s*[·•,]|\s+[A-Z]{2}\d)/i);
-      if(opM){const nm=opM[1].trim();for(const al of AIRLINE_NAMES){if(nm.toUpperCase().includes(al.toUpperCase())){r.airline=al;break;}}}}
+    // Find flight number FIRST, then derive airline from code (more reliable than name matching)
     const fnPats=[
-      /(?:Flight|Flt)\s*(?:No\.?|Number|#)?\s*[:#]?\s*([A-Z0-9]{2}\s?\d{2,5})/i,
-      new RegExp('\\b('+_FNCODES+')\\s?(\\d{2,5})\\b'),
+      /(?:Flight|Flt)\s*(?:No\.?|Number|#)?\s*[:#]?\s*([A-Z0-9]{2}\s*\d{2,5})/i,
+      new RegExp('\\b('+_FNCODES+')\\s*(\\d{2,5})\\b'),
       // "Firefly FY3122" or "Singapore Airlines . SQ947"
-      /(?:Firefly|Singapore\s*Airlines|Scoot|AirAsia|Garuda|Batik\s*Air|Malaysia\s*Airlines|Cathay\s*Pacific)\s*[·•.\s]*\s*([A-Z]{2}\s?\d{2,5})/i,
+      /(?:Firefly|Singapore\s*Airlines|Scoot|AirAsia|Garuda|Batik\s*Air|Malaysia\s*Airlines|Cathay\s*Pacific)\s*[·•.\s]*\s*([A-Z]{2}\s*\d{2,5})/i,
     ];
     for(const pat of fnPats){const m=txt.match(pat);if(m){
-      if(m[2]){r.flightNumber=(m[1]+m[2]).replace(/\s/g,'');if(!r.airline&&AIRLINE_MAP[m[1]])r.airline=AIRLINE_MAP[m[1]];}
-      else{r.flightNumber=m[1].replace(/\s/g,'');const code=m[1].replace(/\s/g,'').replace(/\d+/,'');if(!r.airline&&AIRLINE_MAP[code])r.airline=AIRLINE_MAP[code];}
+      if(m[2]){r.flightNumber=(m[1]+m[2]).replace(/\s/g,'');if(AIRLINE_MAP[m[1]])r.airline=AIRLINE_MAP[m[1]];}
+      else{r.flightNumber=m[1].replace(/\s/g,'');const code=m[1].replace(/\s/g,'').replace(/\d+/,'');if(AIRLINE_MAP[code])r.airline=AIRLINE_MAP[code];}
       break;
     }}
+    // Fallback: name-based airline detection (word-boundary safe)
+    if(!r.airline){r.airline=_matchAirlineName(txt);}
+    // Also check "Operated by" and "AirAsia , AK" style
+    if(!r.airline){const opM=txt.match(/(?:Operated\s*by|Depart\s*:)\s*[:\s]*([A-Za-z\s]+?)(?:\s*[·•,]|\s+[A-Z]{2}\d)/i);
+      if(opM){const nm=opM[1].trim();const opAl=_matchAirlineName(nm);if(opAl)r.airline=opAl;}}
   }
 
   // ===== 6. Airport codes & route =====
