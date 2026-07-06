@@ -2099,6 +2099,28 @@ function autoFillForm(txt,dzId){
   // Detect form type by checking which fields exist
   if(m.querySelector('[name="airline"]')){
     // Flight form
+    if(parsed.multiLeg&&parsed.legs&&parsed.legs.length>=2){
+      // Multi-leg: fill form with first leg, store remaining legs for save callback
+      const leg1=parsed.legs[0];
+      s('airline',leg1.airline||parsed.airline);s('fn',leg1.flightNumber||'');s('pnr',leg1.pnr||parsed.pnr);
+      s('seat',leg1.seat||'');s('from',leg1.from||'');s('to',leg1.to||'');
+      if(leg1.date)s('dep',(leg1.date+'T'+(leg1.departureTime||'00:00')));
+      if(leg1.arrivalDate||leg1.date)s('arr',((leg1.arrivalDate||leg1.date)+'T'+(leg1.arrivalTime||'00:00')));
+      s('duration',leg1.duration||'');
+      s('cost',leg1.cost||parsed.cost);
+      if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
+      // Store additional legs so fFlight save callback can add them
+      window._pendingFlightLegs=parsed.legs.slice(1).map(leg=>({
+        airline:leg.airline||parsed.airline||'',flightNumber:leg.flightNumber||'',
+        pnr:leg.pnr||parsed.pnr||'',seat:leg.seat||'',from:leg.from||'',to:leg.to||'',
+        departureTime:(leg.date?leg.date+'T':'')+(leg.departureTime||'00:00'),
+        arrivalTime:((leg.arrivalDate||leg.date)?(leg.arrivalDate||leg.date)+'T':'')+(leg.arrivalTime||'00:00'),
+        duration:leg.duration||'',cost:leg.cost||'',currency:parsed.currency||'SGD',
+        notes:leg.duration?'Duration: '+leg.duration:'',ocrText:''
+      }));
+      toast(parsed.legs.length+' flights detected — Leg 1 shown, save to add all');
+      return;
+    }
     s('airline',parsed.airline);s('fn',parsed.flightNumber);s('pnr',parsed.pnr);
     s('seat',parsed.seat);s('from',parsed.from);s('to',parsed.to);
     if(parsed.date)s('dep',(parsed.date+'T'+(parsed.departureTime||'00:00')));
@@ -2356,13 +2378,19 @@ function parseFlightSegments(txt){
     if(fltNumPos.length>=2)segments=_segmentsFromPositions(txt,fltNumPos);
   }
 
+  // Strategy 3b: Numbered route headers "1. Singapore to Melbourne" / "2. Melbourne to Singapore"
+  if(!segments){
+    const numRoutePos=_splitPositions(txt,/(?:^|\n)\s*\d+\.\s+\w[\w\s]*?\s+to\s+\w[\w\s]*?(?:\s*[-–—]\s*|$|\n)/gim);
+    if(numRoutePos.length>=2)segments=_segmentsFromPositions(txt,numRoutePos);
+  }
+
   // Strategy 4: Multiple distinct flight numbers — split around each
   if(!segments){
     const fnPat=new RegExp('\\b('+_FNCODES+')\\s*(\\d{3,5})\\b','g');
-    const fnMatches=[];let fm;
+    const fnMatches=[];let fm;const seenFn=new Set();
     while((fm=fnPat.exec(txt))!==null){
       const fn=(fm[1]+fm[2]).replace(/\s/g,'');
-      if(!fnMatches.length||fnMatches[fnMatches.length-1].fn!==fn)fnMatches.push({fn,pos:fm.index});
+      if(!seenFn.has(fn)){seenFn.add(fn);fnMatches.push({fn,pos:fm.index});}
     }
     if(fnMatches.length>=2){
       // Split at each flight number position, using some context before (up to 200 chars back to nearest newline)
@@ -2458,6 +2486,20 @@ function parseFlightSegments(txt){
     if(segDate)leg.date=segDate;
     const arrDateM=seg.match(/ARRIVAL\s*:\s*(.*?)(?:\n|Please)/i);
     if(arrDateM){const ad=parseDate(arrDateM[1],yearHint);if(ad)leg.arrivalDate=ad;}
+    // Try to find a second distinct date for arrival (overnight flights: "27 Aug" depart, "28 Aug" arrive)
+    if(!leg.arrivalDate&&leg.date){
+      const datePatterns=[
+        /(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/gi
+      ];
+      for(const dp of datePatterns){
+        const allDates=[];let dm;
+        while((dm=dp.exec(seg))!==null)allDates.push({txt:dm[0],pos:dm.index});
+        if(allDates.length>=2){
+          const secondDate=parseDate(allDates[allDates.length-1].txt,yearHint);
+          if(secondDate&&secondDate!==leg.date)leg.arrivalDate=secondDate;
+        }
+      }
+    }
     // Times: try structured patterns first, then generic
     const depTimeM=seg.match(/(?:Depart(?:ing|ure)?\s*(?:At|Time)?\s*[:#]?\s*|DEPARTING\s*\n?\s*)(\d{1,2}:\d{2}\s*(?:am|pm)?)/i);
     const arrTimeM=seg.match(/(?:Arriv(?:al|ing)\s*(?:At|Time)?\s*[:#]?\s*|ARRIVING\s*\n?\s*)(\d{1,2}:\d{2}\s*(?:am|pm)?)/i);
@@ -2475,9 +2517,9 @@ function parseFlightSegments(txt){
     }
     const seatM=seg.match(/(?:Seats?)\s*:\s*[\s\S]*?(\d{1,3}[A-HJ-K])\b/i);
     if(seatM)leg.seat=seatM[1];
-    const durM=seg.match(/(?:Duration|Flight\s*Time)\s*[:#]?\s*(\d+)\s*h(?:(?:ou)?rs?)?\s*(\d+)\s*m(?:in)?/i);
+    const durM=seg.match(/(?:Duration|Flight\s*Time|(?:Total\s+)?(?:travel|flying)\s*time)\s*[:#]?\s*(\d+)\s*h(?:(?:ou)?rs?)?\s*(\d+)\s*m(?:in)?s?/i);
     if(durM)leg.duration=durM[1]+'h '+durM[2]+'m';
-    else{const durM2=seg.match(/(\d+)h\s*(\d+)m/i);if(durM2)leg.duration=durM2[1]+'h '+durM2[2]+'m';}
+    else{const durM2=seg.match(/(\d+)h(?:rs?)?\s*(\d+)\s*m(?:in)?s?/i);if(durM2)leg.duration=durM2[1]+'h '+durM2[2]+'m';}
     const cabM=seg.match(/Cabin\s*:\s*([A-Za-z\s\/]+?)(?:\s{2,}|\n|Status)/i);
     if(cabM)leg.cabin=cabM[1].trim().slice(0,30);
     leg.name=`${leg.airline||''} ${leg.flightNumber||''}`.trim()+(leg.from&&leg.to?` (${leg.fromCode||leg.from} → ${leg.toCode||leg.to})`:'');
@@ -2517,6 +2559,12 @@ function parseBookingText(rawTxt){
     const locSet=new Set();
     multiLegs.forEach(l=>{if(l.from)locSet.add(l.from);if(l.to)locSet.add(l.to);});
     r.locations=[...locSet];r.from=multiLegs[0].from||'';r.to=multiLegs[multiLegs.length-1].to||'';
+    // Set top-level fields from first leg so single-form filling works as fallback
+    r.flightNumber=multiLegs[0].flightNumber||'';
+    r.departureTime=multiLegs[0].departureTime||'';
+    r.arrivalTime=multiLegs[0].arrivalTime||'';
+    r.seat=multiLegs[0].seat||'';
+    r.duration=multiLegs[0].duration||'';
     r.name=`${r.airline} ${r.from} → ${r.to} (${multiLegs.length} legs)`;
     return r;
   }
@@ -2806,7 +2854,13 @@ function fFlight(trip,f){
     const oE=document.getElementById('or-'+dz);
     const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),duration:g('duration'),cost:g('cost'),currency:g('currency'),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||''};
     if(e)Object.assign(f,d);else trip.flights.push({id:uid(),...d});
-    saveS();render();toast(e?'Flight updated':'Flight added');
+    // Add any pending multi-leg flights from OCR
+    if(window._pendingFlightLegs&&window._pendingFlightLegs.length){
+      const extra=window._pendingFlightLegs;
+      window._pendingFlightLegs=null;
+      extra.forEach(leg=>trip.flights.push({id:uid(),...leg}));
+      saveS();render();toast((1+extra.length)+' flights added from scan');
+    }else{saveS();render();toast(e?'Flight updated':'Flight added');}
   });
   // Auto-calc flight duration
   setTimeout(()=>{
