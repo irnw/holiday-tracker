@@ -588,8 +588,8 @@ function tpRange(tp){
 }
 function tpFilter(events){
   const r=tpRange(S._tp);
-  if(!r.from&&!r.to)return evts;
-  return evts.filter(t=>{
+  if(!r.from&&!r.to)return events;
+  return events.filter(t=>{
     if(r.from&&t.endDate<r.from)return false;
     if(r.to&&t.startDate>r.to)return false;
     return true;
