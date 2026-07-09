@@ -1,4 +1,3 @@
-<!-- v2 -->
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -229,6 +228,7 @@ textarea.fc{resize:vertical;min-height:50px}
 .dz-paste-btn{margin-top:8px;width:100%}
 .sync-error-card{border-color:var(--orange)!important}
 .sync-error-card .sync-err-icon{color:var(--orange);font-size:18px}
+.dow-hint{color:var(--primary);font-weight:400;text-transform:none;letter-spacing:0;font-size:10px}
 .form-details{overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:0;opacity:0}
 .form-details.open{max-height:600px;opacity:1}
 .form-details-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--primary);cursor:pointer;padding:6px 0;border:none;background:none;font-weight:500;margin-top:4px;grid-column:1/-1}
@@ -381,7 +381,7 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <nav class="sidebar" id="sidebar"></nav>
 <div class="main" id="app"></div>
-<button class="fab" id="fab" title="Quick Upload — Drop a PDF/image to auto-detect trip info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="fab-label">Scan</span></button>
+<button class="fab" id="fab" title="Quick Upload — Drop a PDF/image to auto-detect booking info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="fab-label">Scan</span></button>
 <div class="modal-bg" id="mbg"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" async></script>
@@ -396,10 +396,11 @@ initPdfJs();
 // ===== CONSTANTS =====
 const CUR=['SGD','MYR','USD','IDR','EUR','JPY','THB','PHP','AUD','GBP','CNY','MVR','EGP','TWD','KRW'];
 const DRATES={SGD:1,MYR:0.284,USD:1.34,IDR:0.0000847,EUR:1.46,JPY:0.0089,THB:0.038,PHP:0.024,AUD:0.87,GBP:1.70,CNY:0.185,MVR:0.087,EGP:0.027,TWD:0.042,KRW:0.00098};
-const TRIP_COLORS=['#6c8cff','#ff6b6b','#4ade80','#fb923c','#a78bfa','#f472b6','#22d3ee','#facc15','#34d399','#f87171'];
+const EVENT_COLORS=['#6c8cff','#ff6b6b','#4ade80','#fb923c','#a78bfa','#f472b6','#22d3ee','#facc15','#34d399','#f87171'];
+const ACT_COLORS=['#f472b6','#c084fc','#fb923c','#facc15','#22d3ee','#34d399','#a78bfa','#f87171','#6c8cff','#4ade80'];
 const NAVS=[
   {id:'dashboard',label:'Dashboard',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>'},
-  {id:'trips',label:'Trips',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>'},
+  {id:'events',label:'Events',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>'},
   {id:'calendar',label:'Calendar',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'},
   {id:'leave',label:'Leave',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M9 16l2 2 4-4"/></svg>'},
   {id:'budget',label:'Budget',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'},
@@ -552,7 +553,7 @@ function isMYPH(dateStr){return(PH_DATA.MY[parseInt(dateStr.slice(0,4))]||[]).so
 // Helper: format MY states for display
 function fmtStates(s){return s==='all'?'National':Array.isArray(s)?s.join(', '):s;}
 
-// ===== UTILS (must be before STATE since importTrips uses uid) =====
+// ===== UTILS (must be before STATE since importEvents uses uid) =====
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const esc=s=>{const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;};
 const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
@@ -560,10 +561,11 @@ const fmtS=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric
 const dayN=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short'}):'';
 const days=(a,b)=>!a||!b?0:Math.max(0,Math.ceil((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5)+1);
 const nights=(a,b)=>Math.max(0,days(a,b)-1);
-const toSGD=(amt,cur)=>(parseFloat(amt)||0)*(S.rates[cur]||1);
+const toSGD=(amt,cur,storedRate)=>(parseFloat(amt)||0)*(storedRate||S.rates[cur]||1);
+const snapRate=(cur)=>S.rates[cur]||DRATES[cur]||1;
 const fmtM=(n,c)=>(c||'')+' '+(parseFloat(n)||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtDT=dt=>{if(!dt)return '—';try{const d=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d))return esc(dt);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return esc(dt);}};
-function tripStatus(t){const td=new Date().toISOString().slice(0,10);if(t.startDate<=td&&t.endDate>=td)return 'active';if(t.startDate>td)return 'upcoming';return 'completed';}
+function eventStatus(t){const td=new Date().toISOString().slice(0,10);if(t.startDate<=td&&t.endDate>=td)return 'active';if(t.startDate>td)return 'upcoming';return 'completed';}
 
 // ===== TIME PERIOD FILTER =====
 const TP_OPTIONS=[
@@ -584,10 +586,10 @@ function tpRange(tp){
   if(tp==='custom')return{from:S._tpFrom||null,to:S._tpTo||null};
   return{from:null,to:null};
 }
-function tpFilter(trips){
+function tpFilter(events){
   const r=tpRange(S._tp);
-  if(!r.from&&!r.to)return trips;
-  return trips.filter(t=>{
+  if(!r.from&&!r.to)return evts;
+  return evts.filter(t=>{
     if(r.from&&t.endDate<r.from)return false;
     if(r.to&&t.startDate>r.to)return false;
     return true;
@@ -608,17 +610,18 @@ function toastUndo(msg,undoFn,duration=5000){const el=document.createElement('di
 let S=loadS();
 function loadS(){
   // Check multiple storage keys (htV4 was used when app first worked, htV3 was original)
-  for(const key of ['htV4','htV3']){
-    try{const d=localStorage.getItem(key);if(d){const p=JSON.parse(d);if(p.trips&&p.trips.length&&p.leave&&typeof p.leave==='object'){
-      // Migrate to current key
-      if(key!=='htV4')try{localStorage.setItem('htV4',d);}catch(e2){}
+  for(const key of ['htV5','htV4']){
+    try{const d=localStorage.getItem(key);if(d){const p=JSON.parse(d);
+      if(p.trips&&!p.events){p.events=p.trips.map(t=>({...t,category:t.category||'trip',requiresLeave:t.requiresLeave!==undefined?t.requiresLeave:true}));delete p.trips;}
+      if(p.events&&p.events.length&&p.leave&&typeof p.leave==='object'){
+      if(key!=='htV5')try{localStorage.setItem('htV5',JSON.stringify(p));}catch(e2){}
       if(!p.lastModified)p.lastModified=1;
       return p;
     }}}catch(e){console.error('Load error ('+key+'):',e);}
   }
   return defS();
 }
-function saveS(){S.lastModified=Date.now();try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}debouncedSync();}
+function saveS(){S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}debouncedSync();}
 
 // ===== GIST SYNC =====
 const GIST_FILE='holiday-tracker-data.json';
@@ -661,8 +664,8 @@ async function gistAPI(path,opts={}){
 
 function syncData(){
   // Extract only the data fields worth syncing (not UI state like current view)
-  const {trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified}=S;
-  return {trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified};
+  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified}=S;const trips=events;
+  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified};
 }
 
 async function findExistingGist(){
@@ -719,13 +722,13 @@ async function pullFromGist(retried){
     if(!gist||!gist.files||!gist.files[GIST_FILE])return false;
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
-      S.trips=remote.trips||S.trips;
+      S.events=remote.events||S.events;
       S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;
       S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;
       S.lastModified=remote.lastModified;
-      try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+      try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       applyTheme();render();
       updateSyncStatus('Pulled latest data');
       return true;
@@ -755,10 +758,10 @@ async function fullSync(retried){
     if(gist&&gist.files&&gist.files[GIST_FILE]){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
       if(remote.lastModified&&remote.lastModified>S.lastModified){
-        S.trips=remote.trips||S.trips;S.leave=remote.leave||S.leave;
+        S.events=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});S.leave=remote.leave||S.leave;
         S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
         S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified;
-        try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+        try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
         applyTheme();render();
         updateSyncStatus('Pulled newer data from cloud');toast('Synced from cloud');return;
       }
@@ -794,16 +797,16 @@ async function connectSync(){
       const fullGist=await gistAPI('/gists/'+existing.id);
       const remote=JSON.parse(fullGist.files[GIST_FILE].content);
       // First-time connect: always pull from cloud (cloud is source of truth)
-      S.trips=remote.trips||S.trips;S.leave=remote.leave||S.leave;
+      S.events=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
-      try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+      try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       applyTheme();render();
-      updateSyncStatus('Connected & synced (pulled '+remote.trips.length+' trips)');
+      updateSyncStatus('Connected & synced (pulled '+remote.events.length+' events)');
       toast('Connected & synced from cloud');
     }else{
       await pushToGist();
-      updateSyncStatus('Connected & initial sync done ('+S.trips.length+' trips)');
+      updateSyncStatus('Connected & initial sync done ('+S.events.length+' events)');
       toast('Connected & synced');
     }
     render();
@@ -837,12 +840,12 @@ async function pullGistAnon(gistId){
     const gist=await r.json();
     if(!gist.files||!gist.files[GIST_FILE])return false;
     const remote=JSON.parse(gist.files[GIST_FILE].content);
-    S.trips=remote.trips||[];S.leave=remote.leave||{};
+    S.events=remote.events||[];S.leave=remote.leave||{};
     S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
     S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
-    try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+    try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
     applyTheme();render();
-    toast('Loaded '+S.trips.length+' trips from cloud (read-only)');
+    toast('Loaded '+S.events.length+' events from cloud (read-only)');
     return true;
   }catch(e){console.error('Anon pull failed:',e);return false;}
 }
@@ -889,15 +892,15 @@ async function connectSyncFromDash(){
       // Ensure gist is public for cross-device access
       ensureGistPublic(c.gistId);
       const remote=JSON.parse(gist.files[GIST_FILE].content);
-      S.trips=remote.trips||S.trips;S.leave=remote.leave||S.leave;
+      S.events=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
-      try{localStorage.setItem('htV4',JSON.stringify(S));}catch(e){}
+      try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       applyTheme();
-      toast('Connected & synced '+remote.trips.length+' trips from cloud');
+      toast('Connected & synced '+remote.events.length+' events from cloud');
     }else{
       await pushToGist();
-      toast('Connected & pushed '+S.trips.length+' trips to cloud');
+      toast('Connected & pushed '+S.events.length+' events to cloud');
     }
     startSyncPolling();render();
   }catch(e){
@@ -906,17 +909,17 @@ async function connectSyncFromDash(){
     if(btn){btn.disabled=false;btn.textContent='Connect & Sync';}
   }
 }
-function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},trips:importTrips(),leave:importLeave(),lastModified:1}}
-function tCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency)));return s;}
-function allCost(){return S.trips.reduce((s,t)=>s+tCost(t),0);}
-function upcoming(){const td=new Date().toISOString().slice(0,10);return S.trips.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
-function past(){const td=new Date().toISOString().slice(0,10);return S.trips.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
+function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},trips:importEvents(),leave:importLeave(),lastModified:1}}
+function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency,e.rateToSGD)));return s;}
+function allCost(){return S.events.reduce((s,t)=>s+eCost(t),0);}
+function upcoming(){const td=new Date().toISOString().slice(0,10);return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
+function past(){const td=new Date().toISOString().slice(0,10);return S.events.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
-function tColor(t){return TRIP_COLORS[(t.name||'').length%TRIP_COLORS.length];}
+function eColor(t){const pal=t.category==='activity'?ACT_COLORS:EVENT_COLORS;return pal[(t.name||'').length%pal.length];}
 
 // ===== SORT STATE =====
-let sortKey='date',sortDir='asc';// Applies to trip detail entries
-let tripSortKey='date',tripSortDir='desc';// Applies to trips list
+let sortKey='date',sortDir='asc';// Applies to event detail entries
+let eventSortKey='date',eventSortDir='desc';// Applies to trips list
 
 function sortEntries(arr,type){
   const k=sortKey,d=sortDir==='asc'?1:-1;
@@ -935,11 +938,11 @@ function sortEntries(arr,type){
     return 0;
   });
 }
-function sortTrips(arr){
-  const k=tripSortKey,d=tripSortDir==='asc'?1:-1;
+function sortEvents(arr){
+  const k=eventSortKey,d=eventSortDir==='asc'?1:-1;
   return [...arr].sort((a,b)=>{
     if(k==='date')return a.startDate.localeCompare(b.startDate)*d;
-    if(k==='cost')return (tCost(a)-tCost(b))*d;
+    if(k==='cost')return (eCost(a)-eCost(b))*d;
     if(k==='name')return a.name.localeCompare(b.name)*d;
     return 0;
   });
@@ -956,34 +959,29 @@ function sortCtrlHtml(prefix,curKey,curDir){
 }
 
 // ===== IMPORT DATA =====
-function importTrips(){return[
-{id:uid(),name:'Copenhagen, Iceland & Oslo',startDate:'2024-01-02',endDate:'2024-01-14',locations:['Copenhagen','Iceland','Oslo'],sharedLink:'',notes:'Grab era. 8 leave days.',year:2024,hotels:[],flights:[],activities:[],transport:[]},
-{id:uid(),name:'Tioman Dive',startDate:'2024-03-28',endDate:'2024-03-30',locations:['Tioman, Malaysia'],sharedLink:'',notes:'',year:2024,hotels:[],flights:[],activities:[],transport:[]},
-{id:uid(),name:'Halmahera & Lembeh',startDate:'2024-04-28',endDate:'2024-05-08',locations:['Halmahera','Lembeh'],sharedLink:'',notes:'WM LOB',year:2024,hotels:[],flights:[{id:uid(),airline:'Garuda',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Halmahera',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Taiwan',startDate:'2024-05-18',endDate:'2024-05-23',locations:['Taiwan'],sharedLink:'',notes:'',year:2024,hotels:[],flights:[{id:uid(),airline:'China Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Taiwan',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Bali',startDate:'2024-08-02',endDate:'2024-08-09',locations:['Bali'],sharedLink:'',notes:'',year:2024,hotels:[],flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Bali',cost:'',currency:'SGD',notes:'Outbound',ocrText:''},{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Bali',to:'Singapore',cost:'',currency:'SGD',notes:'Return',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Beijing & Shanghai',startDate:'2024-08-25',endDate:'2024-09-05',locations:['Beijing','Shanghai'],sharedLink:'',notes:'',year:2024,hotels:[],flights:[],activities:[],transport:[]},
-{id:uid(),name:'Shanghai New Year',startDate:'2025-01-01',endDate:'2025-01-05',locations:['Shanghai'],sharedLink:'',notes:'ByteDance. SQ flights.',year:2025,hotels:[],flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Shanghai',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Japan',startDate:'2025-03-28',endDate:'2025-04-06',locations:['Japan'],sharedLink:'',notes:'4 leave days.',year:2025,hotels:[],flights:[],activities:[],transport:[]},
-{id:uid(),name:'Alor Diving',startDate:'2025-04-27',endDate:'2025-05-07',locations:['Alor, Indonesia'],sharedLink:'',notes:'6 leave days.',year:2025,hotels:[],flights:[],activities:[],transport:[]},
-{id:uid(),name:'Egypt LOB',startDate:'2025-08-16',endDate:'2025-08-29',locations:['Egypt'],sharedLink:'',notes:'10 leave days.',year:2025,hotels:[],flights:[],activities:[],transport:[]},
-{id:uid(),name:'Hangzhou Worktrip',startDate:'2025-10-09',endDate:'2025-10-14',locations:['Hangzhou'],sharedLink:'',notes:'',year:2025,hotels:[],flights:[{id:uid(),airline:'Cathay Pacific',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Hangzhou',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Lembeh',startDate:'2025-10-15',endDate:'2025-10-20',locations:['Lembeh'],sharedLink:'',notes:'2 leave days.',year:2025,hotels:[],flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Manado',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Koh Samui',startDate:'2025-11-20',endDate:'2025-11-24',locations:['Koh Samui'],sharedLink:'',notes:'',year:2025,hotels:[],flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Koh Samui',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Maldives',startDate:'2026-03-06',endDate:'2026-03-15',locations:['Maldives'],sharedLink:'',notes:'Paid all. SQ.',year:2026,hotels:[],flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Maldives',cost:'',currency:'SGD',notes:'Booked',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Padel Training KL',startDate:'2026-04-02',endDate:'2026-04-03',locations:['Kuala Lumpur'],sharedLink:'',notes:'',year:2026,hotels:[],flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'KL',cost:'',currency:'SGD',notes:'',ocrText:''},{id:uid(),airline:'Firefly',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'KL',to:'Singapore',cost:'',currency:'MYR',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Malapascua',startDate:'2026-04-28',endDate:'2026-05-03',locations:['Malapascua, Philippines'],sharedLink:'https://docs.google.com/spreadsheets/u/1/d/1RMsobomY2wN4yYV1toEHczTMMEFTcpXzhNbL1cMtaP4/edit?gid=0#gid=0',notes:'Deposit paid. SQ 28 Apr-3 May.',year:2026,hotels:[],flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Cebu',cost:'',currency:'SGD',notes:'Booked',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Komodo',startDate:'2026-05-27',endDate:'2026-06-02',locations:['Komodo','Kuala Lumpur'],sharedLink:'',notes:'Deposit paid. Flights KL-LBJ booked.',year:2026,hotels:[],flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'KL',cost:'',currency:'SGD',notes:'25 May evening',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Tarakan & Bali',startDate:'2026-07-01',endDate:'2026-07-12',locations:['Tarakan','Jakarta','Bali'],sharedLink:'https://docs.google.com/spreadsheets/d/16pWJm9TNwxp0LZkkENiU3K7ygEUxBPo4HKvDhFqBIyU/edit',notes:'Multi-leg.',year:2026,hotels:[],flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Jakarta',cost:'',currency:'SGD',notes:'',ocrText:''},{id:uid(),airline:'Batik Air',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Jakarta',to:'Tarakan',cost:'',currency:'IDR',notes:'',ocrText:''},{id:uid(),airline:'Garuda',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Jakarta',to:'Bali',cost:'',currency:'IDR',notes:'',ocrText:''},{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Bali',to:'Singapore',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Ray Chen Concert',startDate:'2026-06-20',endDate:'2026-06-20',locations:['Singapore'],sharedLink:'',notes:'',year:2026,hotels:[],flights:[],activities:[{id:uid(),name:'Ray Chen Concert',location:'Singapore',date:'2026-06-20',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:'SGD',ocrText:''}],transport:[]},
+function importEvents(){return[
+{id:uid(),name:'Copenhagen, Iceland & Oslo',startDate:'2024-01-02',endDate:'2024-01-14',locations:['Copenhagen','Iceland','Oslo'],sharedLink:'',notes:'Grab era. 8 leave days.',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
+{id:uid(),name:'Tioman Dive',startDate:'2024-03-28',endDate:'2024-03-30',locations:['Tioman, Malaysia'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
+{id:uid(),name:'Halmahera & Lembeh',startDate:'2024-04-28',endDate:'2024-05-08',locations:['Halmahera','Lembeh'],sharedLink:'',notes:'WM LOB',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Garuda',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Halmahera',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Taiwan',startDate:'2024-05-18',endDate:'2024-05-23',locations:['Taiwan'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'China Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Taiwan',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Bali',startDate:'2024-08-02',endDate:'2024-08-09',locations:['Bali'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Bali',cost:'',currency:'SGD',notes:'Outbound',ocrText:''},{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Bali',to:'Singapore',cost:'',currency:'SGD',notes:'Return',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Beijing & Shanghai',startDate:'2024-08-25',endDate:'2024-09-05',locations:['Beijing','Shanghai'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
+{id:uid(),name:'Shanghai New Year',startDate:'2025-01-01',endDate:'2025-01-05',locations:['Shanghai'],sharedLink:'',notes:'ByteDance. SQ flights.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Shanghai',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Japan',startDate:'2025-03-28',endDate:'2025-04-06',locations:['Japan'],sharedLink:'',notes:'4 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
+{id:uid(),name:'Alor Diving',startDate:'2025-04-27',endDate:'2025-05-07',locations:['Alor, Indonesia'],sharedLink:'',notes:'6 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
+{id:uid(),name:'Egypt LOB',startDate:'2025-08-16',endDate:'2025-08-29',locations:['Egypt'],sharedLink:'',notes:'10 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
+{id:uid(),name:'Hangzhou Worktrip',startDate:'2025-10-09',endDate:'2025-10-14',locations:['Hangzhou'],sharedLink:'',notes:'',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Cathay Pacific',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Hangzhou',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Lembeh',startDate:'2025-10-15',endDate:'2025-10-20',locations:['Lembeh'],sharedLink:'',notes:'2 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Manado',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Koh Samui',startDate:'2025-11-20',endDate:'2025-11-24',locations:['Koh Samui'],sharedLink:'',notes:'',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Koh Samui',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Maldives',startDate:'2026-03-06',endDate:'2026-03-15',locations:['Maldives'],sharedLink:'',notes:'Paid all. SQ.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Maldives',cost:'',currency:'SGD',notes:'Booked',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Padel Training KL',startDate:'2026-04-02',endDate:'2026-04-03',locations:['Kuala Lumpur'],sharedLink:'',notes:'',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'KL',cost:'',currency:'SGD',notes:'',ocrText:''},{id:uid(),airline:'Firefly',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'KL',to:'Singapore',cost:'',currency:'MYR',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Malapascua',startDate:'2026-04-28',endDate:'2026-05-03',locations:['Malapascua, Philippines'],sharedLink:'https://docs.google.com/spreadsheets/u/1/d/1RMsobomY2wN4yYV1toEHczTMMEFTcpXzhNbL1cMtaP4/edit?gid=0#gid=0',notes:'Deposit paid. SQ 28 Apr-3 May.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Cebu',cost:'',currency:'SGD',notes:'Booked',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Komodo',startDate:'2026-05-27',endDate:'2026-06-02',locations:['Komodo','Kuala Lumpur'],sharedLink:'',notes:'Deposit paid. Flights KL-LBJ booked.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'KL',cost:'',currency:'SGD',notes:'25 May evening',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Tarakan & Bali',startDate:'2026-07-01',endDate:'2026-07-12',locations:['Tarakan','Jakarta','Bali'],sharedLink:'https://docs.google.com/spreadsheets/d/16pWJm9TNwxp0LZkkENiU3K7ygEUxBPo4HKvDhFqBIyU/edit',notes:'Multi-leg.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Jakarta',cost:'',currency:'SGD',notes:'',ocrText:''},{id:uid(),airline:'Batik Air',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Jakarta',to:'Tarakan',cost:'',currency:'IDR',notes:'',ocrText:''},{id:uid(),airline:'Garuda',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Jakarta',to:'Bali',cost:'',currency:'IDR',notes:'',ocrText:''},{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Bali',to:'Singapore',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
+{id:uid(),name:'Ray Chen Concert',category:'activity',requiresLeave:false,startDate:'2026-06-20',endDate:'2026-06-20',locations:['Singapore'],sharedLink:'',notes:'',year:2026,hotels:[],flights:[],activities:[{id:uid(),name:'Ray Chen Concert',location:'Singapore',date:'2026-06-20',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:'SGD',ocrText:''}],transport:[]},
 ];}
 
-function importLeave(){return{
-2024:{employer:'Grab',al:11,bp:0,ot:0,ph:0,taken:9,holidays:[],applied:[],jobs:[{employer:'Grab',al:11,bp:0,ot:0,ph:0,taken:9}]},
-2025:{employer:'ByteDance',al:11,bp:0,ot:6.5,ph:2,taken:28,holidays:[],applied:[],jobs:[{employer:'ByteDance',al:11,bp:0,ot:6.5,ph:2,taken:28}]},
-2026:{employer:'ByteDance',al:19,bp:1.5,ot:0,ph:0,taken:11,holidays:[],applied:[],jobs:[{employer:'ByteDance',al:19,bp:1.5,ot:0,ph:0,taken:11}]},
-2027:{employer:'ByteDance',al:20,bp:1.5,ot:0,ph:0,taken:0,holidays:[],applied:[],jobs:[{employer:'ByteDance',al:20,bp:1.5,ot:0,ph:0,taken:0}]},
-};}
+function importLeave(){return{};}
 
 // ===== THEME =====
 function applyTheme(){
@@ -1052,7 +1050,7 @@ function renderSidebar(){
     <div class="sidebar-brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg></div><h1>HOLIDAY TRACKER</h1></div>
     <div class="nav">
       <div class="nav-section">Menu</div>
-      ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='trips')?' active':''}" data-action="nav" data-to="${n.id}" role="button" tabindex="0" aria-label="${n.label} (${i+1})">${n.icon}<span>${n.label}</span><span class="kbd" style="margin-left:auto">${i+1}</span></div>`).join('')}
+      ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='events')?' active':''}" data-action="nav" data-to="${n.id}" role="button" tabindex="0" aria-label="${n.label} (${i+1})">${n.icon}<span>${n.label}</span><span class="kbd" style="margin-left:auto">${i+1}</span></div>`).join('')}
     </div>
     <div class="sidebar-footer">
       ${syncIndicatorHtml()}
@@ -1068,7 +1066,7 @@ function render(){
   try{
     switch(S.v){
       case 'dashboard':a.innerHTML=vDash();break;
-      case 'trips':a.innerHTML=vTrips();break;
+      case 'events':a.innerHTML=vEvents();break;
       case 'detail':a.innerHTML=vDetail();break;
       case 'calendar':a.innerHTML=vCal();break;
       case 'leave':a.innerHTML=vLeave();break;
@@ -1084,28 +1082,28 @@ function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveS();render();window.scrollTo
 
 // ===== DASHBOARD =====
 function vDash(){
-  const ft=tpFilter(S.trips);
+  const ft=tpFilter(S.events);
   const u=ft.filter(t=>t.endDate>=new Date().toISOString().slice(0,10)).sort((a,b)=>a.startDate.localeCompare(b.startDate));
   const curYear=new Date().getFullYear();
   const lyRaw=S.leave[curYear]||{};
-  const lyJobs=(lyRaw.jobs||[{al:lyRaw.al||0,bp:lyRaw.bp||0,ot:lyRaw.ot||0,ph:lyRaw.ph||0,taken:lyRaw.taken||0}]);
+  const lyJobs=(lyRaw.jobs||[]);
   const lyTotals=leaveJobTotals(lyJobs);
   const tot=lyTotals.tot,bal=lyTotals.bal;
   const leaveReq=Math.max(0,calcLeaveDaysForYear(curYear,false)-calcAppliedDays(curYear));
-  const nextTrip=upcoming().length?upcoming()[0]:null;
-  const dLeft=nextTrip?daysUntil(nextTrip.startDate):0;
-  const countdownHtml=nextTrip?(dLeft===0?'<span style="color:var(--green);font-weight:600">Today!</span>':dLeft<0?'<span style="color:var(--green);font-weight:600">In progress</span>':`<div class="countdown"><span class="cd-num">${dLeft}</span><span class="cd-unit">day${dLeft!==1?'s':''} away</span></div>`):'—';
-  const ftCost=ft.reduce((s,t)=>s+tCost(t),0);
+  const nextEvent=upcoming().length?upcoming()[0]:null;
+  const dLeft=nextEvent?daysUntil(nextEvent.startDate):0;
+  const countdownHtml=nextEvent?(dLeft===0?'<span style="color:var(--green);font-weight:600">Today!</span>':dLeft<0?'<span style="color:var(--green);font-weight:600">In progress</span>':`<div class="countdown"><span class="cd-num">${dLeft}</span><span class="cd-unit">day${dLeft!==1?'s':''} away</span></div>`):'—';
+  const ftCost=ft.reduce((s,t)=>s+eCost(t),0);
   const totalDays=ft.reduce((s,t)=>s+days(t.startDate,t.endDate),0);
   const yShort=String(curYear).slice(2);
   return `
   <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back, Irene</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}${syncIndicatorHtml()}</div></div>
   <div class="page-content">
     <div class="stats">
-      <div class="stat blue"><div class="s-label">Trips</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
+      <div class="stat blue"><div class="s-label">Events</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
       <div class="stat green"><div class="s-label">Total Spend</div><div class="s-val">${fmtM(ftCost,'')}</div><div class="s-sub">SGD equivalent</div></div>
       <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${leaveReq>0?leaveReq+' still required · ':''}${lyTotals.taken} of ${tot} used</div></div>
-      <div class="stat purple"><div class="s-label">Next Trip</div><div class="s-val" style="font-size:16px">${nextTrip?esc(nextTrip.name):'—'}</div><div class="s-sub">${countdownHtml}</div></div>
+      <div class="stat purple"><div class="s-label">Next Event</div><div class="s-val" style="font-size:16px">${nextEvent?esc(nextEvent.name):'—'}</div><div class="s-sub">${countdownHtml}</div></div>
     </div>
     ${(()=>{const sc=getSyncConfig();
       // Token expired state — show recovery card
@@ -1132,7 +1130,7 @@ function vDash(){
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9m-9 9a9 9 0 019-9"/></svg>
           <h3 style="margin:0;font-size:15px">${sc.gistId?'Read-Only Mode':'Sync Across Devices'}</h3>
         </div>
-        <p style="font-size:12px;color:var(--text2);margin:0 0 12px">${sc.gistId?'Your data was loaded from the cloud. Add a GitHub token to enable editing and auto-sync on this device.':'Access your trips from any device. Connect with a GitHub token to enable automatic cloud sync.'}</p>
+        <p style="font-size:12px;color:var(--text2);margin:0 0 12px">${sc.gistId?'Your data was loaded from the cloud. Add a GitHub token to enable editing and auto-sync on this device.':'Access your events from any device. Connect with a GitHub token to enable automatic cloud sync.'}</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input class="fc" id="dash-sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" style="flex:1;min-width:200px;font-size:13px">
           <button class="btn btn-p" data-action="dash-sync-connect" style="font-size:13px;white-space:nowrap">${sc.gistId?'Enable Editing':'Connect & Sync'}</button>
@@ -1141,50 +1139,52 @@ function vDash(){
       </div>
     </div>`;return '';})()}
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>Upcoming Trips</h3><button class="btn btn-p" data-action="add-trip">+ New Trip</button></div>
+      <div class="card-header"><h3>Upcoming Events</h3><button class="btn btn-p" data-action="add-event">+ New Event</button></div>
       <div class="card-body" style="padding:12px">
-      ${u.length?u.map(t=>{const st=tripStatus(t);return`
-        <div class="entry" style="cursor:pointer;border-left:3px solid ${tColor(t)}" data-action="view" data-id="${t.id}">
+      ${u.length?u.map(t=>{const st=eventStatus(t);return`
+        <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}" data-action="view" data-id="${t.id}">
           <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center"><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
           <div class="entry-grid">
             <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)} — ${fmtS(t.endDate)}</span></div>
             <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
             <div class="eg"><span class="ek">Bookings</span><span class="ev">${(t.flights||[]).length}F · ${(t.hotels||[]).length}H · ${(t.activities||[]).length}A</span></div>
-            ${tCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(tCost(t),'SGD')}</span></div>`:''}
+            ${eCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(eCost(t),'SGD')}</span></div>`:''}
           </div>
-        </div>`;}).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg><p>No upcoming trips yet</p><p style="font-size:11px;color:var(--text3);margin-bottom:12px">Start planning your next adventure</p><button class="btn btn-p" data-action="add-trip">+ Plan a Trip</button></div>'}
+        </div>`;}).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg><p>No upcoming events yet</p><p style="font-size:11px;color:var(--text3);margin-bottom:12px">Start planning your next event</p><button class="btn btn-p" data-action="add-event">+ Plan an Event</button></div>'}
       </div>
     </div>
-    ${(()=>{const p=ft.filter(t=>t.endDate<new Date().toISOString().slice(0,10)).sort((a,b)=>b.startDate.localeCompare(a.startDate));return p.length?`<div class="card"><div class="card-header"><h3>Recent Past Trips</h3></div><div class="card-body" style="padding:12px">${p.slice(0,4).map(t=>`
-      <div class="entry" style="cursor:pointer;opacity:.6;border-left:3px solid ${tColor(t)}" data-action="view" data-id="${t.id}">
+    ${(()=>{const p=ft.filter(t=>t.endDate<new Date().toISOString().slice(0,10)).sort((a,b)=>b.startDate.localeCompare(a.startDate));return p.length?`<div class="card"><div class="card-header"><h3>Recent Past Events</h3></div><div class="card-body" style="padding:12px">${p.slice(0,4).map(t=>`
+      <div class="entry" style="cursor:pointer;opacity:.6;border-left:3px solid ${eColor(t)}" data-action="view" data-id="${t.id}">
         <div class="entry-top"><h4>${esc(t.name)}</h4><span class="tag tag-g">${days(t.startDate,t.endDate)}d</span></div>
-        <div style="font-size:12px;color:var(--text3)">${fmtS(t.startDate)} — ${fmtS(t.endDate)} · ${t.locations.join(', ')}${tCost(t)?` · ${fmtM(tCost(t),'SGD')}`:''}</div>
+        <div style="font-size:12px;color:var(--text3)">${fmtS(t.startDate)} — ${fmtS(t.endDate)} · ${t.locations.join(', ')}${eCost(t)?` · ${fmtM(eCost(t),'SGD')}`:''}</div>
       </div>`).join('')}</div></div>`:''})()}
   </div>`;
 }
 
 // ===== TRIPS LIST =====
-function vTrips(){
-  const yrs=[...new Set(S.trips.map(t=>t.year||new Date(t.startDate).getFullYear()))].sort((a,b)=>b-a);
+function vEvents(){
+  const yrs=[...new Set(S.events.map(t=>t.year||new Date(t.startDate).getFullYear()))].sort((a,b)=>b-a);
   const q=(S._searchQ||'').toLowerCase();
-  let filtered=tpFilter(S.trips).filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY);
+  const catF=S._catFilter||'all';
+  let filtered=tpFilter(S.events).filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY);
+  if(catF!=='all')filtered=filtered.filter(t=>(t.category||'trip')===catF);
   if(q)filtered=filtered.filter(t=>t.name.toLowerCase().includes(q)||t.locations.some(l=>l.toLowerCase().includes(q))||(t.notes||'').toLowerCase().includes(q));
-  filtered=sortTrips(filtered);
+  filtered=sortEvents(filtered);
   return `
-  <div class="page-header"><div><h2>My Trips</h2><div class="subtitle">${filtered.length} of ${S.trips.length} trips</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}<button class="btn btn-p" data-action="add-trip">+ New Trip</button></div></div>
+  <div class="page-header"><div><h2>My Events</h2><div class="subtitle">${filtered.length} of ${S.events.length} events</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}<button class="btn btn-p" data-action="add-event">+ New Event</button></div></div>
   <div class="page-content">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      <div class="ytabs" style="margin-bottom:0"><div class="yt${!S.tfY?' active':''}" data-action="fy" data-y="">All</div>${yrs.map(y=>`<div class="yt${S.tfY==y?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
+      <div class="ytabs" style="margin-bottom:0"><div class="yt${!S.tfY&&catF==='all'?' active':''}" data-action="fy" data-y="">All</div><div class="yt${catF==='trip'?' active':''}" data-action="cat-filter" data-cat="trip">Trips</div><div class="yt${catF==='activity'?' active':''}" data-action="cat-filter" data-cat="activity">Activities</div><span style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>${yrs.map(y=>`<div class="yt${S.tfY==y&&catF==='all'?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search trips…" value="${esc(S._searchQ||'')}" data-action="search-trips"></div>
-        ${sortCtrlHtml('trip',tripSortKey,tripSortDir)}
+        <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search events…" value="${esc(S._searchQ||'')}" data-action="search-events"></div>
+        ${sortCtrlHtml('event',eventSortKey,eventSortDir)}
       </div>
     </div>
-    <div class="trip-grid">${filtered.map(t=>{const st=tripStatus(t);return`
+    <div class="trip-grid">${filtered.map(t=>{const st=eventStatus(t);return`
       <div class="trip-card" data-action="view" data-id="${t.id}">
-        <div class="trip-accent" style="background:linear-gradient(90deg,${tColor(t)},${TRIP_COLORS[((t.name||'').length+3)%TRIP_COLORS.length]})"></div>
+        <div class="trip-accent" style="background:linear-gradient(90deg,${eColor(t)},${EVENT_COLORS[((t.name||'').length+3)%EVENT_COLORS.length]})"></div>
         <div class="trip-body">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><span class="badge badge-${st}">${st}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px">${t.category==='activity'?'<span class="tag tag-o" style="font-size:9px">Activity</span>':''}<span class="badge badge-${st}">${st}</span></div></div>
           <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
           <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}</div>
           <div class="trip-foot">
@@ -1192,37 +1192,37 @@ function vTrips(){
             <span><b>${nights(t.startDate,t.endDate)}</b> nights</span>
             <span><b>${(t.flights||[]).length}</b> flights</span>
             <span><b>${(t.hotels||[]).length}</b> hotels</span>
-            ${tCost(t)?`<span style="color:var(--green)"><b>${fmtM(tCost(t),'')}</b> SGD</span>`:''}
+            ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> SGD</span>`:''}
           </div>
         </div>
       </div>`;}).join('')}
     </div>
-    ${!filtered.length?'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No trips found</p><p style="font-size:11px;color:var(--text3)">Try a different search or filter</p></div>':''}
+    ${!filtered.length?'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No events found</p><p style="font-size:11px;color:var(--text3)">Try a different search or filter</p></div>':''}
   </div>`;
 }
 
 // ===== TRIP DETAIL =====
 function vDetail(){
-  const t=S.trips.find(x=>x.id===S.tid);
-  if(!t)return '<div class="page-content"><p>Trip not found</p></div>';
+  const t=S.events.find(x=>x.id===S.tid);
+  if(!t)return '<div class="page-content"><p>Event not found</p></div>';
   const tab=S.tab||'flights';
   return `
   <div class="page-header">
     <div>
-      <div class="back-link" data-action="nav" data-to="trips">&larr; All Trips</div>
+      <div class="back-link" data-action="nav" data-to="events">&larr; All Events</div>
       <h2>${esc(t.name)}</h2>
       <div class="subtitle">${fmt(t.startDate)} — ${fmt(t.endDate)} · ${dayN(t.startDate)} · ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights</div>
     </div>
     <div style="display:flex;gap:6px">
-      <button class="btn btn-s" data-action="export-trip" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Export</button>
-      <button class="btn btn-s" data-action="edit-trip" data-id="${t.id}">Edit</button>
-      <button class="btn btn-d" data-action="del-trip" data-id="${t.id}">Delete</button>
+      <button class="btn btn-s" data-action="export-event" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Export</button>
+      <button class="btn btn-s" data-action="edit-event" data-id="${t.id}">Edit</button>
+      <button class="btn btn-d" data-action="del-event" data-id="${t.id}">Delete</button>
     </div>
   </div>
   <div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Duration</div><div class="s-val">${days(t.startDate,t.endDate)}<span style="font-size:14px;color:var(--text2)"> days</span></div><div class="s-sub">${nights(t.startDate,t.endDate)} nights</div></div>
-      <div class="stat green"><div class="s-label">Total Cost</div><div class="s-val">${fmtM(tCost(t),'')}</div><div class="s-sub">SGD</div></div>
+      <div class="stat green"><div class="s-label">Total Cost</div><div class="s-val">${fmtM(eCost(t),'')}</div><div class="s-sub">SGD</div></div>
       <div class="stat purple"><div class="s-label">Locations</div><div class="s-val">${t.locations.length}</div><div class="s-sub">${t.locations.join(' · ')}</div></div>
       <div class="stat orange"><div class="s-label">Bookings</div><div class="s-val">${(t.flights||[]).length+(t.hotels||[]).length+(t.activities||[]).length+(t.transport||[]).length}</div></div>
     </div>
@@ -1271,7 +1271,7 @@ function rHotels(t){
       </div>
       ${h.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(h.notes)}</div>`:''}
       ${h.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(h.ocrText)}</div></details>`:''}
-    </div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><p>No hotels added yet</p><p style="font-size:11px;color:var(--text3)">Add accommodation details for this trip</p></div>'}`;
+    </div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><p>No hotels added yet</p><p style="font-size:11px;color:var(--text3)">Add accommodation details for this event</p></div>'}`;
 }
 function rActs(t){
   const sorted=sortEntries(t.activities||[],'activities');
@@ -1337,7 +1337,8 @@ function vCal(){
   const today=new Date().toISOString().slice(0,10);
   // Build leave days set using centralized PH data
   const leaveDays=new Set();
-  S.trips.forEach(t=>{
+  S.events.forEach(t=>{
+    if(t.requiresLeave===false)return;
     const ts=t.startDate,te=t.endDate;if(!ts||!te)return;
     let cur=new Date(ts+'T00:00:00');const end=new Date(te+'T00:00:00');
     while(cur<=end){
@@ -1359,14 +1360,14 @@ function vCal(){
     const dow=new Date(y,m,d).getDay();
     const isWknd=dow===0||dow===6;
     const phs=getPH(ds);
-    const tripsOn=tpFilter(S.trips).filter(t=>t.startDate<=ds&&t.endDate>=ds);
+    const eventsOn=tpFilter(S.events).filter(t=>t.startDate<=ds&&t.endDate>=ds);
     const isApplied=getAppliedForDate(ds,y);
     cells+=`<div class="cal-day${isToday?' today':''}" data-date="${ds}">
       <div class="d-num${isWknd?' weekend':''}">${d}</div>
       ${phs.map(ph=>`<div class="d-ph ph-${ph.country.toLowerCase()}" title="${esc(ph.n)}${ph.country==='MY'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n.length>14?ph.n.slice(0,12)+'…':ph.n)}</div>`).join('')}
       ${leaveDays.has(ds)&&!phs.some(p=>p.country==='SG')?`<div class="d-leave" style="font-size:8px;color:var(--purple);font-weight:500">${isApplied?'Applied':'Leave'}</div>`:''}
-      ${tripsOn.slice(0,2).map(t=>`<div class="cal-trip" style="background:${tColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
-      ${tripsOn.length>2?`<div style="font-size:8px;color:var(--text3)">+${tripsOn.length-2}</div>`:''}
+      ${eventsOn.slice(0,2).map(t=>`<div class="cal-trip" style="background:${eColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
+      ${eventsOn.length>2?`<div style="font-size:8px;color:var(--text3)">+${eventsOn.length-2}</div>`:''}
     </div>`;
   }
   const totalCells=(startDay-1)+daysInMonth;
@@ -1399,17 +1400,18 @@ function vCal(){
     </div>
     ${monthPHs.length?`<div class="card" style="margin-top:12px"><div class="card-header"><h3>Public Holidays This Month</h3></div><div class="card-body" style="padding:8px 16px">${monthPHs.map(ph=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><div style="display:flex;align-items:center;gap:8px"><span class="d-ph ph-${ph.country.toLowerCase()}" style="display:inline-block;margin:0">${ph.country}</span><span>${esc(ph.n)}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--text3);font-size:11px">${ph.country==='MY'?fmtStates(ph.states):''}</span><span style="color:var(--text3)">${fmt(ph.d)}</span></div></div>`).join('')}</div></div>`:''}
     <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
-      ${tpFilter(S.trips).filter(t=>{const ts=new Date(t.startDate),te=new Date(t.endDate);return(ts.getFullYear()===y&&ts.getMonth()===m)||(te.getFullYear()===y&&te.getMonth()===m)||(ts<=first&&te>=last);}).map(t=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer" data-action="view" data-id="${t.id}"><div style="width:10px;height:10px;border-radius:3px;background:${tColor(t)}"></div>${esc(t.name)}</div>`).join('')}
+      ${tpFilter(S.events).filter(t=>{const ts=new Date(t.startDate),te=new Date(t.endDate);return(ts.getFullYear()===y&&ts.getMonth()===m)||(te.getFullYear()===y&&te.getMonth()===m)||(ts<=first&&te>=last);}).map(t=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer" data-action="view" data-id="${t.id}"><div style="width:10px;height:10px;border-radius:3px;background:${eColor(t)}"></div>${esc(t.name)}</div>`).join('')}
     </div>
   </div>`;
 }
 
 // ===== LEAVE =====
-// Calculate total workdays needed for all trips in a year (trip days - weekends - SG PH)
+// Calculate total workdays needed for all events in a year (event days - weekends - SG PH)
 function calcLeaveDaysForYear(year,useFilter){
   const yStr=String(year);
   let count=0;
-  (useFilter?tpFilter(S.trips):S.trips).forEach(t=>{
+  (useFilter?tpFilter(S.events):S.events).forEach(t=>{
+    if(t.requiresLeave===false)return;
     if(!t.startDate||!t.endDate)return;
     let cur=new Date(t.startDate+'T00:00:00');const end=new Date(t.endDate+'T00:00:00');
     while(cur<=end){
@@ -1461,9 +1463,9 @@ function vLeave(){
   if(!l.applied)l.applied=[];
   const jobs=l.jobs||[];
   const totals=leaveJobTotals(jobs);
-  const tripWorkdays=calcLeaveDaysForYear(y,false);
+  const eventWorkdays=calcLeaveDaysForYear(y,false);
   const appliedDays=calcAppliedDays(y);
-  const leaveRequired=Math.max(0,tripWorkdays-appliedDays);
+  const leaveRequired=Math.max(0,eventWorkdays-appliedDays);
   const activeEmployers=jobs.filter(j=>j.employer).map(j=>j.employer).join(' → ')||'—';
   // SG public holidays for this year
   const sgPH=PH_DATA.SG[y]||[];
@@ -1477,19 +1479,19 @@ function vLeave(){
       <div class="lb t-total"><div class="lv">${totals.tot}</div><div class="ll">Balance</div></div>
       <div class="lb t-al"><div class="lv">${totals.al}</div><div class="ll">Annual Leave</div></div>
       <div class="lb t-ot"><div class="lv">${totals.bp+totals.ot+totals.ph}</div><div class="ll">Carry/OT/PH</div></div>
-      <div class="lb" style="background:var(--purple-dim);color:var(--purple)"><div class="lv">${tripWorkdays}</div><div class="ll">From Trips</div></div>
+      <div class="lb" style="background:var(--purple-dim);color:var(--purple)"><div class="lv">${eventWorkdays}</div><div class="ll">From Events</div></div>
       <div class="lb t-applied"><div class="lv">${appliedDays}</div><div class="ll">Applied</div></div>
       <div class="lb t-req"><div class="lv">${leaveRequired}</div><div class="ll">Still Required</div></div>
       <div class="lb t-taken"><div class="lv">${totals.taken}</div><div class="ll">Taken</div></div>
       <div class="lb t-bal"><div class="lv">${totals.bal}</div><div class="ll">Remaining</div></div>
     </div>
     ${parseInt(y)>new Date().getFullYear()?(()=>{
-      const projected=totals.tot-tripWorkdays;
+      const projected=totals.tot-eventWorkdays;
       const projColor=projected>=0?'var(--green)':'var(--accent)';
       return `<div class="card" style="margin-bottom:16px;border-color:${projColor}30"><div class="card-body" style="display:flex;align-items:center;gap:12px;padding:12px 16px">
         <div style="font-size:24px">${projected>=0?'✅':'⚠️'}</div>
         <div><div style="font-size:13px;font-weight:600;color:${projColor}">Projected: ${projected>=0?projected+' days surplus':Math.abs(projected)+' days short'}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">Based on ${totals.tot} total entitlement − ${tripWorkdays} trip workdays (excludes weekends & SG PH)</div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Based on ${totals.tot} total entitlement − ${eventWorkdays} event workdays (excludes weekends & SG PH)</div></div>
       </div></div>`;
     })():''}
 
@@ -1509,7 +1511,7 @@ function vLeave(){
     </div>
 
     ${jobs.map((j,i)=>`
-    <div class="card" style="margin-bottom:12px"><div class="card-header"><h3>${j.employer||'Job '+(i+1)}${j.startDate||j.endDate?' <span style="font-weight:400;font-size:11px;color:var(--text3)">'+(j.startDate?fmtS(j.startDate):'?')+' — '+(j.endDate?fmtS(j.endDate):'present')+'</span>':''}</h3>${jobs.length>1?`<button class="btn btn-ghost" style="color:var(--accent);font-size:11px" data-action="del-job" data-ji="${i}">Remove</button>`:''}</div><div class="card-body">
+    <div class="card" style="margin-bottom:12px"><div class="card-header"><h3>${j.employer||'Job '+(i+1)}${j.startDate||j.endDate?' <span style="font-weight:400;font-size:11px;color:var(--text3)">'+(j.startDate?fmtS(j.startDate):'?')+' — '+(j.endDate?fmtS(j.endDate):'present')+'</span>':''}</h3>`<button class="btn btn-ghost" style="color:var(--accent);font-size:11px" data-action="del-job" data-ji="${i}">Remove</button>`</div><div class="card-body">
       <div class="fg">
         <div class="fi"><label>Employer</label><input class="fc" data-lj="${i}" data-jf="employer" value="${esc(j.employer||'')}"></div>
         <div class="fi"><label>Start Date</label><input class="fc" type="date" data-lj="${i}" data-jf="startDate" value="${j.startDate||''}"></div>
@@ -1535,12 +1537,12 @@ function vLeave(){
 
 // ===== BUDGET =====
 function vBudget(){
-  const ft=tpFilter(S.trips);
+  const ft=tpFilter(S.events);
   const byCur={};
   const byCat={flights:0,hotels:0,activities:0,transport:0};
-  ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||'SGD';byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toSGD(e.cost,c);}})));
-  const wc=ft.filter(t=>tCost(t)>0).sort((a,b)=>tCost(b)-tCost(a));
-  const total=ft.reduce((s,t)=>s+tCost(t),0);
+  ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||'SGD';byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toSGD(e.cost,c,e.rateToSGD);}})));
+  const wc=ft.filter(t=>eCost(t)>0).sort((a,b)=>eCost(b)-eCost(a));
+  const total=ft.reduce((s,t)=>s+eCost(t),0);
   const catColors={flights:'var(--primary)',hotels:'var(--green)',activities:'var(--orange)',transport:'var(--purple)'};
   const maxCat=Math.max(...Object.values(byCat),1);
   return `
@@ -1554,8 +1556,8 @@ function vBudget(){
       ${Object.entries(byCat).map(([k,v])=>`<div class="budget-bar"><span class="bb-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bb-track"><div class="bb-fill" style="width:${(v/maxCat*100).toFixed(1)}%;background:${catColors[k]}"></div></div><span class="bb-val">${fmtM(v,'SGD')}</span></div>`).join('')}
     </div></div>`:''}
     <div class="card">
-      <div class="card-header"><h3>By Trip</h3></div>
-      ${wc.length?wc.map(t=>{const c=tCost(t);return`<div class="b-row"><div style="flex:1"><span style="font-weight:500">${esc(t.name)}</span> <span style="font-size:11px;color:var(--text3)">${fmtS(t.startDate)}</span><div style="margin-top:4px;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${(c/total*100).toFixed(1)}%;background:${tColor(t)};border-radius:2px"></div></div></div><div style="font-weight:600;min-width:100px;text-align:right">${fmtM(c,'SGD')}</div></div>`;}).join('')+'<div class="b-total"><span>Total</span><span>'+fmtM(total,'SGD')+'</span></div>':'<div class="card-body"><div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><p>No costs recorded yet</p><p style="font-size:11px;color:var(--text3)">Add costs to your trip bookings to see spending breakdown</p></div></div>'}
+      <div class="card-header"><h3>By Event</h3></div>
+      ${wc.length?wc.map(t=>{const c=eCost(t);return`<div class="b-row"><div style="flex:1"><span style="font-weight:500">${esc(t.name)}</span> <span style="font-size:11px;color:var(--text3)">${fmtS(t.startDate)}</span><div style="margin-top:4px;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${(c/total*100).toFixed(1)}%;background:${eColor(t)};border-radius:2px"></div></div></div><div style="font-weight:600;min-width:100px;text-align:right">${fmtM(c,'SGD')}</div></div>`;}).join('')+'<div class="b-total"><span>Total</span><span>'+fmtM(total,'SGD')+'</span></div>':'<div class="card-body"><div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><p>No costs recorded yet</p><p style="font-size:11px;color:var(--text3)">Add costs to your trip bookings to see spending breakdown</p></div></div>'}
     </div>
   </div>`;
 }
@@ -1567,8 +1569,8 @@ function icsUid(){return 'ht-'+Date.now()+'-'+Math.random().toString(36).slice(2
 function icsEscape(s){return(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
 function generateICS(){
   const events=[];const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'').slice(0,15)+'Z';
-  S.trips.forEach(t=>{
-    // Trip event (all-day, start to end)
+  S.events.forEach(t=>{
+    // Event entry (all-day, start to end)
     events.push([
       'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(t.startDate),
       'DTEND;VALUE=DATE:'+icsDate(new Date(new Date(t.endDate+'T00:00:00').getTime()+86400000).toISOString()),
@@ -1590,7 +1592,7 @@ function generateICS(){
         isAllDay?'DTSTART;VALUE=DATE:'+startD:'DTSTART:'+startD,
         isAllDay?'DTEND;VALUE=DATE:'+startD:'DTEND:'+(f.arrivalTime?icsDateTime(f.arrivalTime):startD),
         'SUMMARY:'+icsEscape(summary),
-        'DESCRIPTION:'+icsEscape('Trip: '+t.name+(f.pnr?'\\nPNR: '+f.pnr:'')+(f.seat?'\\nSeat: '+f.seat:'')+(f.notes?'\\n'+f.notes:'')),
+        'DESCRIPTION:'+icsEscape('Event: '+t.name+(f.pnr?'\\nPNR: '+f.pnr:'')+(f.seat?'\\nSeat: '+f.seat:'')+(f.notes?'\\n'+f.notes:'')),
         'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
         'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(summary+' in 7 days'),'END:VALARM',
         'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(summary+' tomorrow!'),'END:VALARM',
@@ -1604,7 +1606,7 @@ function generateICS(){
         'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(h.checkIn),
         'DTEND;VALUE=DATE:'+icsDate(h.checkOut||h.checkIn),
         'SUMMARY:'+icsEscape('🏨 '+h.name),
-        'DESCRIPTION:'+icsEscape('Trip: '+t.name+(h.notes?'\\n'+h.notes:'')),
+        'DESCRIPTION:'+icsEscape('Event: '+t.name+(h.notes?'\\n'+h.notes:'')),
         'LOCATION:'+icsEscape(h.name||''),
         'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
         'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(h.name+' check-in in 7 days'),'END:VALARM',
@@ -1619,7 +1621,7 @@ function generateICS(){
         'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(a.date),
         'DTEND;VALUE=DATE:'+icsDate(a.date),
         'SUMMARY:'+icsEscape('🎯 '+(a.name||'Activity')),
-        'DESCRIPTION:'+icsEscape('Trip: '+t.name+(a.notes?'\\n'+a.notes:'')),
+        'DESCRIPTION:'+icsEscape('Event: '+t.name+(a.notes?'\\n'+a.notes:'')),
         'LOCATION:'+icsEscape(a.location||''),
         'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
         'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape((a.name||'Activity')+' in 7 days'),'END:VALARM',
@@ -1636,10 +1638,10 @@ function generateICS(){
 }
 function exportUpcomingICS(){
   const today=new Date().toISOString().slice(0,10);
-  const origTrips=S.trips;
-  S.trips=S.trips.filter(t=>t.endDate>=today);
+  const origEvents=S.events;
+  S.events=S.events.filter(t=>t.endDate>=today);
   generateICS();
-  S.trips=origTrips;
+  S.events=origEvents;
 }
 
 // ===== SETTINGS =====
@@ -1704,31 +1706,68 @@ function vSettings(){
 }
 
 // ===== ITINERARY EXPORT =====
-function showExportModal(tripId){
-  const t=S.trips.find(x=>x.id===tripId);if(!t)return;
+function showExportModal(evId){
+  const t=S.events.find(x=>x.id===evId);if(!t)return;
+  const cbStyle='display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px';
+  const secStyle='padding:6px 0';
+  const gridStyle='display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;padding:4px 0';
   modal('Export Itinerary',`<div class="fg">
     <div class="fi"><label>Format</label>
       <div style="display:flex;gap:16px;padding:8px 0">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="radio" name="exp-fmt" value="pdf" checked> PDF</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="radio" name="exp-fmt" value="xlsx"> Excel</label>
+        <label style="${cbStyle}"><input type="radio" name="exp-fmt" value="pdf" checked> PDF</label>
+        <label style="${cbStyle}"><input type="radio" name="exp-fmt" value="xlsx"> Excel</label>
       </div>
     </div>
-    <div class="fi">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:4px 0"><input type="checkbox" id="exp-cost"> Include costs in itinerary</label>
+    <div class="fi"><label>Include sections</label>
+      <div style="${gridStyle}">
+        <label style="${cbStyle}"><input type="checkbox" class="exp-sec" value="flights" checked> Flights (${(t.flights||[]).length})</label>
+        <label style="${cbStyle}"><input type="checkbox" class="exp-sec" value="hotels" checked> Hotels (${(t.hotels||[]).length})</label>
+        <label style="${cbStyle}"><input type="checkbox" class="exp-sec" value="activities" checked> Activities (${(t.activities||[]).length})</label>
+        <label style="${cbStyle}"><input type="checkbox" class="exp-sec" value="transport" checked> Transport (${(t.transport||[]).length})</label>
+      </div>
+    </div>
+    <div class="fi"><label>Include fields</label>
+      <div style="${gridStyle}">
+        <label style="${cbStyle}"><input type="checkbox" class="exp-fld" value="costs" checked> Costs</label>
+        <label style="${cbStyle}"><input type="checkbox" class="exp-fld" value="payments"> Payment tracking</label>
+        <label style="${cbStyle}"><input type="checkbox" class="exp-fld" value="booking" checked> Booking details</label>
+        <label style="${cbStyle}"><input type="checkbox" class="exp-fld" value="notes" checked> Notes</label>
+      </div>
+    </div>
+    <div class="fi"><label>Date range <span style="color:var(--text3);font-weight:400;font-size:11px">(optional — filter items)</span></label>
+      <div style="display:flex;gap:12px;padding:4px 0">
+        <input type="date" class="fc" id="exp-from" value="${t.startDate}" style="flex:1">
+        <input type="date" class="fc" id="exp-to" value="${t.endDate}" style="flex:1">
+      </div>
     </div>
   </div>`,()=>{
     const fmt2=document.querySelector('input[name="exp-fmt"]:checked').value;
-    const incCost=document.getElementById('exp-cost').checked;
-    if(fmt2==='pdf') genItineraryPDF(t,incCost); else genItineraryXLSX(t,incCost);
+    const secs=[...document.querySelectorAll('.exp-sec:checked')].map(c=>c.value);
+    const flds=[...document.querySelectorAll('.exp-fld:checked')].map(c=>c.value);
+    const from=document.getElementById('exp-from').value;
+    const to=document.getElementById('exp-to').value;
+    const opts={sections:secs,fields:flds,dateFrom:from,dateTo:to};
+    if(fmt2==='pdf') genItineraryPDF(t,opts); else genItineraryXLSX(t,opts);
   },{saveLabel:'Generate'});
 }
 
-function buildItineraryItems(t){
+function buildItineraryItems(t,opts){
+  opts=opts||{};
+  const secs=opts.sections||['flights','hotels','activities','transport'];
+  const flds=opts.fields||['costs','booking','notes'];
+  const incBooking=flds.includes('booking');
+  const incNotes=flds.includes('notes');
+  const incPayments=flds.includes('payments');
+  const dateFrom=opts.dateFrom||'';
+  const dateTo=opts.dateTo||'';
+  const inRange=d=>{if(!d)return true;if(dateFrom&&d<dateFrom)return false;if(dateTo&&d>dateTo)return false;return true;};
   const items=[];
   const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
   const fmtT2=dt=>{if(!dt)return '';try{const d2=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d2))return dt;return d2.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return dt;}};
-  (t.flights||[]).forEach(f=>{
+  const payDet=(e)=>{const r=[];if(!incPayments)return r;if(e.depositAmount)r.push(['Deposit',`${e.currency||'SGD'} ${e.depositAmount}${e.depositPaid==='true'?' (Paid)':' (Unpaid)'}`]);if(e.depositDate)r.push(['Deposit Date',fmtD2(e.depositDate)]);if(e.paymentDueDate)r.push(['Payment Due',fmtD2(e.paymentDueDate)]);if(e.fullyPaid==='true')r.push(['Status','Fully Paid']);return r;};
+  if(secs.includes('flights'))(t.flights||[]).forEach(f=>{
     const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';
+    if(!inRange(d||t.startDate))return;
     const det=[];
     if(f.from||f.to)det.push(['Route',`${f.from||'?'} → ${f.to||'?'}`]);
     if(f.departureTime)det.push(['Depart',fmtT2(f.departureTime)]);
@@ -1736,7 +1775,9 @@ function buildItineraryItems(t){
     if(f.pnr)det.push(['PNR',f.pnr]);
     if(f.seat)det.push(['Seat',f.seat]);
     if(f.duration)det.push(['Duration',f.duration]);
-    if(f.notes)det.push(['Notes',f.notes]);
+    if(incBooking&&f.bookingDetails)det.push(['Booking',f.bookingDetails]);
+    if(incNotes&&f.notes)det.push(['Notes',f.notes]);
+    det.push(...payDet(f));
     items.push({type:'FLIGHT',date:d||t.startDate,sortKey:f.departureTime||d||t.startDate,
       title:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',
       details:det,cost:f.cost?parseFloat(f.cost):0,currency:f.currency||'SGD',color:[59,130,246],
@@ -1744,54 +1785,63 @@ function buildItineraryItems(t){
       detailStr:[f.from&&f.to?`${f.from} → ${f.to}`:'',f.pnr?`PNR: ${f.pnr}`:'',f.seat?`Seat: ${f.seat}`:'',f.duration?`Duration: ${f.duration}`:''].filter(Boolean).join(' | ')
     });
   });
-  (t.hotels||[]).forEach(h=>{
+  if(secs.includes('hotels'))(t.hotels||[]).forEach(h=>{
+    if(!inRange(h.checkIn||t.startDate))return;
     const det=[];
     if(h.checkIn)det.push(['Check-in',fmtD2(h.checkIn)]);
     if(h.checkOut)det.push(['Check-out',fmtD2(h.checkOut)]);
     if(h.checkIn&&h.checkOut)det.push(['Nights',String(nights(h.checkIn,h.checkOut))]);
-    if(h.bookingNumber)det.push(['Booking #',h.bookingNumber]);
-    if(h.notes)det.push(['Notes',h.notes]);
+    if(incBooking&&h.bookingNumber)det.push(['Booking #',h.bookingNumber]);
+    if(incNotes&&h.notes)det.push(['Notes',h.notes]);
+    det.push(...payDet(h));
     items.push({type:'HOTEL',date:h.checkIn||t.startDate,sortKey:h.checkIn||t.startDate,
       title:h.name||'Hotel',
       details:det,cost:h.cost?parseFloat(h.cost):0,currency:h.currency||'SGD',color:[168,85,247],
       timeStr:h.checkIn&&h.checkOut?`${fmtD2(h.checkIn)} - ${fmtD2(h.checkOut)}`:'',
-      detailStr:[h.bookingNumber?`Booking: ${h.bookingNumber}`:'',h.checkIn&&h.checkOut?`${nights(h.checkIn,h.checkOut)} nights`:''].filter(Boolean).join(' | ')
+      detailStr:[incBooking&&h.bookingNumber?`Booking: ${h.bookingNumber}`:'',h.checkIn&&h.checkOut?`${nights(h.checkIn,h.checkOut)} nights`:''].filter(Boolean).join(' | ')
     });
   });
-  (t.activities||[]).forEach(a=>{
+  if(secs.includes('activities'))(t.activities||[]).forEach(a=>{
+    if(!inRange(a.date||t.startDate))return;
     const det=[];
     if(a.location)det.push(['Location',a.location]);
     if(a.time)det.push(['Time',a.time]);
     if(a.duration)det.push(['Duration',a.duration]);
-    if(a.bookingDetails)det.push(['Booking',a.bookingDetails]);
-    if(a.notes)det.push(['Notes',a.notes]);
+    if(incBooking&&a.bookingDetails)det.push(['Booking',a.bookingDetails]);
+    if(incNotes&&a.notes)det.push(['Notes',a.notes]);
+    det.push(...payDet(a));
     items.push({type:'ACTIVITY',date:a.date||t.startDate,sortKey:(a.date||t.startDate)+' '+(a.time||'99'),
       title:a.name||'Activity',
       details:det,cost:a.cost?parseFloat(a.cost):0,currency:a.currency||'SGD',color:[245,158,11],
       timeStr:a.time||'',
-      detailStr:[a.location||'',a.duration?`Duration: ${a.duration}`:'',a.bookingDetails?`Booking: ${a.bookingDetails}`:''].filter(Boolean).join(' | ')
+      detailStr:[a.location||'',a.duration?`Duration: ${a.duration}`:'',incBooking&&a.bookingDetails?`Booking: ${a.bookingDetails}`:''].filter(Boolean).join(' | ')
     });
   });
-  (t.transport||[]).forEach(x=>{
+  if(secs.includes('transport'))(t.transport||[]).forEach(x=>{
+    if(!inRange(x.date||t.startDate))return;
     const det=[];
     if(x.location)det.push(['Location',x.location]);
     if(x.time)det.push(['Time',x.time]);
     if(x.duration)det.push(['Duration',x.duration]);
-    if(x.bookingDetails)det.push(['Booking',x.bookingDetails]);
-    if(x.notes)det.push(['Notes',x.notes]);
+    if(incBooking&&x.bookingDetails)det.push(['Booking',x.bookingDetails]);
+    if(incNotes&&x.notes)det.push(['Notes',x.notes]);
+    det.push(...payDet(x));
     items.push({type:'TRANSPORT',date:x.date||t.startDate,sortKey:(x.date||t.startDate)+' '+(x.time||'99'),
       title:`${x.type||''} ${x.name||''}`.trim()||'Transport',
       details:det,cost:x.cost?parseFloat(x.cost):0,currency:x.currency||'SGD',color:[34,197,94],
       timeStr:x.time||'',
-      detailStr:[x.location||'',x.duration?`Duration: ${x.duration}`:'',x.bookingDetails?`Booking: ${x.bookingDetails}`:''].filter(Boolean).join(' | ')
+      detailStr:[x.location||'',x.duration?`Duration: ${x.duration}`:'',incBooking&&x.bookingDetails?`Booking: ${x.bookingDetails}`:''].filter(Boolean).join(' | ')
     });
   });
   items.sort((a,b)=>a.sortKey.localeCompare(b.sortKey));
   return items;
 }
 
-function genItineraryPDF(t,incCost){
+function genItineraryPDF(t,opts){
   if(typeof window.jspdf==='undefined'){toast('PDF library still loading — try again');return;}
+  opts=opts||{};
+  const incCost=(opts.fields||[]).includes('costs');
+  const secs=opts.sections||['flights','hotels','activities','transport'];
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
   const W=210,M=15,CW=W-2*M;
@@ -1806,28 +1856,28 @@ function genItineraryPDF(t,incCost){
   doc.setFillColor(30,41,59);doc.rect(0,0,W,48,'F');
   doc.setFillColor(59,130,246);doc.rect(0,48,W,1.5,'F');
   doc.setTextColor(148,163,184);doc.setFontSize(9);doc.setFont('helvetica','normal');
-  doc.text('TRIP ITINERARY',M,14);
+  doc.text('EVENT ITINERARY',M,14);
   doc.setTextColor(255);doc.setFontSize(20);doc.setFont('helvetica','bold');
   const tLines=doc.splitTextToSize(t.name,CW);doc.text(tLines,M,26);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(203,213,225);
   doc.text(`${fmtD2(t.startDate)} — ${fmtD2(t.endDate)}  |  ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights  |  ${t.locations.join(', ')}`,M,40);
-  if(incCost){doc.setTextColor(134,239,172);doc.text(`Total: SGD ${tCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,W-M,40,{align:'right'});}
+  if(incCost){doc.setTextColor(134,239,172);doc.text(`Total: SGD ${eCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,W-M,40,{align:'right'});}
   y=56;doc.setTextColor(0);
 
   // Build & group items
-  const items=buildItineraryItems(t);
+  const items=buildItineraryItems(t,opts);
   const byDate={};items.forEach(it=>{if(!byDate[it.date])byDate[it.date]=[];byDate[it.date].push(it);});
   const sortedDates=Object.keys(byDate).sort();
-  const tripStart=new Date(t.startDate+'T00:00:00');
+  const evStart=new Date(t.startDate+'T00:00:00');
 
   if(!items.length){
-    doc.setFontSize(11);doc.setTextColor(100);doc.text('No bookings added to this trip yet.',M,y);
+    doc.setFontSize(11);doc.setTextColor(100);doc.text('No bookings match the selected filters.',M,y);
     addFoot();doc.save(`${t.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'-').toLowerCase()}-itinerary.pdf`);
     toast('PDF exported');return;
   }
 
   sortedDates.forEach(date=>{
-    const dayNum=Math.max(1,Math.ceil((new Date(date+'T00:00:00')-tripStart)/864e5)+1);
+    const dayNum=Math.max(1,Math.ceil((new Date(date+'T00:00:00')-evStart)/864e5)+1);
     ck(20);
     // Day header
     doc.setFillColor(241,245,249);doc.roundedRect(M,y,CW,8,1.5,1.5,'F');
@@ -1881,10 +1931,11 @@ function genItineraryPDF(t,incCost){
     doc.setDrawColor(200);doc.line(M,y,W-M,y);y+=8;
     doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
     doc.text('Cost Summary',M,y);y+=8;
-    const cats=[{l:'Flights',a:t.flights||[]},{l:'Hotels',a:t.hotels||[]},{l:'Activities',a:t.activities||[]},{l:'Transport',a:t.transport||[]}];
+    const catMap={flights:'Flights',hotels:'Hotels',activities:'Activities',transport:'Transport'};
+    const cats=secs.map(s=>({l:catMap[s]||s,a:t[s]||[]}));
     doc.setFontSize(9);
     cats.forEach(c=>{
-      const sm=c.a.reduce((s,e)=>s+toSGD(e.cost,e.currency),0);
+      const sm=c.a.reduce((s,e)=>s+toSGD(e.cost,e.currency,e.rateToSGD),0);
       if(sm>0){
         doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);doc.text(c.l,M+4,y);
         doc.setFont('helvetica','normal');doc.setTextColor(51,65,85);
@@ -1894,7 +1945,7 @@ function genItineraryPDF(t,incCost){
     y+=1;doc.setDrawColor(200);doc.line(M+4,y,M+80,y);y+=6;
     doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
     doc.text('Total',M+4,y);
-    doc.text(`SGD ${tCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);
+    doc.text(`SGD ${eCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);
   }
 
   addFoot();
@@ -1902,37 +1953,54 @@ function genItineraryPDF(t,incCost){
   doc.save(`${fn}-itinerary.pdf`);toast('PDF exported');
 }
 
-function genItineraryXLSX(t,incCost){
+function genItineraryXLSX(t,opts){
   if(typeof XLSX==='undefined'){toast('Excel library still loading — try again');return;}
+  opts=opts||{};
+  const incCost=(opts.fields||[]).includes('costs');
+  const incPayments=(opts.fields||[]).includes('payments');
+  const secs=opts.sections||['flights','hotels','activities','transport'];
   const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
   const wb=XLSX.utils.book_new();
 
   // Overview sheet
-  const ov=[['Trip Itinerary'],[],['Trip Name',t.name],['Dates',`${fmtD2(t.startDate)} — ${fmtD2(t.endDate)}`],
+  const catMap={flights:'Flights',hotels:'Hotels',activities:'Activities',transport:'Transport'};
+  const ov=[['Event Itinerary'],[],['Event Name',t.name],['Dates',`${fmtD2(t.startDate)} — ${fmtD2(t.endDate)}`],
     ['Duration',`${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights`],
-    ['Locations',t.locations.join(', ')],[],
-    ['Flights',(t.flights||[]).length],['Hotels',(t.hotels||[]).length],
-    ['Activities',(t.activities||[]).length],['Transport',(t.transport||[]).length]];
-  if(incCost){ov.push([],['Total Cost (SGD)',tCost(t).toFixed(2)]);}
+    ['Locations',t.locations.join(', ')],[]];
+  secs.forEach(s=>ov.push([catMap[s]||s,(t[s]||[]).length]));
+  if(incCost){ov.push([],['Total Cost (SGD)',eCost(t).toFixed(2)]);}
   const ws1=XLSX.utils.aoa_to_sheet(ov);ws1['!cols']=[{wch:18},{wch:45}];
   XLSX.utils.book_append_sheet(wb,ws1,'Overview');
 
   // Itinerary sheet
-  const hdr=['Day','Date','Type','Name','Details','Time','Notes'];
+  const hdr=['Day','Date','Type','Name','Details','Time'];
+  const flds=opts.fields||['costs','booking','notes'];
+  if(flds.includes('notes'))hdr.push('Notes');
   if(incCost)hdr.push('Cost','Currency');
+  if(incPayments)hdr.push('Deposit','Deposit Paid','Payment Due','Fully Paid');
   const rows=[hdr];
-  const items=buildItineraryItems(t);
-  const tripStart=new Date(t.startDate+'T00:00:00');
+  const items=buildItineraryItems(t,opts);
+  const evStart=new Date(t.startDate+'T00:00:00');
   items.forEach(it=>{
-    const dn=Math.max(1,Math.ceil((new Date(it.date+'T00:00:00')-tripStart)/864e5)+1);
-    const r=[dn,fmtD2(it.date),it.type,it.title,it.detailStr,it.timeStr,it.details.find(d=>d[0]==='Notes')?it.details.find(d=>d[0]==='Notes')[1]:''];
+    const dn=Math.max(1,Math.ceil((new Date(it.date+'T00:00:00')-evStart)/864e5)+1);
+    const r=[dn,fmtD2(it.date),it.type,it.title,it.detailStr,it.timeStr];
+    if(flds.includes('notes'))r.push(it.details.find(d=>d[0]==='Notes')?it.details.find(d=>d[0]==='Notes')[1]:'');
     if(incCost)r.push(it.cost||'',it.currency);
+    if(incPayments){
+      const dep=it.details.find(d=>d[0]==='Deposit');
+      const depDate=it.details.find(d=>d[0]==='Deposit Date');
+      const pmtDue=it.details.find(d=>d[0]==='Payment Due');
+      const status=it.details.find(d=>d[0]==='Status');
+      r.push(dep?dep[1]:'',depDate?depDate[1]:'',pmtDue?pmtDue[1]:'',status?status[1]:'');
+    }
     rows.push(r);
   });
-  if(incCost){rows.push([]);rows.push(['','','','','','','Total (SGD)',tCost(t).toFixed(2)]);}
+  if(incCost){rows.push([]);const totalRow=new Array(hdr.length).fill('');totalRow[hdr.indexOf('Cost')-1]='Total (SGD)';totalRow[hdr.indexOf('Cost')]=eCost(t).toFixed(2);rows.push(totalRow);}
   const ws2=XLSX.utils.aoa_to_sheet(rows);
-  ws2['!cols']=[{wch:5},{wch:16},{wch:11},{wch:30},{wch:40},{wch:22},{wch:25}];
+  ws2['!cols']=[{wch:5},{wch:16},{wch:11},{wch:30},{wch:40},{wch:22}];
+  if(flds.includes('notes'))ws2['!cols'].push({wch:25});
   if(incCost)ws2['!cols'].push({wch:10},{wch:8});
+  if(incPayments)ws2['!cols'].push({wch:18},{wch:12},{wch:14},{wch:10});
   XLSX.utils.book_append_sheet(wb,ws2,'Itinerary');
 
   const fn=t.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'-').toLowerCase();
@@ -1954,9 +2022,9 @@ function modal(title,body,onSave,opts){
 }
 function xm(){document.getElementById('mbg').classList.remove('open');}
 
-function tripCur(trip){
-  if(!trip)return 'SGD';
-  const all=[...(trip.flights||[]),...(trip.hotels||[]),...(trip.activities||[]),...(trip.transport||[])];
+function eventCur(ev){
+  if(!ev)return 'SGD';
+  const all=[...(ev.flights||[]),...(ev.hotels||[]),...(ev.activities||[]),...(ev.transport||[])];
   for(let i=all.length-1;i>=0;i--){if(all[i].currency)return all[i].currency;}
   return 'SGD';
 }
@@ -2190,14 +2258,14 @@ function suParsedHtml(parsed){
 }
 function showSmartUpload(){
   const dzid='su-'+uid();
-  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a booking confirmation, paste a screenshot, or paste email text. The app will extract details and match to an existing trip.</p>'+dzHtml(dzid,true)+`
+  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a booking confirmation, paste a screenshot, or paste email text. The app will extract details and match to an existing event.</p>'+dzHtml(dzid,true)+`
     <div id="su-result" style="display:none;margin-top:14px">
       <div class="su-match" id="su-parsed"></div>
       <div style="margin-top:12px">
-        <div class="fi"><label>Match to Trip</label>
-          <select class="fc" id="su-trip">
-            <option value="__new__">— Create New Trip —</option>
-            ${S.trips.sort((a,b)=>b.startDate.localeCompare(a.startDate)).map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)})</option>`).join('')}
+        <div class="fi"><label>Match to Event</label>
+          <select class="fc" id="su-event">
+            <option value="__new__">— Create New Event —</option>
+            ${S.events.sort((a,b)=>b.startDate.localeCompare(a.startDate)).map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)})</option>`).join('')}
           </select>
         </div>
         <div class="fi" style="margin-top:8px"><label>Type</label>
@@ -2208,14 +2276,14 @@ function showSmartUpload(){
       // Save smart upload result
       const parsed=window._suParsed;
       if(!parsed){toast('No data extracted');return;}
-      const tripId=document.getElementById('su-trip').value;
+      const evId=document.getElementById('su-event').value;
       const type=document.getElementById('su-type').value;
-      let trip;
-      if(tripId==='__new__'){
-        trip={id:uid(),name:parsed.name||'New Trip',startDate:parsed.date||new Date().toISOString().slice(0,10),endDate:parsed.dateTo||parsed.date||new Date().toISOString().slice(0,10),locations:parsed.locations||[],sharedLink:'',notes:'Auto-created from upload',year:parseInt((parsed.date||'2026').slice(0,4)),hotels:[],flights:[],activities:[],transport:[]};
-        S.trips.push(trip);
-      }else{trip=S.trips.find(t=>t.id===tripId);}
-      if(!trip)return;
+      let ev;
+      if(evId==='__new__'){
+        ev={id:uid(),name:parsed.name||'New Event',category:'trip',requiresLeave:true,startDate:parsed.date||new Date().toISOString().slice(0,10),endDate:parsed.dateTo||parsed.date||new Date().toISOString().slice(0,10),locations:parsed.locations||[],sharedLink:'',notes:'Auto-created from upload',year:parseInt((parsed.date||'2026').slice(0,4)),hotels:[],flights:[],activities:[],transport:[]};
+        S.events.push(ev);
+      }else{ev=S.events.find(t=>t.id===evId);}
+      if(!ev)return;
       const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||'SGD',notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
       if(type==='flight'&&parsed.multiLeg&&parsed.legs){
         // Multi-segment: create one flight entry per leg
@@ -2225,13 +2293,13 @@ function showSmartUpload(){
             departureTime:(leg.date?leg.date+' ':'')+(leg.departureTime||''),
             arrivalTime:((leg.arrivalDate||leg.date)?((leg.arrivalDate||leg.date)+' '):'')+(leg.arrivalTime||''),
             from:leg.from||'',to:leg.to||''};
-          trip.flights.push(legEntry);
+          ev.flights.push(legEntry);
         }
-      }else if(type==='flight'){Object.assign(entry,{airline:parsed.airline||'',flightNumber:parsed.flightNumber||'',pnr:parsed.pnr||'',seat:parsed.seat||'',departureTime:(parsed.date?parsed.date+' ':'')+(parsed.departureTime||''),arrivalTime:(parsed.dateTo||parsed.date?(parsed.dateTo||parsed.date)+' ':'')+(parsed.arrivalTime||''),from:parsed.from||'',to:parsed.to||''});trip.flights.push(entry);}
-      else if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||''});trip.hotels.push(entry);}
-      else if(type==='activity'){Object.assign(entry,{name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});trip.activities.push(entry);}
-      else{Object.assign(entry,{type:'Other',name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});trip.transport.push(entry);}
-      saveS();render();toast('Added to '+trip.name);
+      }else if(type==='flight'){Object.assign(entry,{airline:parsed.airline||'',flightNumber:parsed.flightNumber||'',pnr:parsed.pnr||'',seat:parsed.seat||'',departureTime:(parsed.date?parsed.date+' ':'')+(parsed.departureTime||''),arrivalTime:(parsed.dateTo||parsed.date?(parsed.dateTo||parsed.date)+' ':'')+(parsed.arrivalTime||''),from:parsed.from||'',to:parsed.to||''});ev.flights.push(entry);}
+      else if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||''});ev.hotels.push(entry);}
+      else if(type==='activity'){Object.assign(entry,{name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
+      else{Object.assign(entry,{type:'Other',name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.transport.push(entry);}
+      saveS();render();toast('Added to '+ev.name);
   });
   // Hook into OCR completion to parse
   const origRunOCR=runOCR;
@@ -2249,12 +2317,12 @@ function showSmartUpload(){
       // Auto-detect type
       const typeEl=document.getElementById('su-type');
       if(parsed.type)typeEl.value=parsed.type;
-      // Auto-match trip (allow ±3 day buffer around trip dates for positioning flights)
-      const tripSel=document.getElementById('su-trip');
+      // Auto-match event (allow ±3 day buffer around event dates for positioning flights)
+      const evSel=document.getElementById('su-event');
       if(parsed.date){
         const pd=new Date(parsed.date+'T00:00:00').getTime();
         let bestMatch=null,bestDist=Infinity;
-        for(const tr of S.trips){
+        for(const tr of S.events){
           const ts=new Date(tr.startDate+'T00:00:00').getTime(),te=new Date(tr.endDate+'T00:00:00').getTime();
           const buf=3*864e5;// 3 day buffer
           if(pd>=(ts-buf)&&pd<=(te+buf)){
@@ -2264,9 +2332,9 @@ function showSmartUpload(){
         }
         // Also check locations overlap
         if(!bestMatch&&parsed.locations&&parsed.locations.length){
-          bestMatch=S.trips.find(tr=>tr.locations.some(l=>parsed.locations.some(pl=>l.toUpperCase().includes(pl.toUpperCase())||pl.toUpperCase().includes(l.toUpperCase()))));
+          bestMatch=S.events.find(tr=>tr.locations.some(l=>parsed.locations.some(pl=>l.toUpperCase().includes(pl.toUpperCase())||pl.toUpperCase().includes(l.toUpperCase()))));
         }
-        if(bestMatch)tripSel.value=bestMatch.id;
+        if(bestMatch)evSel.value=bestMatch.id;
       }
       // Show results
       document.getElementById('su-result').style.display='block';
@@ -2284,11 +2352,11 @@ function showSmartUpload(){
     window._suParsed=parsed;
     const typeEl=document.getElementById('su-type');
     if(parsed.type&&typeEl)typeEl.value=parsed.type;
-    const tripSel=document.getElementById('su-trip');
+    const evSel=document.getElementById('su-event');
     if(parsed.date&&tripSel){
       const pd=new Date(parsed.date+'T00:00:00').getTime();
       let bestMatch=null,bestDist=Infinity;
-      for(const tr of S.trips){
+      for(const tr of S.events){
         const ts=new Date(tr.startDate+'T00:00:00').getTime(),te=new Date(tr.endDate+'T00:00:00').getTime();
         const buf=3*864e5;
         if(pd>=(ts-buf)&&pd<=(te+buf)){
@@ -2297,9 +2365,9 @@ function showSmartUpload(){
         }
       }
       if(!bestMatch&&parsed.locations&&parsed.locations.length){
-        bestMatch=S.trips.find(tr=>tr.locations.some(l=>parsed.locations.some(pl=>l.toUpperCase().includes(pl.toUpperCase())||pl.toUpperCase().includes(l.toUpperCase()))));
+        bestMatch=S.events.find(tr=>tr.locations.some(l=>parsed.locations.some(pl=>l.toUpperCase().includes(pl.toUpperCase())||pl.toUpperCase().includes(l.toUpperCase()))));
       }
-      if(bestMatch)tripSel.value=bestMatch.id;
+      if(bestMatch)evSel.value=bestMatch.id;
     }
     document.getElementById('su-result').style.display='block';
     document.getElementById('su-parsed').innerHTML=suParsedHtml(parsed);
@@ -2378,90 +2446,72 @@ function _matchAirlineName(text){
   return '';
 }
 function _tryDirectExtract(txt){
-const routeLinePat=new RegExp('\\b('+_FNCODES+')\\s*(\\d{3,5})\\s+([A-Z]{3})\\s*[-–—]\\s*([A-Z]{3})\\b','g');
+  const routeLinePat=new RegExp('\\b('+_FNCODES+')\\s*(\\d{3,5})\\s+([A-Z]{3})\\s*[-–—]\\s*([A-Z]{3})\\b','g');
   const routeLines=[];let rlm;
   while((rlm=routeLinePat.exec(txt))!==null){
     const fn=(rlm[1]+rlm[2]).replace(/\s/g,'');
     if(AIRPORTS[rlm[3]]&&AIRPORTS[rlm[4]]&&!routeLines.some(r2=>r2.fn===fn)){
-      // Grab the rest of the line for seat/baggage
       const lineEnd=txt.indexOf('\n',rlm.index);
       const lineText=txt.substring(rlm.index,lineEnd>0?lineEnd:rlm.index+200);
       routeLines.push({fn,code:rlm[1],from:rlm[3],to:rlm[4],pos:rlm.index,lineText});
     }
   }
-  if(routeLines.length>=2){
-    // Build legs directly from structured passenger section data
-    let pnr2='';
-    const pnrM2=txt.match(/(?:PNR|RESERVATION\s*CODE|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))\s*[:#]?\s*([A-Z0-9]{4,10})/i);
-    if(pnrM2)pnr2=pnrM2[1];
-    const ga=_matchAirlineName(txt);
-    const yrM2=txt.match(/\b(20[2-3]\d)\b/);
-    const yh=yrM2?parseInt(yrM2[1]):new Date().getFullYear();
-    const directLegs=[];
-    for(const rl of routeLines){
-      const leg={};
-      leg.flightNumber=rl.fn;
-      leg.from=AIRPORTS[rl.from];leg.fromCode=rl.from;
-      leg.to=AIRPORTS[rl.to];leg.toCode=rl.to;
-      leg.airline=AIRLINE_MAP[rl.code]||ga;
-      leg.pnr=pnr2;
-      // Extract seat from same line: "61H (Standard Seat)"
-      const seatM=rl.lineText.match(/\b(\d{1,3}[A-HJ-K])\b/);
-      if(seatM)leg.seat=seatM[1];
-      // Extract baggage from same line: "Free: 30 kg" or "30 kg"
-      const bagM=rl.lineText.match(/(\d+)\s*kg/i);
-      if(bagM)leg.baggage=bagM[1]+'kg';
-      // Find times: search full text for "FROM_CODE HH:MM" patterns
-      // Collect all occurrences and use Nth match (1st flight uses 1st occurrence, etc.)
-      const depTimeAll=[];const arrTimeAll=[];
-      const depRe=new RegExp('\\b'+rl.from+'\\s+(\\d{1,2}:\\d{2})','g');
-      let dtm;while((dtm=depRe.exec(txt))!==null)depTimeAll.push(dtm[1]);
-      const arrRe=new RegExp('\\b'+rl.to+'\\s+(\\d{1,2}:\\d{2})','g');
-      while((dtm=arrRe.exec(txt))!==null)arrTimeAll.push(dtm[1]);
-      const legIdx=directLegs.length;
-      if(depTimeAll.length>legIdx)leg.departureTime=depTimeAll[legIdx];
-      else if(depTimeAll.length>0)leg.departureTime=depTimeAll[0];
-      if(arrTimeAll.length>legIdx)leg.arrivalTime=arrTimeAll[legIdx];
-      else if(arrTimeAll.length>0)leg.arrivalTime=arrTimeAll[0];
-      // Find dates near this flight's airports in the full text
-      const datePatAll=[];
-      const dpRe=/(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/gi;
-      let dpm;while((dpm=dpRe.exec(txt))!==null){const pd=parseDate(dpm[0],yh);if(pd)datePatAll.push(pd);}
-      const uniqueDates=[...new Set(datePatAll)].sort();
-      // Assign dates: first leg gets first date, second leg gets a later date, etc.
-      if(uniqueDates.length>0){
-        // For first leg, use earliest date; for second leg use second unique date or later
-        if(legIdx===0)leg.date=uniqueDates[0];
-        else if(uniqueDates.length>1){
-          // Find a date different from first leg's date
-          const laterDates=uniqueDates.filter(d=>d>directLegs[0].date);
-          leg.date=laterDates.length>0?laterDates[0]:uniqueDates[uniqueDates.length-1];
-        }else leg.date=uniqueDates[0];
-      }
-      // Find arrival date for overnight flights
-      if(leg.arrivalTime&&leg.departureTime&&leg.date){
-        const depH=parseInt(leg.departureTime);const arrH=parseInt(leg.arrivalTime);
-        if(arrH<depH){// Likely overnight
-          const laterDates=uniqueDates.filter(d=>d>leg.date);
-          if(laterDates.length>0)leg.arrivalDate=laterDates[0];
-        }
-      }
-      // Duration: search for "Xhrs Ymins" or "Xh Ym" patterns near this flight
-      const durPats=[
-        /(\d+)\s*h(?:(?:ou)?rs?)?\s*(\d+)\s*m(?:in)?s?/gi
-      ];
-      for(const dp2 of durPats){
-        const durAll=[];let dum;
-        while((dum=dp2.exec(txt))!==null)durAll.push(dum[1]+'h '+dum[2]+'m');
-        if(durAll.length>legIdx)leg.duration=durAll[legIdx];
-        else if(durAll.length>0&&legIdx>0)leg.duration=durAll[durAll.length-1];
-        else if(durAll.length>0)leg.duration=durAll[0];
-      }
-      leg.name=`${leg.airline||''} ${leg.flightNumber}`.trim()+` (${leg.fromCode} → ${leg.toCode})`;
-      directLegs.push(leg);
+  if(routeLines.length<2)return null;
+  let pnr2='';
+  const pnrM2=txt.match(/(?:PNR|RESERVATION\s*CODE|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))\s*[:#]?\s*([A-Z0-9]{4,10})/i);
+  if(pnrM2)pnr2=pnrM2[1];
+  const ga=_matchAirlineName(txt);
+  const yrM2=txt.match(/\b(20[2-3]\d)\b/);
+  const yh=yrM2?parseInt(yrM2[1]):new Date().getFullYear();
+  const directLegs=[];
+  for(const rl of routeLines){
+    const leg={};
+    leg.flightNumber=rl.fn;
+    leg.from=AIRPORTS[rl.from];leg.fromCode=rl.from;
+    leg.to=AIRPORTS[rl.to];leg.toCode=rl.to;
+    leg.airline=AIRLINE_MAP[rl.code]||ga;
+    leg.pnr=pnr2;
+    const seatM=rl.lineText.match(/\b(\d{1,3}[A-HJ-K])\b/);
+    if(seatM)leg.seat=seatM[1];
+    const bagM=rl.lineText.match(/(\d+)\s*kg/i);
+    if(bagM)leg.baggage=bagM[1]+'kg';
+    const depTimeAll=[];const arrTimeAll=[];
+    const depRe=new RegExp('\\b'+rl.from+'\\s+(\\d{1,2}:\\d{2})','g');
+    let dtm;while((dtm=depRe.exec(txt))!==null)depTimeAll.push(dtm[1]);
+    const arrRe=new RegExp('\\b'+rl.to+'\\s+(\\d{1,2}:\\d{2})','g');
+    while((dtm=arrRe.exec(txt))!==null)arrTimeAll.push(dtm[1]);
+    const legIdx=directLegs.length;
+    if(depTimeAll.length>legIdx)leg.departureTime=depTimeAll[legIdx];
+    else if(depTimeAll.length>0)leg.departureTime=depTimeAll[0];
+    if(arrTimeAll.length>legIdx)leg.arrivalTime=arrTimeAll[legIdx];
+    else if(arrTimeAll.length>0)leg.arrivalTime=arrTimeAll[0];
+    const datePatAll=[];
+    const dpRe=/(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/gi;
+    let dpm;while((dpm=dpRe.exec(txt))!==null){const pd=parseDate(dpm[0],yh);if(pd)datePatAll.push(pd);}
+    const uniqueDates=[...new Set(datePatAll)].sort();
+    if(uniqueDates.length>0){
+      if(legIdx===0)leg.date=uniqueDates[0];
+      else if(uniqueDates.length>1){
+        const laterDates=uniqueDates.filter(d=>d>directLegs[0].date);
+        leg.date=laterDates.length>0?laterDates[0]:uniqueDates[uniqueDates.length-1];
+      }else leg.date=uniqueDates[0];
     }
-    return directLegs.length>=2?directLegs:null;
+    if(leg.arrivalTime&&leg.departureTime&&leg.date){
+      const depH=parseInt(leg.departureTime);const arrH=parseInt(leg.arrivalTime);
+      if(arrH<depH){const laterDates=uniqueDates.filter(d=>d>leg.date);if(laterDates.length>0)leg.arrivalDate=laterDates[0];}
+    }
+    const durPats=[/(\d+)\s*h(?:(?:ou)?rs?)?\s*(\d+)\s*m(?:in)?s?/gi];
+    for(const dp2 of durPats){
+      const durAll=[];let dum;
+      while((dum=dp2.exec(txt))!==null)durAll.push(dum[1]+'h '+dum[2]+'m');
+      if(durAll.length>legIdx)leg.duration=durAll[legIdx];
+      else if(durAll.length>0&&legIdx>0)leg.duration=durAll[durAll.length-1];
+      else if(durAll.length>0)leg.duration=durAll[0];
+    }
+    leg.name=`${leg.airline||''} ${leg.flightNumber}`.trim()+` (${leg.fromCode} → ${leg.toCode})`;
+    directLegs.push(leg);
   }
+  return directLegs.length>=2?directLegs:null;
 }
 function parseFlightSegments(txt){
   const t=txt.toUpperCase();
@@ -2557,7 +2607,7 @@ function parseFlightSegments(txt){
   console.log('parseFlightSegments: strategy='+_strat+', segments='+(segments?segments.length:'null'));
 
   // Strategy 7: Direct extraction from "SQ 237 SIN - MEL" patterns (passenger/seat section)
-  // This is the most reliable for airline booking confirmations where the itinerary table may be garbled
+  // Now extracted to _tryDirectExtract() so it can also be used as final fallback
   if(!segments||segments.length<2){
     const direct=_tryDirectExtract(txt);
     if(direct)return direct;
@@ -2651,6 +2701,8 @@ function parseFlightSegments(txt){
   }
   console.log('parseFlightSegments: segment parsing produced '+legs.length+' legs');
   if(legs.length>=2)return legs;
+  // Final fallback: Strategy 7 direct extraction (passenger section patterns)
+  // Runs here when earlier strategies found segments but per-segment parsing failed
   console.log('parseFlightSegments: falling back to direct extraction (Strategy 7)');
   return _tryDirectExtract(txt);
 }
@@ -2901,33 +2953,54 @@ function parseBookingText(rawTxt){
   return r;
 }
 
+// ===== PAYMENT TRACKING =====
+function paymentHtml(e){
+  e=e||{};
+  const hasPay=!!(e.depositAmount||e.depositDate||e.depositPaid||e.paymentDueDate||e.fullyPaid);
+  return `<button type="button" class="form-details-toggle${hasPay?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')" style="grid-column:1/-1"><span class="fdt-arrow">▶</span> Payment tracking</button>
+    <div class="form-details${hasPay?' open':''}" style="grid-column:1/-1"><div class="fg">
+      <div class="fi"><label>Deposit Amount</label><input class="fc" type="number" step="0.01" name="depositAmount" value="${e.depositAmount||''}"></div>
+      <div class="fi"><label>Deposit Date</label><input class="fc" type="date" name="depositDate" value="${e.depositDate||''}"></div>
+      <div class="fi"><label>Deposit Paid?</label><select class="fc" name="depositPaid"><option value=""${!e.depositPaid?' selected':''}>—</option><option value="yes"${e.depositPaid==='yes'?' selected':''}>Yes</option><option value="no"${e.depositPaid==='no'?' selected':''}>No</option></select></div>
+      <div class="fi"><label>Payment Due</label><input class="fc" type="date" name="paymentDueDate" value="${e.paymentDueDate||''}"></div>
+      <div class="fi"><label>Fully Paid?</label><select class="fc" name="fullyPaid"><option value=""${!e.fullyPaid?' selected':''}>—</option><option value="yes"${e.fullyPaid==='yes'?' selected':''}>Yes</option><option value="no"${e.fullyPaid==='no'?' selected':''}>No</option></select></div>
+    </div></div>`;
+}
+function gatherPayment(g){
+  return{depositAmount:g('depositAmount'),depositDate:g('depositDate'),depositPaid:g('depositPaid'),paymentDueDate:g('paymentDueDate'),fullyPaid:g('fullyPaid')};
+}
+
 // ===== FORM MODALS =====
-function fTrip(t){
+function fEvent(t){
   const e=!!t;t=t||{name:'',startDate:'',endDate:'',locations:[],sharedLink:'',notes:''};
-  modal(e?'Edit Trip':'New Trip',`<div class="fg">
-    <div class="fi full"><label>Trip Name</label><input class="fc" name="name" value="${esc(t.name)}"></div>
-    <div class="fi"><label>Start Date</label><input class="fc" type="date" name="sd" value="${t.startDate}"></div>
-    <div class="fi"><label>End Date</label><input class="fc" type="date" name="ed" value="${t.endDate}"></div>
+  modal(e?'Edit Event':'New Event',`<div class="fg">
+    <div class="fi full"><label>Event Name</label><input class="fc" name="name" value="${esc(t.name)}"></div>
+    <div class="fi"><label>Category</label><select class="fc" name="category"><option value="trip"${(t.category||'trip')==='trip'?' selected':''}>Trip</option><option value="activity"${t.category==='activity'?' selected':''}>Activity</option></select></div>
+    <div class="fi"><label>Requires Leave?</label><select class="fc" name="requiresLeave"><option value="true"${t.requiresLeave!==false?' selected':''}>Yes</option><option value="false"${t.requiresLeave===false?' selected':''}>No</option></select></div>
+    <div class="fi"><label>Start Date <span class="dow-hint" data-for="sd">${t.startDate?dayN(t.startDate):''}</span></label><input class="fc" type="date" name="sd" value="${t.startDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>Start Time</label><input class="fc" type="time" name="st" value="${t.startTime||''}"></div>
+    <div class="fi"><label>End Date <span class="dow-hint" data-for="ed">${t.endDate?dayN(t.endDate):''}</span></label><input class="fc" type="date" name="ed" value="${t.endDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>End Time</label><input class="fc" type="time" name="et" value="${t.endTime||''}"></div>
     <div class="fi full"><label>Locations (comma-separated)</label><input class="fc" name="locs" value="${esc(t.locations.join(', '))}"></div>
     <div class="fi full"><label>Shared Link</label><input class="fc" name="link" value="${esc(t.sharedLink||'')}"></div>
     <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(t.notes||'')}</textarea></div>
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
-    const d={name:g('name'),startDate:g('sd'),endDate:g('ed'),locations:g('locs').split(',').map(s=>s.trim()).filter(Boolean),sharedLink:g('link'),notes:g('notes'),year:parseInt(g('sd'))||new Date().getFullYear()};
-    if(e)Object.assign(t,d);else S.trips.push({id:uid(),hotels:[],flights:[],activities:[],transport:[],...d});
-    saveS();render();toast(e?'Trip updated':'Trip created');
+    const d={name:g('name'),category:g('category')||'trip',requiresLeave:g('requiresLeave')!=='false',startDate:g('sd'),startTime:g('st'),endDate:g('ed'),endTime:g('et'),locations:g('locs').split(',').map(s=>s.trim()).filter(Boolean),sharedLink:g('link'),notes:g('notes'),year:parseInt(g('sd'))||new Date().getFullYear()};
+    if(e)Object.assign(t,d);else S.events.push({id:uid(),hotels:[],flights:[],activities:[],transport:[],...d});
+    saveS();render();toast(e?'Event updated':'Event created');
   });
 }
 function calcNights(ci,co){if(!ci||!co)return'';const d=Math.round((new Date(co+'T00:00:00')-new Date(ci+'T00:00:00'))/864e5);return d>0?d:'';}
-function fHotel(trip,h){
-  const e=!!h;h=h||{name:'',bookingNumber:'',website:'',checkIn:'',checkOut:'',cost:'',currency:tripCur(trip),notes:'',ocrText:''};
+function fHotel(ev,h){
+  const e=!!h;h=h||{name:'',bookingNumber:'',website:'',checkIn:'',checkOut:'',cost:'',currency:eventCur(ev),notes:'',ocrText:''};
   const initNights=calcNights(h.checkIn,h.checkOut);
   const dz='h-'+uid();
   const hasDetails=!!(h.bookingNumber||h.website||h.cost||h.notes);
   modal(e?'Edit Hotel':'Add Hotel',`<div class="fg">
     <div class="fi full"><label>Hotel Name</label><input class="fc" name="name" value="${esc(h.name)}"></div>
-    <div class="fi"><label>Check-in</label><input class="fc" type="date" name="ci" value="${h.checkIn||''}"></div>
-    <div class="fi"><label>Check-out</label><input class="fc" type="date" name="co" value="${h.checkOut||''}"></div>
+    <div class="fi"><label>Check-in <span class="dow-hint">${h.checkIn?dayN(h.checkIn):''}</span></label><input class="fc" type="date" name="ci" value="${h.checkIn||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>Check-out <span class="dow-hint">${h.checkOut?dayN(h.checkOut):''}</span></label><input class="fc" type="date" name="co" value="${h.checkOut||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
     <div class="fi"><label>Nights</label><input class="fc" type="number" name="nights" min="1" value="${initNights}" placeholder="Auto-calculated"></div>
     <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
     <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
@@ -2937,12 +3010,13 @@ function fHotel(trip,h){
       <div class="fi"><label>Currency</label>${curSel(h.currency)}</div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(h.notes||'')}</textarea></div>
     </div></div>
+    ${paymentHtml(h)}
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={name:g('name'),bookingNumber:g('bn'),website:g('web'),checkIn:g('ci'),checkOut:g('co'),cost:g('cost'),currency:g('currency'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:h.ocrText)||''};
-    if(e)Object.assign(h,d);else trip.hotels.push({id:uid(),...d});
+    const d={name:g('name'),bookingNumber:g('bn'),website:g('web'),checkIn:g('ci'),checkOut:g('co'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:h.ocrText)||'',...gatherPayment(g)};
+    if(e)Object.assign(h,d);else ev.hotels.push({id:uid(),...d});
     saveS();render();toast(e?'Hotel updated':'Hotel added');
   });
   // Auto-calc nights ↔ dates
@@ -2956,8 +3030,8 @@ function fHotel(trip,h){
     ni.addEventListener('change',syncCo);
   },50);
 }
-function fFlight(trip,f){
-  const e=!!f;f=f||{airline:'',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',duration:'',from:'',to:'',cost:'',currency:tripCur(trip),notes:'',ocrText:''};
+function fFlight(ev,f){
+  const e=!!f;f=f||{airline:'',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',duration:'',from:'',to:'',cost:'',currency:eventCur(ev),notes:'',ocrText:''};
   const dz='f-'+uid();
   const hasDetails=!!(f.pnr||f.seat||f.duration||f.cost||f.notes||f.attachUrl);
   modal(e?'Edit Flight':'Add Flight',`<div class="fg">
@@ -2977,17 +3051,18 @@ function fFlight(trip,f){
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(f.notes||'')}</textarea></div>
       <div class="fi full"><label>Attachment URL</label><input class="fc" name="attach" value="${esc(f.attachUrl||'')}" placeholder="Link to doc, PDF, or image"></div>
     </div></div>
+    ${paymentHtml(f)}
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),duration:g('duration'),cost:g('cost'),currency:g('currency'),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||''};
-    if(e)Object.assign(f,d);else trip.flights.push({id:uid(),...d});
+    const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),duration:g('duration'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||'',...gatherPayment(g)};
+    if(e)Object.assign(f,d);else ev.flights.push({id:uid(),...d});
     // Add any pending multi-leg flights from OCR
     if(window._pendingFlightLegs&&window._pendingFlightLegs.length){
       const extra=window._pendingFlightLegs;
       window._pendingFlightLegs=null;
-      extra.forEach(leg=>trip.flights.push({id:uid(),...leg}));
+      extra.forEach(leg=>ev.flights.push({id:uid(),...leg}));
       saveS();render();toast((1+extra.length)+' flights added from scan');
     }else{saveS();render();toast(e?'Flight updated':'Flight added');}
   });
@@ -3006,16 +3081,16 @@ function fFlight(trip,f){
     arr.addEventListener('change',calcDur);
   },50);
 }
-function fAct(trip,a){
-  const e=!!a;a=a||{name:'',location:'',date:'',endDate:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:tripCur(trip),ocrText:''};
+function fAct(ev,a){
+  const e=!!a;a=a||{name:'',location:'',date:'',endDate:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:eventCur(ev),ocrText:''};
   const dz='a-'+uid();
   const initDays=(a.date&&a.endDate)?calcNights(a.date,a.endDate):'';
   const hasDetails=!!(a.time||a.duration||a.cost||a.bookingDetails||a.notes);
   modal(e?'Edit Activity':'Add Activity',`<div class="fg">
     <div class="fi full"><label>Name</label><input class="fc" name="name" value="${esc(a.name||'')}"></div>
     <div class="fi"><label>Location</label><input class="fc" name="loc" list="location-list" value="${esc(a.location||'')}" autocomplete="off"></div>
-    <div class="fi"><label>Start Date</label><input class="fc" type="date" name="date" value="${a.date||''}"></div>
-    <div class="fi"><label>End Date</label><input class="fc" type="date" name="endDate" value="${a.endDate||''}"></div>
+    <div class="fi"><label>Start Date <span class="dow-hint">${a.date?dayN(a.date):''}</span></label><input class="fc" type="date" name="date" value="${a.date||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>End Date <span class="dow-hint">${a.endDate?dayN(a.endDate):''}</span></label><input class="fc" type="date" name="endDate" value="${a.endDate||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
     <div class="fi"><label>Days</label><input class="fc" type="number" name="days" min="1" value="${initDays}" placeholder="Auto-calculated"></div>
     <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
     <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
@@ -3026,12 +3101,13 @@ function fAct(trip,a){
       <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(a.bookingDetails||'')}"></div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(a.notes||'')}</textarea></div>
     </div></div>
+    ${paymentHtml(a)}
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={name:g('name'),location:g('loc'),date:g('date'),endDate:g('endDate'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:a.ocrText)||''};
-    if(e)Object.assign(a,d);else trip.activities.push({id:uid(),...d});
+    const d={name:g('name'),location:g('loc'),date:g('date'),endDate:g('endDate'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:a.ocrText)||'',...gatherPayment(g)};
+    if(e)Object.assign(a,d);else ev.activities.push({id:uid(),...d});
     saveS();render();toast(e?'Activity updated':'Activity added');
   });
   // Auto-calc days ↔ dates
@@ -3045,8 +3121,8 @@ function fAct(trip,a){
     dy.addEventListener('change',syncEnd);
   },50);
 }
-function fTrans(trip,x){
-  const e=!!x;x=x||{type:'',name:'',location:'',date:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:tripCur(trip),ocrText:''};
+function fTrans(ev,x){
+  const e=!!x;x=x||{type:'',name:'',location:'',date:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:eventCur(ev),ocrText:''};
   const dz='t-'+uid();
   const types=['Train','Bus','Ferry','Car Rental','Taxi/Grab','Boat','Other'];
   const hasDetails=!!(x.duration||x.cost||x.bookingDetails||x.notes);
@@ -3054,7 +3130,7 @@ function fTrans(trip,x){
     <div class="fi"><label>Type</label><select class="fc" name="type">${types.map(tp=>`<option${tp===x.type?' selected':''}>${tp}</option>`).join('')}</select></div>
     <div class="fi"><label>Name / Provider</label><input class="fc" name="name" value="${esc(x.name||'')}"></div>
     <div class="fi"><label>Location</label><input class="fc" name="loc" list="location-list" value="${esc(x.location||'')}" autocomplete="off"></div>
-    <div class="fi"><label>Date</label><input class="fc" type="date" name="date" value="${x.date||''}"></div>
+    <div class="fi"><label>Date <span class="dow-hint">${x.date?dayN(x.date):''}</span></label><input class="fc" type="date" name="date" value="${x.date||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
     <div class="fi"><label>Time</label><input class="fc" type="time" name="time" value="${x.time||''}"></div>
     <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
     <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
@@ -3064,12 +3140,13 @@ function fTrans(trip,x){
       <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(x.bookingDetails||'')}"></div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(x.notes||'')}</textarea></div>
     </div></div>
+    ${paymentHtml(x)}
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={type:g('type'),name:g('name'),location:g('loc'),date:g('date'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:x.ocrText)||''};
-    if(e)Object.assign(x,d);else trip.transport.push({id:uid(),...d});
+    const d={type:g('type'),name:g('name'),location:g('loc'),date:g('date'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:x.ocrText)||'',...gatherPayment(g)};
+    if(e)Object.assign(x,d);else ev.transport.push({id:uid(),...d});
     saveS();render();toast(e?'Transport updated':'Transport added');
   });
 }
@@ -3089,20 +3166,21 @@ function bind(){
 
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-action]');if(!el)return;
-  const a=el.dataset.action,trip=S.trips.find(t=>t.id===S.tid);
+  const a=el.dataset.action,ev=S.events.find(t=>t.id===S.tid);
   switch(a){
     case 'nav':nav(el.dataset.to);break;
     case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
-    case 'add-trip':fTrip();break;
-    case 'export-trip':showExportModal(el.dataset.id);break;
-    case 'edit-trip':{const t=S.trips.find(x=>x.id===el.dataset.id);if(t)fTrip(t);break;}
-    case 'del-trip':{const delId=el.dataset.id;const delTrip=S.trips.find(t=>t.id===delId);if(delTrip){const bc=(delTrip.flights||[]).length+(delTrip.hotels||[]).length+(delTrip.activities||[]).length+(delTrip.transport||[]).length;modal('Delete Trip',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delTrip.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.trips.indexOf(delTrip);S.trips.splice(idx,1);saveS();nav('trips');toast('Trip deleted');},{saveLabel:'Delete',danger:true});}}break;
+    case 'add-event':fEvent();break;
+    case 'export-event':showExportModal(el.dataset.id);break;
+    case 'edit-event':{const t=S.events.find(x=>x.id===el.dataset.id);if(t)fEvent(t);break;}
+    case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
-    case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;saveS();render();break;
+    case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;S._catFilter='all';saveS();render();break;
+    case 'cat-filter':S._catFilter=el.dataset.cat||'all';S.tfY=null;saveS();render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
     case 'aly':{const y=prompt('Year:');if(y&&parseInt(y)){S.leave[parseInt(y)]={jobs:[{employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0}],holidays:[]};S.ly=parseInt(y);saveS();render();}break;}
     case 'add-job':{const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[],holidays:[],applied:[]};if(!S.leave[y].jobs)S.leave[y]=migrateLeaveJobs(S.leave[y]);S.leave[y].jobs.push({employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0});saveS();render();break;}
-    case 'del-job':{const y=S.ly||2026;const ji=parseInt(el.dataset.ji);if(S.leave[y]&&S.leave[y].jobs&&S.leave[y].jobs.length>1){S.leave[y].jobs.splice(ji,1);saveS();render();}break;}
+    case 'del-job':{const y=S.ly||2026;const ji=parseInt(el.dataset.ji);if(S.leave[y]&&S.leave[y].jobs&&S.leave[y].jobs.length>0){S.leave[y].jobs.splice(ji,1);saveS();render();}break;}
     case 'add-applied':{const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[{employer:'',al:0,bp:0,ot:0,ph:0,taken:0}],holidays:[],applied:[]};if(!S.leave[y].applied)S.leave[y].applied=[];
       modal('Add Leave Applied',`<div class="fg">
         <div class="fi"><label>From</label><input class="fc" type="date" name="la-from"></div>
@@ -3110,19 +3188,19 @@ document.addEventListener('click',e=>{
         <div class="fi full"><label>Note</label><input class="fc" name="la-note" placeholder="e.g. Japan trip, Sick leave"></div>
       </div>`,()=>{const m=document.querySelector('.modal');const f=m.querySelector('[name="la-from"]').value;const t=m.querySelector('[name="la-to"]').value;const n=m.querySelector('[name="la-note"]').value;if(f){S.leave[y].applied.push({from:f,to:t||f,note:n});saveS();render();toast('Leave added');}});break;}
     case 'del-applied':{const y=S.ly||2026;const ai=parseInt(el.dataset.ai);if(S.leave[y]&&S.leave[y].applied){const entry=S.leave[y].applied[ai];S.leave[y].applied.splice(ai,1);saveS();render();toastUndo('Leave entry removed',()=>{S.leave[y].applied.splice(ai,0,entry);saveS();render();});}break;}
-    case 'add-flight':if(trip)fFlight(trip);break;
-    case 'edit-flight':{if(trip){const f=trip.flights.find(x=>x.id===el.dataset.eid);if(f)fFlight(trip,f);}break;}
-    case 'del-flight':{if(trip){const eid=el.dataset.eid;const entry=trip.flights.find(x=>x.id===eid);if(entry){const idx=trip.flights.indexOf(entry);trip.flights.splice(idx,1);saveS();render();toastUndo('Flight deleted',()=>{trip.flights.splice(idx,0,entry);saveS();render();});}}}break;
-    case 'dup-flight':{if(trip){const f=trip.flights.find(x=>x.id===el.dataset.eid);if(f){const dup={...f,id:uid(),from:f.to,to:f.from,departureTime:'',arrivalTime:'',duration:'',flightNumber:'',seat:'',notes:'Return flight'};fFlight(trip,dup);}}}break;
-    case 'add-hotel':if(trip)fHotel(trip);break;
-    case 'edit-hotel':{if(trip){const h=trip.hotels.find(x=>x.id===el.dataset.eid);if(h)fHotel(trip,h);}break;}
-    case 'del-hotel':{if(trip){const eid=el.dataset.eid;const entry=trip.hotels.find(x=>x.id===eid);if(entry){const idx=trip.hotels.indexOf(entry);trip.hotels.splice(idx,1);saveS();render();toastUndo('Hotel deleted',()=>{trip.hotels.splice(idx,0,entry);saveS();render();});}}}break;
-    case 'add-act':if(trip)fAct(trip);break;
-    case 'edit-act':{if(trip){const x=trip.activities.find(x=>x.id===el.dataset.eid);if(x)fAct(trip,x);}break;}
-    case 'del-act':{if(trip){const eid=el.dataset.eid;const entry=trip.activities.find(x=>x.id===eid);if(entry){const idx=trip.activities.indexOf(entry);trip.activities.splice(idx,1);saveS();render();toastUndo('Activity deleted',()=>{trip.activities.splice(idx,0,entry);saveS();render();});}}}break;
-    case 'add-trans':if(trip)fTrans(trip);break;
-    case 'edit-trans':{if(trip){const x=trip.transport.find(x=>x.id===el.dataset.eid);if(x)fTrans(trip,x);}break;}
-    case 'del-trans':{if(trip){const eid=el.dataset.eid;const entry=trip.transport.find(x=>x.id===eid);if(entry){const idx=trip.transport.indexOf(entry);trip.transport.splice(idx,1);saveS();render();toastUndo('Transport deleted',()=>{trip.transport.splice(idx,0,entry);saveS();render();});}}}break;
+    case 'add-flight':if(ev)fFlight(ev);break;
+    case 'edit-flight':{if(ev){const f=ev.flights.find(x=>x.id===el.dataset.eid);if(f)fFlight(ev,f);}break;}
+    case 'del-flight':{if(ev){const eid=el.dataset.eid;const entry=ev.flights.find(x=>x.id===eid);if(entry){const idx=ev.flights.indexOf(entry);ev.flights.splice(idx,1);saveS();render();toastUndo('Flight deleted',()=>{ev.flights.splice(idx,0,entry);saveS();render();});}}}break;
+    case 'dup-flight':{if(ev){const f=ev.flights.find(x=>x.id===el.dataset.eid);if(f){const dup={...f,id:uid(),from:f.to,to:f.from,departureTime:'',arrivalTime:'',duration:'',flightNumber:'',seat:'',notes:'Return flight'};fFlight(ev,dup);}}}break;
+    case 'add-hotel':if(ev)fHotel(ev);break;
+    case 'edit-hotel':{if(ev){const h=ev.hotels.find(x=>x.id===el.dataset.eid);if(h)fHotel(ev,h);}break;}
+    case 'del-hotel':{if(ev){const eid=el.dataset.eid;const entry=ev.hotels.find(x=>x.id===eid);if(entry){const idx=ev.hotels.indexOf(entry);ev.hotels.splice(idx,1);saveS();render();toastUndo('Hotel deleted',()=>{ev.hotels.splice(idx,0,entry);saveS();render();});}}}break;
+    case 'add-act':if(ev)fAct(ev);break;
+    case 'edit-act':{if(ev){const x=ev.activities.find(x=>x.id===el.dataset.eid);if(x)fAct(ev,x);}break;}
+    case 'del-act':{if(ev){const eid=el.dataset.eid;const entry=ev.activities.find(x=>x.id===eid);if(entry){const idx=ev.activities.indexOf(entry);ev.activities.splice(idx,1);saveS();render();toastUndo('Activity deleted',()=>{ev.activities.splice(idx,0,entry);saveS();render();});}}}break;
+    case 'add-trans':if(ev)fTrans(ev);break;
+    case 'edit-trans':{if(ev){const x=ev.transport.find(x=>x.id===el.dataset.eid);if(x)fTrans(ev,x);}break;}
+    case 'del-trans':{if(ev){const eid=el.dataset.eid;const entry=ev.transport.find(x=>x.id===eid);if(entry){const idx=ev.transport.indexOf(entry);ev.transport.splice(idx,1);saveS();render();toastUndo('Transport deleted',()=>{ev.transport.splice(idx,0,entry);saveS();render();});}}}break;
     case 'xm':xm();break;
     case 'cal-prev':if(S.calM===0){S.calM=11;S.calY--;}else S.calM--;saveS();render();break;
     case 'cal-next':if(S.calM===11){S.calM=0;S.calY++;}else S.calM++;saveS();render();break;
@@ -3131,16 +3209,16 @@ document.addEventListener('click',e=>{
     case 'ics-all':generateICS();break;
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
     case 'export-csv':{
-      const csvRows=[['Trip','Start','End','Locations','Days','Flights','Hotels','Activities','Transport','Total Cost (SGD)']];
-      S.trips.sort((a2,b2)=>a2.startDate.localeCompare(b2.startDate)).forEach(t2=>{
+      const csvRows=[['Event','Start','End','Locations','Days','Flights','Hotels','Activities','Transport','Total Cost (SGD)']];
+      S.events.sort((a2,b2)=>a2.startDate.localeCompare(b2.startDate)).forEach(t2=>{
         const d2=days(t2.startDate,t2.endDate);
         const csvEsc=v=>{const s=String(v||'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
-        csvRows.push([csvEsc(t2.name),t2.startDate,t2.endDate,csvEsc(t2.locations.join('; ')),d2,(t2.flights||[]).length,(t2.hotels||[]).length,(t2.activities||[]).length,(t2.transport||[]).length,tCost(t2).toFixed(2)]);
+        csvRows.push([csvEsc(t2.name),t2.startDate,t2.endDate,csvEsc(t2.locations.join('; ')),d2,(t2.flights||[]).length,(t2.hotels||[]).length,(t2.activities||[]).length,(t2.transport||[]).length,eCost(t2).toFixed(2)]);
       });
       const csvStr=csvRows.map(r=>r.join(',')).join('\n');
-      const b3=new Blob([csvStr],{type:'text/csv'});const a3=document.createElement('a');a3.href=URL.createObjectURL(b3);a3.download='holiday-tracker-trips.csv';a3.click();toast('CSV exported');break;}
+      const b3=new Blob([csvStr],{type:'text/csv'});const a3=document.createElement('a');a3.href=URL.createObjectURL(b3);a3.download='holiday-tracker-events.csv';a3.click();toast('CSV exported');break;}
     case 'import':document.getElementById('imp-f').click();break;
-    case 'reset':if(confirm('Reset ALL data? This cannot be undone.')){localStorage.removeItem('htV3');localStorage.removeItem('htV4');S=defS();saveS();render();toast('Data reset');}break;
+    case 'reset':if(confirm('Reset ALL data? This cannot be undone.')){localStorage.removeItem('htV4');localStorage.removeItem('htV5');S=defS();saveS();render();toast('Data reset');}break;
     case 'sync-connect':connectSync();break;
     case 'dash-sync-connect':connectSyncFromDash();break;
     case 'sync-disconnect':disconnectSync();break;
@@ -3149,24 +3227,24 @@ document.addEventListener('click',e=>{
     case 'sync-push':pushToGist().then(()=>toast('Pushed to cloud'));break;
     case 'sync-pull':pullFromGist().then(pulled=>{if(pulled)toast('Pulled from cloud');else toast('Already up to date');});break;
     case 'entry-sort-dir':sortDir=sortDir==='asc'?'desc':'asc';render();break;
-    case 'trip-sort-dir':tripSortDir=tripSortDir==='asc'?'desc':'asc';render();break;
+    case 'event-sort-dir':eventSortDir=eventSortDir==='asc'?'desc':'asc';render();break;
   }
 });
 
 document.addEventListener('change',e=>{
   if(e.target.matches('[data-action="entry-sort-key"]')){sortKey=e.target.value;render();}
-  if(e.target.matches('[data-action="trip-sort-key"]')){tripSortKey=e.target.value;render();}
+  if(e.target.matches('[data-action="event-sort-key"]')){eventSortKey=e.target.value;render();}
   if(e.target.matches('[data-action="tp-change"]')){S._tp=e.target.value;saveS();render();}
   if(e.target.matches('[data-action="tp-from"]')){S._tpFrom=e.target.value;saveS();render();}
   if(e.target.matches('[data-action="tp-to"]')){S._tpTo=e.target.value;saveS();render();}
 });
 
-document.addEventListener('change',e=>{if(e.target.id==='imp-f'&&e.target.files.length){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.trips){S=d;saveS();render();toast('Imported');}}catch(e2){toast('Error');}};r.readAsText(e.target.files[0]);}});
+document.addEventListener('change',e=>{if(e.target.id==='imp-f'&&e.target.files.length){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.events||d.trips){if(d.trips&&!d.events){d.events=d.trips.map(t=>({...t,category:'trip',requiresLeave:true}));delete d.trips;}S=d;saveS();render();toast('Imported');}}catch(e2){toast('Error');}};r.readAsText(e.target.files[0]);}});
 // Search input handler
 document.addEventListener('input',e=>{
-  if(e.target.matches('[data-action="search-trips"]')){S._searchQ=e.target.value;render();
+  if(e.target.matches('[data-action="search-events"]')){S._searchQ=e.target.value;render();
     // Re-focus after render
-    setTimeout(()=>{const inp=document.querySelector('[data-action="search-trips"]');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}},10);
+    setTimeout(()=>{const inp=document.querySelector('[data-action="search-events"]');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}},10);
   }
 });
 
@@ -3176,14 +3254,14 @@ document.addEventListener('keydown',e=>{
   // Don't trigger shortcuts when typing in inputs
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
   if(e.key==='1')nav('dashboard');
-  else if(e.key==='2')nav('trips');
+  else if(e.key==='2')nav('events');
   else if(e.key==='3')nav('calendar');
   else if(e.key==='4')nav('leave');
   else if(e.key==='5')nav('budget');
   else if(e.key==='6')nav('settings');
-  else if(e.key==='n'&&!e.ctrlKey&&!e.metaKey)fTrip();
+  else if(e.key==='n'&&!e.ctrlKey&&!e.metaKey)fEvent();
   else if(e.key==='u'&&!e.ctrlKey&&!e.metaKey)showSmartUpload();
-  else if(e.key==='/'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();const si=document.querySelector('[data-action="search-trips"]');if(si)si.focus();else nav('trips');}
+  else if(e.key==='/'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();const si=document.querySelector('[data-action="search-events"]');if(si)si.focus();else nav('events');}
 });
 
 // Hamburger
