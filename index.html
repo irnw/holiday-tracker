@@ -195,6 +195,7 @@ textarea.fc{resize:vertical;min-height:50px}
 .tag-o{background:var(--orange-dim);color:var(--orange)}
 
 /* ========== YEAR TABS ========== */
+.cat-group{margin-bottom:24px}.cat-group-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .ytabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
 .yt{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text3);border:1px solid var(--glass-border);transition:all .15s}
 .yt:hover{border-color:var(--text3);color:var(--text2)}.yt.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 16px rgba(59,130,246,.25)}
@@ -398,6 +399,16 @@ const CUR=['SGD','MYR','USD','IDR','EUR','JPY','THB','PHP','AUD','GBP','CNY','MV
 const DRATES={SGD:1,MYR:0.284,USD:1.34,IDR:0.0000847,EUR:1.46,JPY:0.0089,THB:0.038,PHP:0.024,AUD:0.87,GBP:1.70,CNY:0.185,MVR:0.087,EGP:0.027,TWD:0.042,KRW:0.00098};
 const EVENT_COLORS=['#6c8cff','#ff6b6b','#4ade80','#fb923c','#a78bfa','#f472b6','#22d3ee','#facc15','#34d399','#f87171'];
 const ACT_COLORS=['#f472b6','#c084fc','#fb923c','#facc15','#22d3ee','#34d399','#a78bfa','#f87171','#6c8cff','#4ade80'];
+const CATEGORIES=[
+  {id:'trip',label:'Trip',color:'#6c8cff'},
+  {id:'work',label:'Work',color:'#fb923c'},
+  {id:'training',label:'Training',color:'#a78bfa'},
+  {id:'social',label:'Social',color:'#f472b6'},
+  {id:'personal',label:'Personal',color:'#4ade80'},
+  {id:'activity',label:'Activity',color:'#22d3ee'}
+];
+function catColor(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.color:'#6c8cff';}
+function catLabel(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.label:c||'Trip';}
 const NAVS=[
   {id:'dashboard',label:'Dashboard',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>'},
   {id:'events',label:'Events',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>'},
@@ -915,7 +926,7 @@ function allCost(){return S.events.reduce((s,t)=>s+eCost(t),0);}
 function upcoming(){const td=new Date().toISOString().slice(0,10);return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
 function past(){const td=new Date().toISOString().slice(0,10);return S.events.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
-function eColor(t){const pal=t.category==='activity'?ACT_COLORS:EVENT_COLORS;return pal[(t.name||'').length%pal.length];}
+function eColor(t){return catColor(t.category||'trip');}
 
 // ===== SORT STATE =====
 let sortKey='date',sortDir='asc';// Applies to event detail entries
@@ -1162,41 +1173,57 @@ function vDash(){
 }
 
 // ===== TRIPS LIST =====
+function eventCardHtml(t){
+  const st=eventStatus(t);
+  const cc=catColor(t.category||'trip');
+  return`<div class="trip-card" data-action="view" data-id="${t.id}">
+    <div class="trip-accent" style="background:${cc}"></div>
+    <div class="trip-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px"><span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
+      <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
+      <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}</div>
+      <div class="trip-foot">
+        <span><b>${days(t.startDate,t.endDate)}</b> days</span>
+        <span><b>${nights(t.startDate,t.endDate)}</b> nights</span>
+        <span><b>${(t.flights||[]).length}</b> flights</span>
+        <span><b>${(t.hotels||[]).length}</b> hotels</span>
+        ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> SGD</span>`:''}
+      </div>
+    </div>
+  </div>`;
+}
 function vEvents(){
   const yrs=[...new Set(S.events.map(t=>t.year||new Date(t.startDate).getFullYear()))].sort((a,b)=>b-a);
   const q=(S._searchQ||'').toLowerCase();
   const catF=S._catFilter||'all';
+  const grouped=S._catGroup||false;
   let filtered=tpFilter(S.events).filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY);
   if(catF!=='all')filtered=filtered.filter(t=>(t.category||'trip')===catF);
   if(q)filtered=filtered.filter(t=>t.name.toLowerCase().includes(q)||t.locations.some(l=>l.toLowerCase().includes(q))||(t.notes||'').toLowerCase().includes(q));
   filtered=sortEvents(filtered);
+  const usedCats=[...new Set(S.events.map(t=>t.category||'trip'))];
+  const catTabs=CATEGORIES.filter(c=>usedCats.includes(c.id));
+  let gridHtml='';
+  if(grouped&&catF==='all'){
+    const groups={};
+    filtered.forEach(t=>{const c=t.category||'trip';if(!groups[c])groups[c]=[];groups[c].push(t);});
+    const orderedCats=CATEGORIES.filter(c=>groups[c.id]);
+    gridHtml=orderedCats.map(cat=>`<div class="cat-group"><div class="cat-group-header"><div style="width:10px;height:10px;border-radius:3px;background:${cat.color}"></div><span style="font-weight:600;font-size:13px">${cat.label}</span><span style="color:var(--text3);font-size:11px">${groups[cat.id].length} event${groups[cat.id].length!==1?'s':''}</span></div><div class="trip-grid">${groups[cat.id].map(t=>eventCardHtml(t)).join('')}</div></div>`).join('');
+  }else{
+    gridHtml=`<div class="trip-grid">${filtered.map(t=>eventCardHtml(t)).join('')}</div>`;
+  }
   return `
   <div class="page-header"><div><h2>My Events</h2><div class="subtitle">${filtered.length} of ${S.events.length} events</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}<button class="btn btn-p" data-action="add-event">+ New Event</button></div></div>
   <div class="page-content">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      <div class="ytabs" style="margin-bottom:0"><div class="yt${!S.tfY&&catF==='all'?' active':''}" data-action="fy" data-y="">All</div><div class="yt${catF==='trip'?' active':''}" data-action="cat-filter" data-cat="trip">Trips</div><div class="yt${catF==='activity'?' active':''}" data-action="cat-filter" data-cat="activity">Activities</div><span style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>${yrs.map(y=>`<div class="yt${S.tfY==y&&catF==='all'?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
+      <div class="ytabs" style="margin-bottom:0"><div class="yt${!S.tfY&&catF==='all'?' active':''}" data-action="fy" data-y="">All</div>${catTabs.map(c=>`<div class="yt${catF===c.id?' active':''}" data-action="cat-filter" data-cat="${c.id}" style="${catF===c.id?'background:'+c.color+';border-color:'+c.color:''}"><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${c.color};margin-right:4px"></span>${c.label}</div>`).join('')}<span style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>${yrs.map(y=>`<div class="yt${S.tfY==y&&catF==='all'?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="yt${grouped?' active':''}" data-action="cat-group" style="font-size:11px;padding:4px 10px;cursor:pointer" title="Group by category"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6"/></svg> Group</div>
         <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search events…" value="${esc(S._searchQ||'')}" data-action="search-events"></div>
         ${sortCtrlHtml('event',eventSortKey,eventSortDir)}
       </div>
     </div>
-    <div class="trip-grid">${filtered.map(t=>{const st=eventStatus(t);return`
-      <div class="trip-card" data-action="view" data-id="${t.id}">
-        <div class="trip-accent" style="background:linear-gradient(90deg,${eColor(t)},${EVENT_COLORS[((t.name||'').length+3)%EVENT_COLORS.length]})"></div>
-        <div class="trip-body">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px">${t.category==='activity'?'<span class="tag tag-o" style="font-size:9px">Activity</span>':''}<span class="badge badge-${st}">${st}</span></div></div>
-          <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
-          <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}</div>
-          <div class="trip-foot">
-            <span><b>${days(t.startDate,t.endDate)}</b> days</span>
-            <span><b>${nights(t.startDate,t.endDate)}</b> nights</span>
-            <span><b>${(t.flights||[]).length}</b> flights</span>
-            <span><b>${(t.hotels||[]).length}</b> hotels</span>
-            ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> SGD</span>`:''}
-          </div>
-        </div>
-      </div>`;}).join('')}
-    </div>
+    ${gridHtml}
     ${!filtered.length?'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No events found</p><p style="font-size:11px;color:var(--text3)">Try a different search or filter</p></div>':''}
   </div>`;
 }
@@ -2975,7 +3002,7 @@ function fEvent(t){
   const e=!!t;t=t||{name:'',startDate:'',endDate:'',locations:[],sharedLink:'',notes:''};
   modal(e?'Edit Event':'New Event',`<div class="fg">
     <div class="fi full"><label>Event Name</label><input class="fc" name="name" value="${esc(t.name)}"></div>
-    <div class="fi"><label>Category</label><select class="fc" name="category"><option value="trip"${(t.category||'trip')==='trip'?' selected':''}>Trip</option><option value="activity"${t.category==='activity'?' selected':''}>Activity</option></select></div>
+    <div class="fi"><label>Category</label><select class="fc" name="category">${CATEGORIES.map(c=>`<option value="${c.id}"${(t.category||'trip')===c.id?' selected':''}>${c.label}</option>`).join('')}</select></div>
     <div class="fi"><label>Requires Leave?</label><select class="fc" name="requiresLeave"><option value="true"${t.requiresLeave!==false?' selected':''}>Yes</option><option value="false"${t.requiresLeave===false?' selected':''}>No</option></select></div>
     <div class="fi"><label>Start Date <span class="dow-hint" data-for="sd">${t.startDate?dayN(t.startDate):''}</span></label><input class="fc" type="date" name="sd" value="${t.startDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
     <div class="fi"><label>Start Time</label><input class="fc" type="time" name="st" value="${t.startTime||''}"></div>
@@ -3177,6 +3204,7 @@ document.addEventListener('click',e=>{
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
     case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;S._catFilter='all';saveS();render();break;
     case 'cat-filter':S._catFilter=el.dataset.cat||'all';S.tfY=null;saveS();render();break;
+    case 'cat-group':S._catGroup=!S._catGroup;saveS();render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
     case 'aly':{const y=prompt('Year:');if(y&&parseInt(y)){S.leave[parseInt(y)]={jobs:[{employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0}],holidays:[]};S.ly=parseInt(y);saveS();render();}break;}
     case 'add-job':{const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[],holidays:[],applied:[]};if(!S.leave[y].jobs)S.leave[y]=migrateLeaveJobs(S.leave[y]);S.leave[y].jobs.push({employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0});saveS();render();break;}
