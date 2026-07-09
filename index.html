@@ -1511,7 +1511,7 @@ function vLeave(){
     </div>
 
     ${jobs.map((j,i)=>`
-    <div class="card" style="margin-bottom:12px"><div class="card-header"><h3>${j.employer||'Job '+(i+1)}${j.startDate||j.endDate?' <span style="font-weight:400;font-size:11px;color:var(--text3)">'+(j.startDate?fmtS(j.startDate):'?')+' — '+(j.endDate?fmtS(j.endDate):'present')+'</span>':''}</h3>`<button class="btn btn-ghost" style="color:var(--accent);font-size:11px" data-action="del-job" data-ji="${i}">Remove</button>`</div><div class="card-body">
+    <div class="card" style="margin-bottom:12px"><div class="card-header"><h3>${j.employer||'Job '+(i+1)}${j.startDate||j.endDate?' <span style="font-weight:400;font-size:11px;color:var(--text3)">'+(j.startDate?fmtS(j.startDate):'?')+' — '+(j.endDate?fmtS(j.endDate):'present')+'</span>':''}</h3><button class="btn btn-ghost" style="color:var(--accent);font-size:11px" data-action="del-job" data-ji="${i}">Remove</button></div><div class="card-body">
       <div class="fg">
         <div class="fi"><label>Employer</label><input class="fc" data-lj="${i}" data-jf="employer" value="${esc(j.employer||'')}"></div>
         <div class="fi"><label>Start Date</label><input class="fc" type="date" data-lj="${i}" data-jf="startDate" value="${j.startDate||''}"></div>
