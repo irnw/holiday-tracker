@@ -642,9 +642,29 @@ function setSyncConfig(c){try{localStorage.setItem('htSync',JSON.stringify(c));}
 // Parse URL hash for device linking: #gist=GIST_ID
 (function(){const h=location.hash;if(h.startsWith('#gist=')){const gid=h.slice(6);if(gid){const c=getSyncConfig();if(!c.gistId){c.gistId=gid;setSyncConfig(c);}}history.replaceState(null,'',location.pathname+location.search);}})();
 
+// Backup current state before any sync overwrite
+function backupBeforeSync(){
+  try{
+    const cur=localStorage.getItem('htV5');
+    if(cur)localStorage.setItem('htV5_backup',cur);
+    localStorage.setItem('htV5_backup_ts',new Date().toISOString());
+  }catch(e){}
+}
+// Merge remote events into local — never deletes local events missing from remote
+function mergeEvents(local,remote){
+  const merged=[...local];
+  const localIds=new Set(local.map(e=>e.id));
+  for(const re of remote){
+    const idx=merged.findIndex(e=>e.id===re.id);
+    if(idx>=0){merged[idx]=re;} // update existing
+    else{merged.push(re);} // add new from remote
+  }
+  return merged;
+}
+let _appErrorState=false; // set true if app hits runtime error
 let _syncTimer=null;
 function debouncedSync(){
-  if(!getSyncConfig().token)return;
+  if(!getSyncConfig().token||_appErrorState)return;
   clearTimeout(_syncTimer);
   _syncTimer=setTimeout(()=>pushToGist(),3000);
 }
@@ -686,6 +706,9 @@ async function findExistingGist(){
 
 async function pushToGist(retried){
   const c=getSyncConfig();if(!c.token)return;
+  // Guard: don't push if app errored or events suspiciously empty
+  if(_appErrorState){console.warn('Push blocked: app in error state');return;}
+  if((S.events||[]).length===0){console.warn('Push blocked: empty events array');return;}
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)}}};
   try{
@@ -733,7 +756,9 @@ async function pullFromGist(retried){
     if(!gist||!gist.files||!gist.files[GIST_FILE])return false;
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
-      S.events=remote.events||S.events;
+      backupBeforeSync();
+      const remoteEvts=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});
+      S.events=mergeEvents(S.events||[],remoteEvts);
       S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;
       S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
@@ -769,7 +794,10 @@ async function fullSync(retried){
     if(gist&&gist.files&&gist.files[GIST_FILE]){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
       if(remote.lastModified&&remote.lastModified>S.lastModified){
-        S.events=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});S.leave=remote.leave||S.leave;
+        backupBeforeSync();
+        const remoteEvts=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});
+        S.events=mergeEvents(S.events||[],remoteEvts);
+        S.leave=remote.leave||S.leave;
         S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
         S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified;
         try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
@@ -807,8 +835,10 @@ async function connectSync(){
       ensureGistPublic(existing.id);
       const fullGist=await gistAPI('/gists/'+existing.id);
       const remote=JSON.parse(fullGist.files[GIST_FILE].content);
-      // First-time connect: always pull from cloud (cloud is source of truth)
-      S.events=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});S.leave=remote.leave||S.leave;
+      // First-time connect: merge cloud with local (never lose local data)
+      backupBeforeSync();
+      const remoteEvts=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});
+      S.events=mergeEvents(S.events||[],remoteEvts);S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
@@ -1085,7 +1115,7 @@ function render(){
       case 'settings':a.innerHTML=vSettings();break;
       default:a.innerHTML=vDash();
     }
-  }catch(e){console.error('View error:',e);a.innerHTML='<div style="padding:40px;color:#ff6b6b"><h2>Error</h2><pre style="margin-top:12px;font-size:12px;white-space:pre-wrap;color:#e8e9ed">'+e.message+'\n'+e.stack+'</pre><button onclick="localStorage.removeItem(\'htV4\');localStorage.removeItem(\'htV3\');location.reload()" style="margin-top:16px;padding:8px 16px;background:#6c8cff;color:#fff;border:none;border-radius:8px;cursor:pointer">Reset &amp; Reload</button></div>';}
+  }catch(e){console.error('View error:',e);_appErrorState=true;stopSyncPolling();a.innerHTML='<div style="padding:40px;color:#ff6b6b"><h2>Error</h2><pre style="margin-top:12px;font-size:12px;white-space:pre-wrap;color:#e8e9ed">'+e.message+'\n'+e.stack+'</pre><p style="margin-top:8px;font-size:11px;color:var(--text3)">Sync has been paused to prevent data loss.</p><button onclick="localStorage.removeItem(\'htV4\');localStorage.removeItem(\'htV3\');location.reload()" style="margin-top:16px;padding:8px 16px;background:#6c8cff;color:#fff;border:none;border-radius:8px;cursor:pointer">Reset &amp; Reload</button></div>';}
   try{bind();}catch(e){console.error('Bind error:',e);}
   initPdfJs();
 }
@@ -1726,6 +1756,7 @@ function vSettings(){
       <button class="btn btn-s" data-action="export">Export JSON</button>
       <button class="btn btn-s" data-action="export-csv">Export CSV</button>
       <button class="btn btn-s" data-action="import">Import JSON</button>
+      ${localStorage.getItem('htV5_backup')?`<button class="btn btn-s" data-action="restore-backup" style="border-color:var(--orange);color:var(--orange)">Restore Backup <span style="font-size:9px;opacity:.7">(${localStorage.getItem('htV5_backup_ts')||'unknown'})</span></button>`:''}
       <button class="btn btn-d" data-action="reset">Reset All Data</button>
       <input type="file" id="imp-f" accept=".json" style="display:none">
     </div></div>
@@ -3246,6 +3277,7 @@ document.addEventListener('click',e=>{
       const csvStr=csvRows.map(r=>r.join(',')).join('\n');
       const b3=new Blob([csvStr],{type:'text/csv'});const a3=document.createElement('a');a3.href=URL.createObjectURL(b3);a3.download='holiday-tracker-events.csv';a3.click();toast('CSV exported');break;}
     case 'import':document.getElementById('imp-f').click();break;
+    case 'restore-backup':{const bk=localStorage.getItem('htV5_backup');const bkTs=localStorage.getItem('htV5_backup_ts')||'unknown';if(bk&&confirm('Restore backup from '+bkTs+'? This will merge backup events with current data.')){try{const bd=JSON.parse(bk);if(bd.events){S.events=mergeEvents(S.events||[],bd.events);S.lastModified=Date.now();saveS();render();pushToGist();toast('Restored '+(bd.events||[]).length+' events from backup');}}catch(e2){toast('Backup corrupted');}}break;}
     case 'reset':if(confirm('Reset ALL data? This cannot be undone.')){localStorage.removeItem('htV4');localStorage.removeItem('htV5');S=defS();saveS();render();toast('Data reset');}break;
     case 'sync-connect':connectSync();break;
     case 'dash-sync-connect':connectSyncFromDash();break;
