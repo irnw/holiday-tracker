@@ -223,6 +223,12 @@ textarea.fc{resize:vertical;min-height:50px}
 .country-item.visited{background:rgba(108,140,255,.08);border-color:rgba(108,140,255,.2);color:var(--text)}
 .country-item .ci-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .country-item.visited .ci-check{background:var(--primary);border-color:var(--primary)}
+.region-section{margin-bottom:8px}
+.region-section:last-child{margin-bottom:0}
+.region-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg2);border-radius:8px;cursor:pointer;margin-bottom:6px;border:1px solid var(--glass-border);user-select:none}
+.region-header:hover{background:var(--bg3)}
+.region-name{font-size:13px;font-weight:600;color:var(--text)}
+.region-count{font-size:11px;color:var(--text3);font-weight:500}
 .country-search{margin-bottom:12px}
 .clash-time{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
 .clash-date{background:rgba(251,146,60,.12);color:#fb923c;border:1px solid rgba(251,146,60,.25)}
@@ -1913,21 +1919,22 @@ function exportUpcomingICS(){
 const COUNTRY_DATA={
   '004':'Afghanistan','008':'Albania','012':'Algeria','020':'Andorra','024':'Angola','028':'Antigua and Barbuda','032':'Argentina','036':'Australia','040':'Austria','031':'Azerbaijan',
   '044':'Bahamas','048':'Bahrain','050':'Bangladesh','052':'Barbados','112':'Belarus','056':'Belgium','084':'Belize','204':'Benin','064':'Bhutan','068':'Bolivia',
-  '070':'Bosnia and Herzegovina','072':'Botswana','076':'Brazil','096':'Brunei','100':'Bulgaria','854':'Burkina Faso','108':'Burundi','116':'Cambodia','120':'Cameroon','124':'Canada',
+  '070':'Bosnia and Herzegovina','072':'Botswana','076':'Brazil','096':'Brunei','100':'Bulgaria','854':'Burkina Faso','108':'Burundi','132':'Cape Verde','116':'Cambodia','120':'Cameroon','124':'Canada',
   '140':'Central African Republic','148':'Chad','152':'Chile','156':'China','170':'Colombia','174':'Comoros','178':'Congo','180':'DR Congo','188':'Costa Rica','384':'Ivory Coast',
   '191':'Croatia','192':'Cuba','196':'Cyprus','203':'Czech Republic','208':'Denmark','262':'Djibouti','212':'Dominica','214':'Dominican Republic','218':'Ecuador','818':'Egypt',
-  '222':'El Salvador','226':'Equatorial Guinea','232':'Eritrea','233':'Estonia','231':'Ethiopia','242':'Fiji','246':'Finland','250':'France','266':'Gabon','270':'Gambia',
-  '268':'Georgia','276':'Germany','288':'Ghana','300':'Greece','320':'Guatemala','324':'Guinea','328':'Guyana','332':'Haiti','340':'Honduras','348':'Hungary',
+  '222':'El Salvador','226':'Equatorial Guinea','232':'Eritrea','233':'Estonia','748':'Eswatini','231':'Ethiopia','242':'Fiji','246':'Finland','250':'France','266':'Gabon','270':'Gambia',
+  '268':'Georgia','276':'Germany','288':'Ghana','300':'Greece','308':'Grenada','320':'Guatemala','324':'Guinea','624':'Guinea-Bissau','328':'Guyana','332':'Haiti','340':'Honduras','344':'Hong Kong','348':'Hungary',
   '352':'Iceland','356':'India','360':'Indonesia','364':'Iran','368':'Iraq','372':'Ireland','376':'Israel','380':'Italy','388':'Jamaica','392':'Japan',
-  '400':'Jordan','398':'Kazakhstan','404':'Kenya','408':'North Korea','410':'South Korea','414':'Kuwait','417':'Kyrgyzstan','418':'Laos','428':'Latvia','422':'Lebanon',
-  '426':'Lesotho','430':'Liberia','434':'Libya','440':'Lithuania','442':'Luxembourg','450':'Madagascar','454':'Malawi','458':'Malaysia','462':'Maldives','466':'Mali',
-  '470':'Malta','478':'Mauritania','480':'Mauritius','484':'Mexico','498':'Moldova','496':'Mongolia','499':'Montenegro','504':'Morocco','508':'Mozambique','104':'Myanmar',
-  '516':'Namibia','524':'Nepal','528':'Netherlands','554':'New Zealand','558':'Nicaragua','562':'Niger','566':'Nigeria','578':'Norway','512':'Oman','586':'Pakistan',
-  '591':'Panama','598':'Papua New Guinea','600':'Paraguay','604':'Peru','608':'Philippines','616':'Poland','620':'Portugal','634':'Qatar','642':'Romania','643':'Russia',
-  '646':'Rwanda','682':'Saudi Arabia','686':'Senegal','688':'Serbia','694':'Sierra Leone','702':'Singapore','703':'Slovakia','705':'Slovenia','706':'Somalia','710':'South Africa',
+  '400':'Jordan','398':'Kazakhstan','404':'Kenya','296':'Kiribati','408':'North Korea','410':'South Korea','-99':'Kosovo','414':'Kuwait','417':'Kyrgyzstan','418':'Laos','428':'Latvia','422':'Lebanon',
+  '426':'Lesotho','430':'Liberia','434':'Libya','438':'Liechtenstein','440':'Lithuania','442':'Luxembourg','446':'Macau','450':'Madagascar','454':'Malawi','458':'Malaysia','462':'Maldives','466':'Mali',
+  '470':'Malta','584':'Marshall Islands','478':'Mauritania','480':'Mauritius','484':'Mexico','583':'Micronesia','498':'Moldova','492':'Monaco','496':'Mongolia','499':'Montenegro','504':'Morocco','508':'Mozambique','104':'Myanmar',
+  '516':'Namibia','520':'Nauru','524':'Nepal','528':'Netherlands','554':'New Zealand','558':'Nicaragua','562':'Niger','566':'Nigeria','807':'North Macedonia','578':'Norway','512':'Oman','586':'Pakistan',
+  '585':'Palau','275':'Palestine','591':'Panama','598':'Papua New Guinea','600':'Paraguay','604':'Peru','608':'Philippines','616':'Poland','620':'Portugal','634':'Qatar','642':'Romania','643':'Russia',
+  '646':'Rwanda','659':'Saint Kitts and Nevis','662':'Saint Lucia','670':'Saint Vincent','882':'Samoa','674':'San Marino','678':'São Tomé and Príncipe','682':'Saudi Arabia','686':'Senegal','688':'Serbia',
+  '690':'Seychelles','694':'Sierra Leone','702':'Singapore','703':'Slovakia','705':'Slovenia','090':'Solomon Islands','706':'Somalia','710':'South Africa',
   '728':'South Sudan','724':'Spain','144':'Sri Lanka','729':'Sudan','740':'Suriname','752':'Sweden','756':'Switzerland','760':'Syria','158':'Taiwan','762':'Tajikistan',
-  '834':'Tanzania','764':'Thailand','626':'Timor-Leste','768':'Togo','780':'Trinidad and Tobago','788':'Tunisia','792':'Turkey','795':'Turkmenistan','800':'Uganda','804':'Ukraine',
-  '784':'United Arab Emirates','826':'United Kingdom','840':'United States','858':'Uruguay','860':'Uzbekistan','548':'Vanuatu','862':'Venezuela','704':'Vietnam','887':'Yemen',
+  '834':'Tanzania','764':'Thailand','626':'Timor-Leste','768':'Togo','776':'Tonga','780':'Trinidad and Tobago','788':'Tunisia','792':'Turkey','795':'Turkmenistan','798':'Tuvalu','800':'Uganda','804':'Ukraine',
+  '784':'United Arab Emirates','826':'United Kingdom','840':'United States','858':'Uruguay','860':'Uzbekistan','548':'Vanuatu','336':'Vatican City','862':'Venezuela','704':'Vietnam','887':'Yemen',
   '894':'Zambia','716':'Zimbabwe'
 };
 
@@ -1937,7 +1944,29 @@ function vCountries(){
   const allCountries=Object.entries(COUNTRY_DATA).map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name));
   const visited=allCountries.filter(c=>vc.includes(c.id));
   const searchQ=(S._countrySearch||'').toLowerCase();
-  const filtered=searchQ?allCountries.filter(c=>c.name.toLowerCase().includes(searchQ)):allCountries;
+  const regionNames={1:'Oceania',2:'Americas — North & Central',3:'Americas — South',4:'Europe',5:'Asia',6:'Middle East',7:'Africa'};
+  const regionOrder=[5,4,2,3,6,7,1];
+  const cMap=countContinentMap();
+  function renderItem(c){return `<div class="country-item${vc.includes(c.id)?' visited':''}" data-action="toggle-country" data-cid="${c.id}"><div class="ci-check">${vc.includes(c.id)?'<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</div><span>${esc(c.name)}</span></div>`;}
+  let gridHtml='';
+  if(searchQ){
+    const filtered=allCountries.filter(c=>c.name.toLowerCase().includes(searchQ));
+    gridHtml=`<div class="country-grid">${filtered.map(renderItem).join('')}</div>`;
+    if(!filtered.length)gridHtml='<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">No countries match your search</div>';
+  } else {
+    gridHtml=regionOrder.map(r=>{
+      const countries=allCountries.filter(c=>cMap[c.id]===r);
+      if(!countries.length)return '';
+      const visitedInRegion=countries.filter(c=>vc.includes(c.id)).length;
+      return `<div class="region-section">
+        <div class="region-header" data-action="toggle-region" data-region="${r}">
+          <span class="region-name">${regionNames[r]}</span>
+          <span class="region-count">${visitedInRegion} / ${countries.length}</span>
+        </div>
+        <div class="country-grid">${countries.map(renderItem).join('')}</div>
+      </div>`;
+    }).join('');
+  }
 
   return `
   <div class="page-header"><div><h2>Countries</h2><div class="subtitle">${visited.length} of ${allCountries.length} countries visited</div></div></div>
@@ -1951,26 +1980,25 @@ function vCountries(){
     <div class="world-map-container" id="world-map"><div style="text-align:center;padding:40px;color:var(--text3);font-size:12px">Loading map...</div></div>
     <div class="card" style="margin-top:16px">
       <div class="card-header"><h3>All Countries</h3><div class="search-bar" style="max-width:200px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search countries..." value="${esc(S._countrySearch||'')}" data-action="country-search" style="font-size:11px;padding:5px 10px 5px 28px"></div></div>
-      <div class="card-body">
-        <div class="country-grid">
-          ${filtered.map(c=>`<div class="country-item${vc.includes(c.id)?' visited':''}" data-action="toggle-country" data-cid="${c.id}"><div class="ci-check">${vc.includes(c.id)?'<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</div><span>${esc(c.name)}</span></div>`).join('')}
-        </div>
-      </div>
+      <div class="card-body">${gridHtml}</div>
     </div>
   </div>`;
 }
 
-function countContinents(vc){
-  const continentMap={'036':1,'554':1,'242':1,'548':1,'598':1,
-    '840':2,'124':2,'484':2,'320':2,'340':2,'222':2,'558':2,'188':2,'591':2,'044':2,'052':2,'212':2,'214':2,'332':2,'388':2,'780':2,'084':2,'192':2,
+function countContinentMap(){
+  return {'036':1,'554':1,'242':1,'548':1,'598':1,'585':1,'296':1,'584':1,'583':1,'520':1,'882':1,'090':1,'776':1,'798':1,
+    '840':2,'124':2,'484':2,'320':2,'340':2,'222':2,'558':2,'188':2,'591':2,'044':2,'052':2,'212':2,'214':2,'332':2,'388':2,'780':2,'084':2,'192':2,'308':2,'659':2,'662':2,'670':2,
     '032':3,'076':3,'152':3,'170':3,'218':3,'604':3,'068':3,'600':3,'858':3,'862':3,'328':3,'740':3,
-    '826':4,'250':4,'276':4,'380':4,'724':4,'620':4,'528':4,'056':4,'040':4,'756':4,'208':4,'752':4,'578':4,'246':4,'352':4,'372':4,'616':4,'203':4,'348':4,'642':4,'100':4,'300':4,'191':4,'688':4,'499':4,'008':4,'705':4,'703':4,'440':4,'428':4,'233':4,'112':4,'804':4,'643':4,'070':4,'196':4,'470':4,'442':4,'020':4,
-    '156':5,'392':5,'410':5,'408':5,'496':5,'398':5,'417':5,'762':5,'860':5,'795':5,'050':5,'356':5,'586':5,'524':5,'064':5,'144':5,'462':5,'360':5,'458':5,'702':5,'764':5,'704':5,'116':5,'418':5,'104':5,'608':5,'158':5,'096':5,'626':5,
+    '826':4,'250':4,'276':4,'380':4,'724':4,'620':4,'528':4,'056':4,'040':4,'756':4,'208':4,'752':4,'578':4,'246':4,'352':4,'372':4,'616':4,'203':4,'348':4,'642':4,'100':4,'300':4,'191':4,'688':4,'499':4,'008':4,'705':4,'703':4,'440':4,'428':4,'233':4,'112':4,'804':4,'643':4,'070':4,'196':4,'470':4,'442':4,'020':4,'438':4,'492':4,'674':4,'336':4,'807':4,'-99':4,
+    '156':5,'392':5,'410':5,'408':5,'496':5,'398':5,'417':5,'762':5,'860':5,'795':5,'050':5,'356':5,'586':5,'524':5,'064':5,'144':5,'462':5,'360':5,'458':5,'702':5,'764':5,'704':5,'116':5,'418':5,'104':5,'608':5,'158':5,'096':5,'626':5,'344':5,'446':5,'275':5,
     '792':6,'784':6,'682':6,'634':6,'414':6,'512':6,'048':6,'400':6,'376':6,'422':6,'760':6,'364':6,'368':6,'887':6,'031':6,'268':6,
-    '818':7,'012':7,'504':7,'788':7,'434':7,'566':7,'288':7,'384':7,'686':7,'270':7,'324':7,'694':7,'430':7,'768':7,'204':7,'854':7,'466':7,'562':7,'148':7,'120':7,'140':7,'178':7,'180':7,'024':7,'508':7,'834':7,'404':7,'800':7,'646':7,'231':7,'262':7,'706':7,'232':7,'710':7,'516':7,'072':7,'426':7,'454':7,'716':7,'894':7,'108':7,'174':7,'450':7,'480':7,'226':7,'266':7,'728':7,'729':7
+    '818':7,'012':7,'504':7,'788':7,'434':7,'566':7,'288':7,'384':7,'686':7,'270':7,'324':7,'694':7,'430':7,'768':7,'204':7,'854':7,'466':7,'562':7,'148':7,'120':7,'140':7,'178':7,'180':7,'024':7,'508':7,'834':7,'404':7,'800':7,'646':7,'231':7,'262':7,'706':7,'232':7,'710':7,'516':7,'072':7,'426':7,'454':7,'716':7,'894':7,'108':7,'174':7,'450':7,'480':7,'226':7,'266':7,'728':7,'729':7,'132':7,'748':7,'624':7,'678':7,'690':7
   };
+}
+function countContinents(vc){
+  const cm=countContinentMap();
   const cs=new Set();
-  vc.forEach(id=>{if(continentMap[id])cs.add(continentMap[id]);});
+  vc.forEach(id=>{if(cm[id])cs.add(cm[id]);});
   return cs.size;
 }
 
