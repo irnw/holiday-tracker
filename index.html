@@ -2022,7 +2022,7 @@ function renderWorldMap(){
           const idx=S.visitedCountries.indexOf(cid);
           if(idx>=0)S.visitedCountries.splice(idx,1);
           else S.visitedCountries.push(cid);
-          saveS();triggerSync();
+          saveS();
           d3.select(this).classed('visited',S.visitedCountries.includes(cid));
           render();
         })
