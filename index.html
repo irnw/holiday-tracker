@@ -61,6 +61,19 @@ a{color:var(--primary);text-decoration:none}
 
 /* ========== MAIN ========== */
 .main{margin-left:220px;flex:1;min-height:100vh}
+.sidebar.collapsed{width:56px}
+.sidebar.collapsed .sidebar-brand h1{display:none}
+.sidebar.collapsed .sidebar-brand{padding:16px 12px;justify-content:center}
+.sidebar.collapsed .nav-item span{display:none}
+.sidebar.collapsed .nav-item .kbd{display:none}
+.sidebar.collapsed .nav-item{padding:10px 0;justify-content:center}
+.sidebar.collapsed .nav-section{font-size:0;height:8px}
+.sidebar.collapsed .sidebar-footer{padding:8px 4px}
+.sidebar.collapsed .theme-toggle span,.sidebar.collapsed .theme-toggle svg+text,.sidebar.collapsed .sync-dot{font-size:0;overflow:hidden;white-space:nowrap;width:28px}
+.sidebar.collapsed+.main,.main.sidebar-collapsed{margin-left:56px}
+.sidebar-collapse-btn{position:absolute;top:50%;right:-12px;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:var(--sidebar-bg);border:1px solid var(--glass-border);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:101;font-size:11px;transition:transform .2s}
+.sidebar-collapse-btn:hover{color:var(--text);background:var(--bg2)}
+.sidebar.collapsed .sidebar-collapse-btn{transform:translateY(-50%) rotate(180deg)}
 .page-header{padding:24px 32px 20px;background:var(--header-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .page-header h2{font-size:20px;font-weight:700;letter-spacing:-.3px}
 .page-header .subtitle{color:var(--text3);font-size:12px;margin-top:3px;font-weight:400}
@@ -76,12 +89,12 @@ a{color:var(--primary);text-decoration:none}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
 /* ========== STATS ========== */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
-.stat{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--glass-border);backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--glass-border);backdrop-filter:blur(12px);position:relative;overflow:hidden}
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
 .stat .s-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600}
-.stat .s-val{font-size:28px;font-weight:800;margin-top:6px;line-height:1.1;letter-spacing:-.5px}
-.stat .s-sub{font-size:11px;color:var(--text2);margin-top:6px}
+.stat .s-val{font-size:24px;font-weight:800;margin-top:4px;line-height:1.1;letter-spacing:-.5px}
+.stat .s-sub{font-size:11px;color:var(--text2);margin-top:4px}
 .stat.blue .s-val{color:var(--primary)}.stat.green .s-val{color:var(--green)}.stat.orange .s-val{color:var(--orange)}.stat.red .s-val{color:var(--accent)}.stat.purple .s-val{color:var(--purple)}
 
 /* ========== TRIPS ========== */
@@ -197,6 +210,7 @@ textarea.fc{resize:vertical;min-height:50px}
 /* ========== YEAR TABS ========== */
 .cat-group{margin-bottom:24px}.cat-group-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .clash-badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px}
+.clash-link{cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
 .clash-time{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
 .clash-date{background:rgba(251,146,60,.12);color:#fb923c;border:1px solid rgba(251,146,60,.25)}
 .clash-warning{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);margin:12px 0 4px;font-size:12px;line-height:1.5;color:var(--text)}
@@ -380,7 +394,7 @@ textarea.fc{resize:vertical;min-height:50px}
   .page-content{padding:14px}
   .fg{grid-template-columns:1fr}
   .trip-grid{grid-template-columns:1fr}
-  .stats{grid-template-columns:1fr 1fr}
+  .stats{grid-template-columns:1fr 1fr}.stat .s-val{font-size:20px}.stat{padding:10px 12px}
   .search-bar{max-width:100%}
   .fab{bottom:16px;right:16px;padding:0 14px 0 12px;height:42px;font-size:12px}
   .tp-filter{flex-wrap:wrap}
@@ -390,6 +404,11 @@ textarea.fc{resize:vertical;min-height:50px}
   .leave-boxes{grid-template-columns:repeat(2,1fr)}
   .la-table{font-size:11px}
   .la-table th,.la-table td{padding:6px 8px}
+  .entry-grid{grid-template-columns:1fr}
+  .entry-top h4{font-size:13px}
+  .entry-top{flex-wrap:wrap;gap:6px}
+  .clash-badge{font-size:8px;padding:1px 4px}
+  .sidebar-collapse-btn{display:none}
 }
 </style>
 <script>
@@ -466,12 +485,33 @@ function findClashes(ev,excludeId){
   }
   return clashes;
 }
-function clashBadgeHtml(ev){
+function clashBadgeHtml(ev,clickable){
   const cl=findClashes(ev,ev.id);
   if(!cl.length)return'';
   const timeCl=cl.filter(c=>c.severity==='time');
+  const target=timeCl.length?timeCl[0]:cl[0];
+  if(clickable){
+    if(timeCl.length)return`<span class="clash-badge clash-time clash-link" data-action="view-clash" data-id="${target.event.id}" title="Time clash with ${timeCl.map(c=>c.event.name).join(', ')} — click to view">⚠ Clash</span>`;
+    return`<span class="clash-badge clash-date clash-link" data-action="view-clash" data-id="${target.event.id}" title="Date overlap with ${cl.map(c=>c.event.name).join(', ')} — click to view">⚠ Overlap</span>`;
+  }
   if(timeCl.length)return`<span class="clash-badge clash-time" title="Time clash with ${timeCl.map(c=>c.event.name).join(', ')}">⚠ Clash</span>`;
   return`<span class="clash-badge clash-date" title="Date overlap with ${cl.map(c=>c.event.name).join(', ')}">⚠ Overlap</span>`;
+}
+function eventPaymentStatus(t){
+  const items=[...(t.flights||[]),...(t.hotels||[]),...(t.activities||[]),...(t.transport||[])];
+  if(!items.length)return null;
+  const withPay=items.filter(i=>i.depositAmount||i.paymentDueDate||i.fullyPaid);
+  if(!withPay.length)return null;
+  const allPaid=withPay.every(i=>i.fullyPaid==='yes');
+  const td=new Date().toISOString().slice(0,10);
+  const overdue=withPay.filter(i=>i.paymentDueDate&&i.fullyPaid!=='yes'&&i.paymentDueDate<td);
+  const upcoming=withPay.filter(i=>i.paymentDueDate&&i.fullyPaid!=='yes'&&i.paymentDueDate>=td);
+  const unpaidDeposits=withPay.filter(i=>i.depositAmount&&i.depositPaid!=='yes');
+  if(allPaid)return{status:'paid',label:'Fully Paid',color:'var(--green)'};
+  if(overdue.length)return{status:'overdue',label:'Payment Overdue',color:'var(--accent)'};
+  if(unpaidDeposits.length)return{status:'deposit-due',label:'Deposit Due',color:'var(--orange)'};
+  if(upcoming.length)return{status:'payment-pending',label:'Payment Pending',color:'var(--orange)'};
+  return{status:'partial',label:'Partially Paid',color:'var(--text2)'};
 }
 function clashWarningHtml(clashes){
   if(!clashes.length)return'';
@@ -1149,6 +1189,19 @@ function closeMobileMenu(){
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
 }
+function toggleSidebarCollapse(){
+  const sb=document.getElementById('sidebar');
+  const main=document.getElementById('app');
+  sb.classList.toggle('collapsed');
+  main.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('ht-sidebar-collapsed',sb.classList.contains('collapsed')?'1':'');
+}
+function restoreSidebarState(){
+  if(localStorage.getItem('ht-sidebar-collapsed')==='1'){
+    document.getElementById('sidebar').classList.add('collapsed');
+    document.getElementById('app').classList.add('sidebar-collapsed');
+  }
+}
 function syncIndicatorHtml(){
   const c=getSyncConfig();
   if(c.token&&_syncErrorState==='401')return '<div class="sync-dot" style="color:var(--orange)"><div class="sd-icon"></div>Token expired</div>';
@@ -1168,6 +1221,7 @@ function syncIndicatorHtml(){
 function renderSidebar(){
   const isDark=S.theme==='dark';
   document.getElementById('sidebar').innerHTML=`
+    <button class="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="Toggle sidebar">&#8249;</button>
     <div class="sidebar-brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg></div><h1>HOLIDAY TRACKER</h1></div>
     <div class="nav">
       <div class="nav-section">Menu</div>
@@ -1182,7 +1236,7 @@ function renderSidebar(){
 }
 
 function render(){
-  try{renderSidebar();}catch(e){console.error('Sidebar error:',e);}
+  try{renderSidebar();restoreSidebarState();}catch(e){console.error('Sidebar error:',e);}
   const a=document.getElementById('app');
   try{
     switch(S.v){
@@ -1252,7 +1306,7 @@ function vDash(){
   <div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Events</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
-      <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${leaveReq>0?leaveReq+' still required · ':''}${lyTotals.taken} of ${tot} used</div></div>
+      <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${lyTotals.taken} used · ${tot} total</div></div>
       <div class="stat purple"><div class="s-label">Next Event</div><div class="s-val" style="font-size:16px">${nextEvent?esc(nextEvent.name):'---'}</div><div class="s-sub">${countdownHtml}</div></div>
       <div class="stat" style="border-color:#ef4444"><div class="s-label">Clashes</div><div class="s-val">${clashCount}</div><div class="s-sub">${timeClashCount} timing · ${dateClashCount} date</div></div>
     </div>
@@ -1301,12 +1355,13 @@ function vDash(){
       <div class="card-body" style="padding:12px">
       ${dashEvents.length?dashEvents.map(t=>{const st=eventStatus(t);const dl=daysUntil(t.startDate);const cc=catColor(t.category||'trip');const countTxt=st==='active'?'In progress':st==='completed'?(Math.abs(daysUntil(t.endDate))+' days ago'):(dl===0?'Today':(dl+' day'+(dl!==1?'s':'')+' away'));return`
         <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}${st==='completed'?';opacity:.6':''}" data-action="view" data-id="${t.id}">
-          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
+          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t,true)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
           <div class="entry-grid">
             <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</span></div>
             <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
             <div class="eg"><span class="ek">Bookings</span><span class="ev">${(t.flights||[]).length}F · ${(t.hotels||[]).length}H · ${(t.activities||[]).length}A</span></div>
             ${eCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(eCost(t),'SGD')}</span></div>`:''}
+            ${(()=>{const ps=eventPaymentStatus(t);return ps?`<div class="eg"><span class="ek">Payment</span><span class="ev" style="color:${ps.color};font-weight:600;font-size:11px">${ps.status==='paid'?'✓':'⚠'} ${ps.label}</span></div>`:''})()}
             <div class="eg"><span class="ek">Countdown</span><span class="ev" style="font-weight:600;color:${st==='active'?'var(--green)':st==='completed'?'var(--text3)':'var(--primary)'}">${countTxt}</span></div>
             <div class="eg"><span class="ek">Leave</span><span class="ev">${t.requiresLeave===false?'No':'Yes'}</span></div>
           </div>
@@ -1323,7 +1378,7 @@ function eventCardHtml(t){
   return`<div class="trip-card" data-action="view" data-id="${t.id}">
     <div class="trip-accent" style="background:${cc}"></div>
     <div class="trip-body">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t,true)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
       <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
       <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}</div>
       <div class="trip-foot">
@@ -1396,6 +1451,7 @@ function vDetail(){
       <div class="stat green"><div class="s-label">Total Cost</div><div class="s-val">${fmtM(eCost(t),'')}</div><div class="s-sub">SGD</div></div>
       <div class="stat purple"><div class="s-label">Locations</div><div class="s-val">${t.locations.length}</div><div class="s-sub">${t.locations.join(' · ')}</div></div>
       <div class="stat orange"><div class="s-label">Bookings</div><div class="s-val">${(t.flights||[]).length+(t.hotels||[]).length+(t.activities||[]).length+(t.transport||[]).length}</div></div>
+      ${(()=>{const ps=eventPaymentStatus(t);if(!ps)return'';const icon=ps.status==='paid'?'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';return`<div class="stat" style="border-color:${ps.color}"><div class="s-label">Payment</div><div class="s-val" style="font-size:14px;color:${ps.color};display:flex;align-items:center;gap:6px">${icon} ${ps.label}</div></div>`;})()}
     </div>
     ${t.sharedLink?`<div class="shared-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg><a href="${esc(t.sharedLink)}" target="_blank">${esc(t.sharedLink)}</a></div>`:''}
     ${t.notes?`<div style="margin:8px 0 16px;padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text2)">${esc(t.notes)}</div>`:''}
@@ -3446,6 +3502,7 @@ document.addEventListener('click',e=>{
     case 'sync-pull':pullFromGist().then(pulled=>{if(pulled)toast('Pulled from cloud');else toast('Already up to date');});break;
     case 'entry-sort-dir':sortDir=sortDir==='asc'?'desc':'asc';render();break;
     case 'event-sort-dir':eventSortDir=eventSortDir==='asc'?'desc':'asc';render();break;
+    case 'view-clash':e.stopPropagation();nav('detail',{detailId:el.dataset.id});break;
     case 'dash-cat':S._dashCat=el.dataset.cat||'all';saveS();render();break;
     case 'dash-status':S._dashStatus=el.dataset.st||'all';saveS();render();break;
     case 'add-attach-link':{if(ev){
