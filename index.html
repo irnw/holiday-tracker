@@ -209,6 +209,18 @@ textarea.fc{resize:vertical;min-height:50px}
 .yt{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text3);border:1px solid var(--glass-border);transition:all .15s}
 .yt:hover{border-color:var(--text3);color:var(--text2)}.yt.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 16px rgba(59,130,246,.25)}
 
+/* ========== ATTACHMENTS ========== */
+.attach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.attach-card{background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--glass-border);transition:transform .15s}
+.attach-card:hover{transform:translateY(-2px)}
+.attach-thumb{width:100%;height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.attach-thumb img{width:100%;height:100%;object-fit:cover}
+.attach-link-thumb{background:var(--bg)}
+.attach-info{padding:8px 10px}
+.attach-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attach-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.attach-actions{display:flex;gap:4px;padding:0 10px 8px;justify-content:flex-end}
+
 /* ========== QUICK UPLOAD FAB ========== */
 .fab{position:fixed;bottom:24px;right:28px;height:46px;padding:0 18px 0 14px;background:linear-gradient(135deg,var(--glow-1),var(--glow-2));border:none;border-radius:23px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 4px 24px rgba(59,130,246,.35);transition:all .25s;z-index:90;font-size:13px;font-weight:600;letter-spacing:.2px}
 .fab:hover{transform:scale(1.05);box-shadow:0 8px 32px rgba(59,130,246,.45)}
@@ -1192,7 +1204,7 @@ function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveS();render();window.scrollTo
 // ===== DASHBOARD =====
 function vDash(){
   const ft=tpFilter(S.events);
-  const u=ft.filter(t=>t.endDate>=new Date().toISOString().slice(0,10)).sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  const td=new Date().toISOString().slice(0,10);
   const curYear=new Date().getFullYear();
   const lyRaw=S.leave[curYear]||{};
   const lyJobs=(lyRaw.jobs||[]);
@@ -1202,20 +1214,51 @@ function vDash(){
   const nextEvent=upcoming().length?upcoming()[0]:null;
   const dLeft=nextEvent?daysUntil(nextEvent.startDate):0;
   const countdownHtml=nextEvent?(dLeft===0?'<span style="color:var(--green);font-weight:600">Today!</span>':dLeft<0?'<span style="color:var(--green);font-weight:600">In progress</span>':`<div class="countdown"><span class="cd-num">${dLeft}</span><span class="cd-unit">day${dLeft!==1?'s':''} away</span></div>`):'—';
-  const ftCost=ft.reduce((s,t)=>s+eCost(t),0);
   const totalDays=ft.reduce((s,t)=>s+days(t.startDate,t.endDate),0);
   const yShort=String(curYear).slice(2);
+  // Clash count
+  const clashCount=ft.filter(t=>{const b=clashBadgeHtml(t);return b&&b.length>0;}).length;
+  const timeClashCount=ft.filter(t=>clashBadgeHtml(t).includes('clash-time')).length;
+  const dateClashCount=ft.filter(t=>clashBadgeHtml(t).includes('clash-date')).length;
+  // Dashboard filters
+  const dashSearch=(S._dashSearch||'').toLowerCase();
+  const dashCat=S._dashCat||'all';
+  const dashStatus=S._dashStatus||'all';
+  // Filter events
+  let dashEvents=ft.slice();
+  if(dashSearch)dashEvents=dashEvents.filter(t=>t.name.toLowerCase().includes(dashSearch)||t.locations.some(l=>l.toLowerCase().includes(dashSearch))||(t.notes||'').toLowerCase().includes(dashSearch));
+  if(dashCat!=='all')dashEvents=dashEvents.filter(t=>(t.category||'trip')===dashCat);
+  if(dashStatus==='active')dashEvents=dashEvents.filter(t=>eventStatus(t)==='active');
+  else if(dashStatus==='upcoming')dashEvents=dashEvents.filter(t=>eventStatus(t)!=='completed');
+  else if(dashStatus==='completed')dashEvents=dashEvents.filter(t=>eventStatus(t)==='completed');
+  // Sort: active first, then upcoming by nearest start, then completed by most recent end
+  dashEvents.sort((a,b)=>{
+    const sa=eventStatus(a),sb=eventStatus(b);
+    const ord={active:0,upcoming:1,completed:2};
+    if(ord[sa]!==ord[sb])return ord[sa]-ord[sb];
+    if(sa==='completed')return b.endDate.localeCompare(a.endDate);
+    return a.startDate.localeCompare(b.startDate);
+  });
+  // Payment due alerts
+  const payDue=ft.filter(t=>{
+    const items=[...(t.flights||[]),...(t.hotels||[]),...(t.activities||[]),...(t.transport||[])];
+    return items.some(i=>i.paymentDueDate&&i.fullyPaid!=='yes'&&i.paymentDueDate>=td);
+  });
+  // Category tabs
+  const usedCats=[...new Set(ft.map(t=>t.category||'trip'))];
+  const catTabs=CATEGORIES.filter(c=>usedCats.includes(c.id));
   return `
-  <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back, Irene</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}${syncIndicatorHtml()}</div></div>
+  <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back, Irene</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${syncIndicatorHtml()}</div></div>
   <div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Events</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
-      <div class="stat green"><div class="s-label">Total Spend</div><div class="s-val">${fmtM(ftCost,'')}</div><div class="s-sub">SGD equivalent</div></div>
       <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${leaveReq>0?leaveReq+' still required · ':''}${lyTotals.taken} of ${tot} used</div></div>
-      <div class="stat purple"><div class="s-label">Next Event</div><div class="s-val" style="font-size:16px">${nextEvent?esc(nextEvent.name):'—'}</div><div class="s-sub">${countdownHtml}</div></div>
+      <div class="stat purple"><div class="s-label">Next Event</div><div class="s-val" style="font-size:16px">${nextEvent?esc(nextEvent.name):'---'}</div><div class="s-sub">${countdownHtml}</div></div>
+      <div class="stat" style="border-color:#ef4444"><div class="s-label">Clashes</div><div class="s-val">${clashCount}</div><div class="s-sub">${timeClashCount} timing · ${dateClashCount} date</div></div>
     </div>
+    ${payDue.length?`<div class="card" style="margin-bottom:16px;border:1px solid var(--orange);border-radius:10px;overflow:hidden"><div style="background:rgba(251,146,60,.08);padding:12px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span style="font-weight:600;font-size:13px;color:var(--orange)">Payments Due</span></div>${payDue.map(t=>`<div style="font-size:12px;color:var(--text2);padding:2px 0"><span style="font-weight:600">${esc(t.name)}</span> has unpaid bookings with upcoming due dates</div>`).join('')}</div></div>`:''}
     ${(()=>{const sc=getSyncConfig();
-      // Token expired state — show recovery card
+      // Token expired state
       if(sc.token&&_syncErrorState==='401')return `
     <div class="card sync-error-card" style="margin-bottom:16px;border:1px solid var(--orange);border-radius:12px;overflow:hidden">
       <div style="background:linear-gradient(135deg,rgba(255,160,60,.12),rgba(255,160,60,.04));padding:16px 20px">
@@ -1223,15 +1266,15 @@ function vDash(){
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <h3 style="margin:0;font-size:15px;color:var(--orange)">Token Expired</h3>
         </div>
-        <p style="font-size:12px;color:var(--text2);margin:0 0 12px">Your GitHub token has expired. Generate a new one and paste it below to restore sync. Your data is safe — it's still stored locally and in the cloud.</p>
+        <p style="font-size:12px;color:var(--text2);margin:0 0 12px">Your GitHub token has expired. Generate a new one and paste it below to restore sync. Your data is safe --- it is still stored locally and in the cloud.</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input class="fc" id="dash-sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" style="flex:1;min-width:200px;font-size:13px">
           <button class="btn btn-p" data-action="dash-sync-connect" style="font-size:13px;white-space:nowrap">Update Token</button>
         </div>
-        <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--orange);display:inline-block;margin-top:8px">Generate new token (gist scope only) →</a>
+        <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--orange);display:inline-block;margin-top:8px">Generate new token (gist scope only) &#8594;</a>
       </div>
     </div>`;
-      // No token — show connect card
+      // No token
       if(!sc.token)return `
     <div class="card" style="margin-bottom:16px;border:1px solid var(--primary);border-radius:12px;overflow:hidden">
       <div style="background:linear-gradient(135deg,rgba(108,140,255,.15),rgba(108,140,255,.05));padding:16px 20px">
@@ -1244,29 +1287,32 @@ function vDash(){
           <input class="fc" id="dash-sync-token" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" style="flex:1;min-width:200px;font-size:13px">
           <button class="btn btn-p" data-action="dash-sync-connect" style="font-size:13px;white-space:nowrap">${sc.gistId?'Enable Editing':'Connect & Sync'}</button>
         </div>
-        <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary);display:inline-block;margin-top:8px">Create a token (gist scope only) →</a>
+        <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary);display:inline-block;margin-top:8px">Create a token (gist scope only) &#8594;</a>
       </div>
     </div>`;return '';})()}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;padding:12px 16px;background:var(--bg2);border-radius:10px;border:1px solid var(--glass-border)">
+      <div class="search-bar" style="flex:1;min-width:160px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search events..." value="${esc(S._dashSearch||'')}" data-action="dash-search"></div>
+      <div class="ytabs" style="margin-bottom:0"><div class="yt${dashCat==='all'?' active':''}" data-action="dash-cat" data-cat="all">All</div>${catTabs.map(c=>`<div class="yt${dashCat===c.id?' active':''}" data-action="dash-cat" data-cat="${c.id}" style="${dashCat===c.id?'background:'+c.color+';border-color:'+c.color:''}"><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${c.color};margin-right:4px"></span>${c.label}</div>`).join('')}</div>
+      <div class="ytabs" style="margin-bottom:0">${['all','active','upcoming','completed'].map(st=>`<div class="yt${dashStatus===st?' active':''}" data-action="dash-status" data-st="${st}">${st.charAt(0).toUpperCase()+st.slice(1)}</div>`).join('')}</div>
+      ${tpHtml()}
+    </div>
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>Upcoming Events</h3><button class="btn btn-p" data-action="add-event">+ New Event</button></div>
+      <div class="card-header"><h3>All Events <span style="font-size:12px;font-weight:400;color:var(--text3)">(${dashEvents.length})</span></h3><button class="btn btn-p" data-action="add-event">+ New Event</button></div>
       <div class="card-body" style="padding:12px">
-      ${u.length?u.map(t=>{const st=eventStatus(t);return`
-        <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}" data-action="view" data-id="${t.id}">
-          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t)}<span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
+      ${dashEvents.length?dashEvents.map(t=>{const st=eventStatus(t);const dl=daysUntil(t.startDate);const cc=catColor(t.category||'trip');const countTxt=st==='active'?'In progress':st==='completed'?(Math.abs(daysUntil(t.endDate))+' days ago'):(dl===0?'Today':(dl+' day'+(dl!==1?'s':'')+' away'));return`
+        <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}${st==='completed'?';opacity:.6':''}" data-action="view" data-id="${t.id}">
+          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
           <div class="entry-grid">
-            <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)} — ${fmtS(t.endDate)}</span></div>
+            <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</span></div>
             <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
             <div class="eg"><span class="ek">Bookings</span><span class="ev">${(t.flights||[]).length}F · ${(t.hotels||[]).length}H · ${(t.activities||[]).length}A</span></div>
             ${eCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(eCost(t),'SGD')}</span></div>`:''}
+            <div class="eg"><span class="ek">Countdown</span><span class="ev" style="font-weight:600;color:${st==='active'?'var(--green)':st==='completed'?'var(--text3)':'var(--primary)'}">${countTxt}</span></div>
+            <div class="eg"><span class="ek">Leave</span><span class="ev">${t.requiresLeave===false?'No':'Yes'}</span></div>
           </div>
-        </div>`;}).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg><p>No upcoming events yet</p><p style="font-size:11px;color:var(--text3);margin-bottom:12px">Start planning your next event</p><button class="btn btn-p" data-action="add-event">+ Plan an Event</button></div>'}
+        </div>`;}).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg><p>No events found</p><p style="font-size:11px;color:var(--text3);margin-bottom:12px">Try a different filter or add a new event</p><button class="btn btn-p" data-action="add-event">+ Plan an Event</button></div>'}
       </div>
     </div>
-    ${(()=>{const p=ft.filter(t=>t.endDate<new Date().toISOString().slice(0,10)).sort((a,b)=>b.startDate.localeCompare(a.startDate));return p.length?`<div class="card"><div class="card-header"><h3>Recent Past Events</h3></div><div class="card-body" style="padding:12px">${p.slice(0,4).map(t=>`
-      <div class="entry" style="cursor:pointer;opacity:.6;border-left:3px solid ${eColor(t)}" data-action="view" data-id="${t.id}">
-        <div class="entry-top"><h4>${esc(t.name)}</h4><span class="tag tag-g">${days(t.startDate,t.endDate)}d</span></div>
-        <div style="font-size:12px;color:var(--text3)">${fmtS(t.startDate)} — ${fmtS(t.endDate)} · ${t.locations.join(', ')}${eCost(t)?` · ${fmtM(eCost(t),'SGD')}`:''}</div>
-      </div>`).join('')}</div></div>`:''})()}
   </div>`;
 }
 
@@ -1354,9 +1400,9 @@ function vDetail(){
     ${t.sharedLink?`<div class="shared-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg><a href="${esc(t.sharedLink)}" target="_blank">${esc(t.sharedLink)}</a></div>`:''}
     ${t.notes?`<div style="margin:8px 0 16px;padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text2)">${esc(t.notes)}</div>`:''}
     <div class="tabs">
-      ${['timeline','flights','hotels','activities','transport'].map(k=>`<div class="tab${tab===k?' active':''}" data-action="tab" data-t="${k}">${k==='timeline'?'Timeline':k.charAt(0).toUpperCase()+k.slice(1)} ${k!=='timeline'?'('+((t[k]||[]).length)+')':''}</div>`).join('')}
+      ${['timeline','flights','hotels','activities','transport','attachments'].map(k=>`<div class="tab${tab===k?' active':''}" data-action="tab" data-t="${k}">${k==='timeline'?'Timeline':k.charAt(0).toUpperCase()+k.slice(1)} ${k!=='timeline'?'('+((k==='attachments'?(t.attachments||[]):(t[k]||[])).length)+')':''}</div>`).join('')}
     </div>
-    ${tab==='timeline'?rTimeline(t):tab==='flights'?rFlights(t):tab==='hotels'?rHotels(t):tab==='activities'?rActs(t):rTrans(t)}
+    ${tab==='timeline'?rTimeline(t):tab==='flights'?rFlights(t):tab==='hotels'?rHotels(t):tab==='activities'?rActs(t):tab==='attachments'?rAttach(t):rTrans(t)}
   </div>`;
 }
 
@@ -1433,6 +1479,24 @@ function rTrans(t){
       ${x.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(x.notes)}</div>`:''}
       ${x.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(x.ocrText)}</div></details>`:''}
     </div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><p>No transport entries yet</p><p style="font-size:11px;color:var(--text3)">Add trains, buses, ferries, or car rentals</p></div>'}`;
+}
+
+// ===== ATTACHMENTS =====
+function rAttach(t){
+  const atts=t.attachments||[];
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-size:14px">Attachments</h3><div style="display:flex;gap:8px"><button class="btn btn-s" data-action="add-attach-link">+ Add Link</button><button class="btn btn-p" data-action="add-attach-img">+ Upload Image</button></div></div>
+  ${atts.length?`<div class="attach-grid">${atts.map(a=>`
+    <div class="attach-card">
+      ${a.thumbData?`<div class="attach-thumb"><img src="${a.thumbData}" alt="${esc(a.name||'')}" loading="lazy"></div>`:`<div class="attach-thumb attach-link-thumb"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>`}
+      <div class="attach-info">
+        <div class="attach-name">${esc(a.name||'Attachment')}</div>
+        <div class="attach-meta">${a.addedAt?new Date(a.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):''}</div>
+      </div>
+      <div class="attach-actions">
+        ${a.url?`<a href="${esc(a.url)}" target="_blank" class="btn btn-ghost" style="font-size:10px">Open</a>`:''}
+        <button class="btn btn-ghost" style="color:var(--accent);font-size:10px" data-action="del-attach" data-aid="${a.id}">Del</button>
+      </div>
+    </div>`).join('')}</div>`:'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg><p>No attachments yet</p><p style="font-size:11px;color:var(--text3)">Add links or upload images related to this event</p></div>'}`;
 }
 
 // ===== TIMELINE =====
@@ -3382,6 +3446,70 @@ document.addEventListener('click',e=>{
     case 'sync-pull':pullFromGist().then(pulled=>{if(pulled)toast('Pulled from cloud');else toast('Already up to date');});break;
     case 'entry-sort-dir':sortDir=sortDir==='asc'?'desc':'asc';render();break;
     case 'event-sort-dir':eventSortDir=eventSortDir==='asc'?'desc':'asc';render();break;
+    case 'dash-cat':S._dashCat=el.dataset.cat||'all';saveS();render();break;
+    case 'dash-status':S._dashStatus=el.dataset.st||'all';saveS();render();break;
+    case 'add-attach-link':{if(ev){
+      modal('Add Link Attachment',`<div class="fg">
+        <div class="fi full"><label>Name</label><input class="fc" name="att-name" placeholder="e.g. Hotel confirmation"></div>
+        <div class="fi full"><label>URL</label><input class="fc" name="att-url" placeholder="https://..."></div>
+      </div>`,()=>{
+        const m=document.querySelector('.modal');
+        const name=m.querySelector('[name="att-name"]').value;
+        const url=m.querySelector('[name="att-url"]').value;
+        if(!url){toast('URL required');return false;}
+        if(!ev.attachments)ev.attachments=[];
+        ev.attachments.push({id:uid(),name:name||url,url,type:'link',addedAt:new Date().toISOString()});
+        saveS();render();toast('Link added');
+      });}break;}
+    case 'add-attach-img':{if(ev){
+      const fid='att-'+uid();
+      modal('Upload Image',`<div class="fg">
+        <div class="fi full"><label>Name</label><input class="fc" name="att-name" placeholder="e.g. Booking screenshot"></div>
+        <div class="fi full"><label>Image</label><input type="file" accept="image/*" id="${fid}" class="fc"></div>
+        <div class="fi full"><label>Link (optional)</label><input class="fc" name="att-url" placeholder="https://..."></div>
+      </div>`,()=>{
+        const m=document.querySelector('.modal');
+        const name=m.querySelector('[name="att-name"]').value;
+        const url=m.querySelector('[name="att-url"]').value;
+        const fi=document.getElementById(fid);
+        const pendingFile=fi?fi._pendingThumb:null;
+        if(!pendingFile&&!url){toast('Image or URL required');return false;}
+        if(!ev.attachments)ev.attachments=[];
+        ev.attachments.push({id:uid(),name:name||'Image',thumbData:pendingFile||'',url:url||'',type:pendingFile?'image':'link',addedAt:new Date().toISOString()});
+        saveS();render();toast('Attachment added');
+      });
+      setTimeout(()=>{
+        const fi=document.getElementById(fid);
+        if(fi)fi.addEventListener('change',e2=>{
+          const file=e2.target.files[0];
+          if(!file)return;
+          const reader=new FileReader();
+          reader.onload=()=>{
+            const img=new Image();
+            img.onload=()=>{
+              const canvas=document.createElement('canvas');
+              const maxW=300,maxH=300;
+              let w=img.width,h=img.height;
+              if(w>maxW){h=h*(maxW/w);w=maxW;}
+              if(h>maxH){w=w*(maxH/h);h=maxH;}
+              canvas.width=w;canvas.height=h;
+              const ctx=canvas.getContext('2d');
+              ctx.drawImage(img,0,0,w,h);
+              fi._pendingThumb=canvas.toDataURL('image/jpeg',0.6);
+              toast('Image ready');
+            };
+            img.src=reader.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      },100);
+      }break;}
+    case 'del-attach':{if(ev){
+      const aid=el.dataset.aid;
+      const idx=(ev.attachments||[]).findIndex(a=>a.id===aid);
+      if(idx>=0){const entry=ev.attachments[idx];ev.attachments.splice(idx,1);saveS();render();
+        toastUndo('Attachment deleted',()=>{ev.attachments.splice(idx,0,entry);saveS();render();});}
+      }break;}
   }
 });
 
@@ -3399,6 +3527,9 @@ document.addEventListener('input',e=>{
   if(e.target.matches('[data-action="search-events"]')){S._searchQ=e.target.value;render();
     // Re-focus after render
     setTimeout(()=>{const inp=document.querySelector('[data-action="search-events"]');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}},10);
+  }
+  if(e.target.matches('[data-action="dash-search"]')){S._dashSearch=e.target.value;render();
+    setTimeout(()=>{const inp=document.querySelector('[data-action="dash-search"]');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}},10);
   }
 });
 
