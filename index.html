@@ -3650,7 +3650,7 @@ document.addEventListener('click',e=>{
       const idx=S.visitedCountries.indexOf(cid);
       if(idx>=0)S.visitedCountries.splice(idx,1);
       else S.visitedCountries.push(cid);
-      saveS();triggerSync();render();
+      saveS();render();
       break;
     }
     case 'dash-cat':S._dashCat=el.dataset.cat||'all';saveS();render();break;
