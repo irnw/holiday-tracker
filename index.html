@@ -196,6 +196,15 @@ textarea.fc{resize:vertical;min-height:50px}
 
 /* ========== YEAR TABS ========== */
 .cat-group{margin-bottom:24px}.cat-group-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.clash-badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px}
+.clash-time{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.clash-date{background:rgba(251,146,60,.12);color:#fb923c;border:1px solid rgba(251,146,60,.25)}
+.clash-warning{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);margin:12px 0 4px;font-size:12px;line-height:1.5;color:var(--text)}
+.clash-warning-icon{font-size:18px;flex-shrink:0;margin-top:-1px}
+.clash-warning-text{flex:1}
+.clash-warning-text strong{color:#ef4444}
+.clash-event-name{font-weight:600;color:var(--primary)}
+.cal-clash{position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:1.5px solid var(--bg)}
 .ytabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
 .yt{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--text3);border:1px solid var(--glass-border);transition:all .15s}
 .yt:hover{border-color:var(--text3);color:var(--text2)}.yt.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 0 16px rgba(59,130,246,.25)}
@@ -409,6 +418,65 @@ const CATEGORIES=[
 ];
 function catColor(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.color:'#6c8cff';}
 function catLabel(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.label:c||'Trip';}
+
+// ===== CLASH DETECTION =====
+function eventToInterval(ev){
+  if(!ev.startDate||!ev.endDate)return null;
+  const sTime=ev.startTime||null, eTime=ev.endTime||null;
+  const hasTime=!!(sTime&&eTime);
+  const start=new Date(ev.startDate+'T'+(sTime||'00:00')+':00');
+  const end=new Date(ev.endDate+'T'+(eTime||'23:59')+':00');
+  return {start,end,hasTime};
+}
+function intervalsOverlap(a,b){
+  return a.start<b.end&&b.start<a.end;
+}
+function findClashes(ev,excludeId){
+  const intA=eventToInterval(ev);
+  if(!intA)return[];
+  const clashes=[];
+  for(const other of S.events){
+    if(other.id===excludeId)continue;
+    const intB=eventToInterval(other);
+    if(!intB)continue;
+    if(!intervalsOverlap(intA,intB))continue;
+    // Classify severity: time-sensitive = both have explicit times and those times overlap
+    const bothTimed=intA.hasTime&&intB.hasTime;
+    // For date-only overlaps on multi-day trips, only flag if same day (not just range overlap for long trips)
+    if(!bothTimed){
+      // If both are multi-day without times, only flag if the date ranges overlap AND
+      // at least one is single-day or they share an exact start/end date
+      const sameDayTouch=ev.startDate===other.startDate||ev.startDate===other.endDate||ev.endDate===other.startDate||ev.endDate===other.endDate;
+      const eitherSingleDay=(ev.startDate===ev.endDate)||(other.startDate===other.endDate);
+      if(!sameDayTouch&&!eitherSingleDay)continue;
+    }
+    clashes.push({event:other,severity:bothTimed?'time':'date'});
+  }
+  return clashes;
+}
+function clashBadgeHtml(ev){
+  const cl=findClashes(ev,ev.id);
+  if(!cl.length)return'';
+  const timeCl=cl.filter(c=>c.severity==='time');
+  if(timeCl.length)return`<span class="clash-badge clash-time" title="Time clash with ${timeCl.map(c=>c.event.name).join(', ')}">⚠ Clash</span>`;
+  return`<span class="clash-badge clash-date" title="Date overlap with ${cl.map(c=>c.event.name).join(', ')}">⚠ Overlap</span>`;
+}
+function clashWarningHtml(clashes){
+  if(!clashes.length)return'';
+  const timeCl=clashes.filter(c=>c.severity==='time');
+  const dateCl=clashes.filter(c=>c.severity==='date');
+  let html='<div class="clash-warning">';
+  html+='<div class="clash-warning-icon">⚠️</div>';
+  if(timeCl.length){
+    html+=`<div class="clash-warning-text"><strong>Time clash detected</strong> — overlaps with:<br>${timeCl.map(c=>`<span class="clash-event-name">${esc(c.event.name)}</span> (${fmt(c.event.startDate)}${c.event.startTime?' '+c.event.startTime:''}–${fmt(c.event.endDate)}${c.event.endTime?' '+c.event.endTime:''})`).join('<br>')}</div>`;
+  }
+  if(dateCl.length){
+    html+=`<div class="clash-warning-text">${timeCl.length?'Also has ':'Has '}<strong>date overlap</strong> with: ${dateCl.map(c=>`<span class="clash-event-name">${esc(c.event.name)}</span>`).join(', ')}</div>`;
+  }
+  html+='</div>';
+  return html;
+}
+
 const NAVS=[
   {id:'dashboard',label:'Dashboard',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>'},
   {id:'events',label:'Events',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>'},
@@ -1184,7 +1252,7 @@ function vDash(){
       <div class="card-body" style="padding:12px">
       ${u.length?u.map(t=>{const st=eventStatus(t);return`
         <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}" data-action="view" data-id="${t.id}">
-          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center"><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
+          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t)}<span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
           <div class="entry-grid">
             <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)} — ${fmtS(t.endDate)}</span></div>
             <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
@@ -1209,7 +1277,7 @@ function eventCardHtml(t){
   return`<div class="trip-card" data-action="view" data-id="${t.id}">
     <div class="trip-accent" style="background:${cc}"></div>
     <div class="trip-body">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px"><span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
       <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
       <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}</div>
       <div class="trip-foot">
@@ -1419,7 +1487,9 @@ function vCal(){
     const phs=getPH(ds);
     const eventsOn=tpFilter(S.events).filter(t=>t.startDate<=ds&&t.endDate>=ds);
     const isApplied=getAppliedForDate(ds,y);
-    cells+=`<div class="cal-day${isToday?' today':''}" data-date="${ds}">
+    const dayHasClash=eventsOn.length>=2&&eventsOn.some(ev=>findClashes(ev,ev.id).filter(c=>c.severity==='time').length>0);
+    cells+=`<div class="cal-day${isToday?' today':''}" style="position:relative" data-date="${ds}">
+      ${dayHasClash?'<div class="cal-clash" title="Time clash on this day"></div>':''}
       <div class="d-num${isWknd?' weekend':''}">${d}</div>
       ${phs.map(ph=>`<div class="d-ph ph-${ph.country.toLowerCase()}" title="${esc(ph.n)}${ph.country==='MY'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n.length>14?ph.n.slice(0,12)+'…':ph.n)}</div>`).join('')}
       ${leaveDays.has(ds)&&!phs.some(p=>p.country==='SG')?`<div class="d-leave" style="font-size:8px;color:var(--purple);font-weight:500">${isApplied?'Applied':'Leave'}</div>`:''}
@@ -2073,7 +2143,7 @@ function modal(title,body,onSave,opts){
   const o=document.getElementById('mbg');
   o.innerHTML=`<div class="modal"><div class="modal-head"><h3>${title}</h3><button class="modal-x" data-action="xm">×</button></div><div class="modal-body">${body}</div><div class="modal-foot"><button class="btn btn-s" data-action="xm">Cancel</button><button class="${saveCls}" id="msave">${saveLabel}</button></div></div>`;
   o.classList.add('open');
-  if(onSave)document.getElementById('msave').onclick=()=>{onSave();xm();};
+  if(onSave)document.getElementById('msave').onclick=()=>{const r=onSave();if(r===false)return;xm();};
   o.onclick=e=>{if(e.target===o)xm();};
   o.querySelectorAll('.dz').forEach(setupDZ);
   setupDZTabs(o);
@@ -3042,12 +3112,36 @@ function fEvent(t){
     <div class="fi full"><label>Locations (comma-separated)</label><input class="fc" name="locs" value="${esc(t.locations.join(', '))}"></div>
     <div class="fi full"><label>Shared Link</label><input class="fc" name="link" value="${esc(t.sharedLink||'')}"></div>
     <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(t.notes||'')}</textarea></div>
-  </div>`,()=>{
+  </div><div id="clash-zone"></div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const d={name:g('name'),category:g('category')||'trip',requiresLeave:g('requiresLeave')!=='false',startDate:g('sd'),startTime:g('st'),endDate:g('ed'),endTime:g('et'),locations:g('locs').split(',').map(s=>s.trim()).filter(Boolean),sharedLink:g('link'),notes:g('notes'),year:parseInt(g('sd'))||new Date().getFullYear()};
+    // Check for clashes before saving
+    const clashes=findClashes(d,e?t.id:null);
+    const cz=m.querySelector('#clash-zone');
+    const timeCl=clashes.filter(c=>c.severity==='time');
+    if(timeCl.length&&!m._clashConfirmed){
+      cz.innerHTML=clashWarningHtml(clashes)+'<div style="font-size:11px;color:var(--text3);margin-top:4px;text-align:center">Click Save again to confirm</div>';
+      m._clashConfirmed=true;
+      return false;// Don't close modal — user must click Save again to confirm
+    }
     if(e)Object.assign(t,d);else S.events.push({id:uid(),hotels:[],flights:[],activities:[],transport:[],...d});
     saveS();render();toast(e?'Event updated':'Event created');
   });
+  // Live clash check on date/time change
+  setTimeout(()=>{
+    const m=document.querySelector('.modal');
+    if(!m)return;
+    ['sd','st','ed','et'].forEach(n=>{
+      const inp=m.querySelector(`[name="${n}"]`);
+      if(inp)inp.addEventListener('change',()=>{
+        const g=nm=>m.querySelector(`[name="${nm}"]`).value;
+        const probe={startDate:g('sd'),startTime:g('st'),endDate:g('ed'),endTime:g('et')};
+        const cl=findClashes(probe,e?t.id:null);
+        const cz=m.querySelector('#clash-zone');
+        if(cz){cz.innerHTML=clashWarningHtml(cl);m._clashConfirmed=false;}
+      });
+    });
+  },50);
 }
 function calcNights(ci,co){if(!ci||!co)return'';const d=Math.round((new Date(co+'T00:00:00')-new Date(ci+'T00:00:00'))/864e5);return d>0?d:'';}
 function fHotel(ev,h){
