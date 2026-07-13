@@ -853,6 +853,8 @@ async function pushToGist(retried){
   if(_appErrorState){console.warn('Push blocked: app in error state');return;}
   if((S.events||[]).length===0){console.warn('Push blocked: empty events array');return;}
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
+  // Before pushing, merge remote visitedCountries so we never overwrite with fewer
+  try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}}}}catch(e){/* non-fatal */}
   const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)}}};
   try{
     if(c.gistId){
@@ -898,6 +900,9 @@ async function pullFromGist(retried){
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}else return false;}
     if(!gist||!gist.files||!gist.files[GIST_FILE])return false;
     const remote=JSON.parse(gist.files[GIST_FILE].content);
+    // Always merge visitedCountries via union regardless of lastModified
+    let vcChanged=false;
+    if(remote.visitedCountries&&remote.visitedCountries.length){const local=new Set(S.visitedCountries||[]);const before=local.size;remote.visitedCountries.forEach(c=>local.add(c));if(local.size>before){S.visitedCountries=[...local];vcChanged=true;}}
     if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
       backupBeforeSync();
       const remoteEvts=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});
@@ -906,13 +911,13 @@ async function pullFromGist(retried){
       S.rates=remote.rates||S.rates;
       S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;
-      if(remote.visitedCountries){const local=new Set(S.visitedCountries||[]);remote.visitedCountries.forEach(c=>local.add(c));S.visitedCountries=[...local];}
       S.lastModified=remote.lastModified;
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       applyTheme();render();
       updateSyncStatus('Pulled latest data');
       return true;
     }
+    if(vcChanged){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}render();updateSyncStatus('Merged countries');return true;}
     updateSyncStatus('Already up to date');
     return false;
   }catch(e){console.error('Pull failed:',e);updateSyncStatus('Sync error: '+e.message);return false;}
@@ -937,6 +942,8 @@ async function fullSync(retried){
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}}
     if(gist&&gist.files&&gist.files[GIST_FILE]){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
+      // Always merge visitedCountries via union regardless of lastModified
+      if(remote.visitedCountries&&remote.visitedCountries.length){const local=new Set(S.visitedCountries||[]);remote.visitedCountries.forEach(c=>local.add(c));S.visitedCountries=[...local];}
       if(remote.lastModified&&remote.lastModified>S.lastModified){
         backupBeforeSync();
         const remoteEvts=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});
@@ -944,7 +951,6 @@ async function fullSync(retried){
         S.leave=remote.leave||S.leave;
         S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
         S.theme=remote.theme||S.theme;
-        if(remote.visitedCountries){const local=new Set(S.visitedCountries||[]);remote.visitedCountries.forEach(c=>local.add(c));S.visitedCountries=[...local];}
         S.lastModified=remote.lastModified;
         try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
         applyTheme();render();
