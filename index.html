@@ -511,10 +511,9 @@ function clashBadgeHtml(ev,clickable){
   const cl=findClashes(ev,ev.id);
   if(!cl.length)return'';
   const timeCl=cl.filter(c=>c.severity==='time');
-  const target=timeCl.length?timeCl[0]:cl[0];
   if(clickable){
-    if(timeCl.length)return`<span class="clash-badge clash-time clash-link" data-action="view-clash" data-id="${target.event.id}" title="Time clash with ${timeCl.map(c=>c.event.name).join(', ')} — click to view">⚠ Clash</span>`;
-    return`<span class="clash-badge clash-date clash-link" data-action="view-clash" data-id="${target.event.id}" title="Date overlap with ${cl.map(c=>c.event.name).join(', ')} — click to view">⚠ Overlap</span>`;
+    if(timeCl.length)return`<span class="clash-badge clash-time clash-link" data-action="show-clash" data-id="${ev.id}" title="Time clash with ${timeCl.map(c=>c.event.name).join(', ')} — click to view">⚠ Clash</span>`;
+    return`<span class="clash-badge clash-date clash-link" data-action="show-clash" data-id="${ev.id}" title="Date overlap with ${cl.map(c=>c.event.name).join(', ')} — click to view">⚠ Overlap</span>`;
   }
   if(timeCl.length)return`<span class="clash-badge clash-time" title="Time clash with ${timeCl.map(c=>c.event.name).join(', ')}">⚠ Clash</span>`;
   return`<span class="clash-badge clash-date" title="Date overlap with ${cl.map(c=>c.event.name).join(', ')}">⚠ Overlap</span>`;
@@ -549,6 +548,75 @@ function clashWarningHtml(clashes){
   }
   html+='</div>';
   return html;
+}
+
+function clashCardHtml(t){
+  const st=eventStatus(t);const cc=catColor(t.category||'trip');
+  return`<div class="entry clash-ev-card" style="cursor:pointer;border-left:3px solid ${cc};margin:6px 0;padding:10px 12px" data-action="view" data-id="${t.id}">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div style="font-weight:600;font-size:13px;color:var(--text)">${esc(t.name)}</div>
+      <div style="display:flex;gap:4px;align-items:center"><span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.locations.join(', ')||'No locations'}</div>
+  </div>`;
+}
+
+function showClashModal(eventId){
+  const o=document.getElementById('mbg');
+  let body='';
+  if(eventId){
+    const ev=S.events.find(e=>e.id===eventId);
+    if(!ev){xm();return;}
+    const cl=findClashes(ev,ev.id);
+    if(!cl.length){xm();return;}
+    const timeCl=cl.filter(c=>c.severity==='time');
+    const dateCl=cl.filter(c=>c.severity==='date');
+    body+=clashCardHtml(ev);
+    if(timeCl.length){
+      body+=`<div style="font-size:11px;font-weight:600;color:#ef4444;margin:12px 0 4px;display:flex;align-items:center;gap:4px"><span>⚠</span> Time clashes with:</div>`;
+      timeCl.forEach(c=>{body+=clashCardHtml(c.event);});
+    }
+    if(dateCl.length){
+      body+=`<div style="font-size:11px;font-weight:600;color:#fb923c;margin:12px 0 4px;display:flex;align-items:center;gap:4px"><span>⚠</span> Date overlaps with:</div>`;
+      dateCl.forEach(c=>{body+=clashCardHtml(c.event);});
+    }
+  }else{
+    // All clashes grouped
+    const seen=new Set();
+    const groups=[];
+    for(const ev of S.events){
+      if(seen.has(ev.id))continue;
+      const cl=findClashes(ev,ev.id);
+      if(!cl.length)continue;
+      const group={event:ev,clashes:cl};
+      seen.add(ev.id);
+      cl.forEach(c=>seen.add(c.event.id));
+      groups.push(group);
+    }
+    if(!groups.length){body='<div style="text-align:center;color:var(--text3);padding:20px">No clashes found</div>';}
+    else{
+      groups.forEach((g,i)=>{
+        const timeCl=g.clashes.filter(c=>c.severity==='time');
+        const dateCl=g.clashes.filter(c=>c.severity==='date');
+        const severity=timeCl.length?'time':'date';
+        const sevColor=severity==='time'?'#ef4444':'#fb923c';
+        const sevLabel=timeCl.length?'Time Clash':'Date Overlap';
+        body+=`<div style="margin:${i?'16px':'0'} 0 0;padding:12px;border-radius:10px;background:${sevColor}08;border:1px solid ${sevColor}25">`;
+        body+=`<div style="font-size:11px;font-weight:600;color:${sevColor};margin-bottom:8px;display:flex;align-items:center;gap:4px"><span>⚠</span> ${sevLabel}</div>`;
+        body+=clashCardHtml(g.event);
+        g.clashes.forEach(c=>{body+=clashCardHtml(c.event);});
+        body+=`</div>`;
+      });
+    }
+  }
+  o.innerHTML=`<div class="modal"><div class="modal-head"><h3>${eventId?'Event Clashes':'All Clashes'}</h3><button class="modal-x" data-action="xm">×</button></div><div class="modal-body" style="max-height:70vh;overflow-y:auto">${body}</div><div class="modal-foot"><button class="btn btn-s" data-action="xm">Close</button></div></div>`;
+  o.classList.add('open');
+  o.onclick=e=>{if(e.target===o)xm();};
+  // Make cards clickable — close modal and navigate
+  o.querySelectorAll('.clash-ev-card[data-id]').forEach(card=>{
+    card.onclick=e=>{e.stopPropagation();xm();nav('detail',{detailId:card.dataset.id});};
+  });
 }
 
 const NAVS=[
@@ -1342,7 +1410,7 @@ function vDash(){
       <div class="stat blue"><div class="s-label">Events</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
       <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${lyTotals.taken} used · ${tot} total</div></div>
       <div class="stat purple"><div class="s-label">Next Event</div><div class="s-val" style="font-size:16px">${nextEvent?esc(nextEvent.name):'---'}</div><div class="s-sub">${countdownHtml}</div></div>
-      <div class="stat" style="border-color:#ef4444"><div class="s-label">Clashes</div><div class="s-val">${clashCount}</div><div class="s-sub">${timeClashCount} timing · ${dateClashCount} date</div></div>
+      <div class="stat${clashCount?' clash-link':''}" style="border-color:#ef4444;${clashCount?'cursor:pointer':''}" ${clashCount?'data-action="show-all-clashes"':''}><div class="s-label">Clashes</div><div class="s-val">${clashCount}</div><div class="s-sub">${timeClashCount} timing · ${dateClashCount} date</div></div>
     </div>
     ${payDue.length?`<div class="card" style="margin-bottom:16px;border:1px solid var(--orange);border-radius:10px;overflow:hidden"><div style="background:rgba(251,146,60,.08);padding:12px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span style="font-weight:600;font-size:13px;color:var(--orange)">Payments Due</span></div>${payDue.map(t=>`<div style="font-size:12px;color:var(--text2);padding:2px 0"><span style="font-weight:600">${esc(t.name)}</span> has unpaid bookings with upcoming due dates</div>`).join('')}</div></div>`:''}
     ${(()=>{const sc=getSyncConfig();
@@ -3684,7 +3752,8 @@ document.addEventListener('click',e=>{
     case 'sync-pull':pullFromGist().then(pulled=>{if(pulled)toast('Pulled from cloud');else toast('Already up to date');});break;
     case 'entry-sort-dir':sortDir=sortDir==='asc'?'desc':'asc';render();break;
     case 'event-sort-dir':eventSortDir=eventSortDir==='asc'?'desc':'asc';render();break;
-    case 'view-clash':e.stopPropagation();nav('detail',{detailId:el.dataset.id});break;
+    case 'show-clash':e.stopPropagation();showClashModal(el.dataset.id);break;
+    case 'show-all-clashes':e.stopPropagation();showClashModal();break;
     case 'toggle-country':{
       const cid=el.dataset.cid;
       if(!S.visitedCountries)S.visitedCountries=[];
