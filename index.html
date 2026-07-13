@@ -838,8 +838,8 @@ async function gistAPI(path,opts={}){
 
 function syncData(){
   // Extract only the data fields worth syncing (not UI state like current view)
-  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified}=S;const trips=events;
-  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified};
+  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries}=S;const trips=events;
+  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[]};
 }
 
 async function findExistingGist(){
@@ -906,6 +906,7 @@ async function pullFromGist(retried){
       S.rates=remote.rates||S.rates;
       S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;
+      if(remote.visitedCountries){const local=new Set(S.visitedCountries||[]);remote.visitedCountries.forEach(c=>local.add(c));S.visitedCountries=[...local];}
       S.lastModified=remote.lastModified;
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       applyTheme();render();
@@ -942,7 +943,9 @@ async function fullSync(retried){
         S.events=mergeEvents(S.events||[],remoteEvts);
         S.leave=remote.leave||S.leave;
         S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
-        S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified;
+        S.theme=remote.theme||S.theme;
+        if(remote.visitedCountries){const local=new Set(S.visitedCountries||[]);remote.visitedCountries.forEach(c=>local.add(c));S.visitedCountries=[...local];}
+        S.lastModified=remote.lastModified;
         try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
         applyTheme();render();
         updateSyncStatus('Pulled newer data from cloud');toast('Synced from cloud');return;
