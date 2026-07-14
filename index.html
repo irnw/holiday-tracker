@@ -552,7 +552,7 @@ function clashWarningHtml(clashes){
 
 function clashCardHtml(t){
   const st=eventStatus(t);const cc=catColor(t.category||'trip');
-  return`<div class="entry clash-ev-card" style="cursor:pointer;border-left:3px solid ${cc};margin:6px 0;padding:10px 12px" data-action="view" data-id="${t.id}">
+  return`<div class="entry clash-ev-card" style="cursor:pointer;border-left:3px solid ${cc};margin:6px 0;padding:10px 12px" data-clash-nav="${t.id}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
       <div style="font-weight:600;font-size:13px;color:var(--text)">${esc(t.name)}</div>
       <div style="display:flex;gap:4px;align-items:center"><span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div>
@@ -614,8 +614,8 @@ function showClashModal(eventId){
   o.classList.add('open');
   o.onclick=e=>{if(e.target===o)xm();};
   // Make cards clickable — close modal and navigate
-  o.querySelectorAll('.clash-ev-card[data-id]').forEach(card=>{
-    card.onclick=e=>{e.stopPropagation();xm();nav('detail',{detailId:card.dataset.id});};
+  o.querySelectorAll('[data-clash-nav]').forEach(card=>{
+    card.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const eid=card.getAttribute('data-clash-nav');xm();nav('detail',{detailId:eid});},true);
   });
 }
 
