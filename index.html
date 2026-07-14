@@ -460,16 +460,16 @@ initPdfJs();
 const CUR=['SGD','MYR','USD','IDR','EUR','JPY','THB','PHP','AUD','GBP','CNY','MVR','EGP','TWD','KRW'];
 const DRATES={SGD:1,MYR:0.284,USD:1.34,IDR:0.0000847,EUR:1.46,JPY:0.0089,THB:0.038,PHP:0.024,AUD:0.87,GBP:1.70,CNY:0.185,MVR:0.087,EGP:0.027,TWD:0.042,KRW:0.00098};
 const EVENT_COLORS=['#6c8cff','#ff6b6b','#4ade80','#fb923c','#a78bfa','#f472b6','#22d3ee','#facc15','#34d399','#f87171'];
-const ACT_COLORS=['#f472b6','#c084fc','#fb923c','#facc15','#22d3ee','#34d399','#a78bfa','#f87171','#6c8cff','#4ade80'];
+const ACT_COLORS=['#2ea8a0','#d49650','#c87070','#d47898','#5aad6a','#4da0d0','#b07cc8','#d4a050','#6aab8e','#5a9ec8'];
 const CATEGORIES=[
-  {id:'trip',label:'Trip',color:'#6c8cff'},
-  {id:'work',label:'Work',color:'#fb923c'},
-  {id:'training',label:'Training',color:'#a78bfa'},
-  {id:'social',label:'Social',color:'#f472b6'},
-  {id:'personal',label:'Personal',color:'#4ade80'},
-  {id:'activity',label:'Activity',color:'#22d3ee'}
+  {id:'trip',label:'Trip',color:'#2ea8a0'},
+  {id:'work',label:'Work',color:'#d49650'},
+  {id:'training',label:'Training',color:'#c87070'},
+  {id:'social',label:'Social',color:'#d47898'},
+  {id:'personal',label:'Personal',color:'#5aad6a'},
+  {id:'activity',label:'Activity',color:'#4da0d0'}
 ];
-function catColor(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.color:'#6c8cff';}
+function catColor(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.color:'#2ea8a0';}
 function catLabel(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.label:c||'Trip';}
 
 // ===== CLASH DETECTION =====
@@ -1892,7 +1892,7 @@ function vBudget(){
   ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||'SGD';byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toSGD(e.cost,c,e.rateToSGD);}})));
   const wc=ft.filter(t=>eCost(t)>0).sort((a,b)=>eCost(b)-eCost(a));
   const total=ft.reduce((s,t)=>s+eCost(t),0);
-  const catColors={flights:'var(--primary)',hotels:'var(--green)',activities:'var(--orange)',transport:'var(--purple)'};
+  const catColors={flights:'#4da0d0',hotels:'#5aad6a',activities:'#d49650',transport:'#b07cc8'};
   const maxCat=Math.max(...Object.values(byCat),1);
   return `
   <div class="page-header"><div><h2>Budget</h2><div class="subtitle">Spending overview</div></div><div>${tpHtml()}</div></div>
