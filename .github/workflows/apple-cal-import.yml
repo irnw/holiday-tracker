@@ -1,0 +1,39 @@
+name: Import Apple Calendar
+# Fetches the user's public Apple Calendar (set in the tracker's Settings)
+# and stores it in the sync gist, where the app imports it.
+# Requires a repository secret GIST_TOKEN: a GitHub PAT with "gist" scope.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Apple calendar and update gist
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: |
+          set -e
+          if [ -z "$GIST_TOKEN" ]; then echo "No GIST_TOKEN secret configured - skipping"; exit 0; fi
+          AUTH="Authorization: Bearer $GIST_TOKEN"
+          # Locate the sync gist by its data file
+          GIST_ID=$(curl -sf -H "$AUTH" "https://api.github.com/gists?per_page=100" | jq -r '[.[] | select(.files["holiday-tracker-data.json"])][0].id // empty')
+          if [ -z "$GIST_ID" ]; then echo "Sync gist not found"; exit 0; fi
+          GIST_JSON=$(curl -sf -H "$AUTH" "https://api.github.com/gists/$GIST_ID")
+          # Read the Apple calendar URL from the synced settings
+          URL=$(echo "$GIST_JSON" | jq -r '.files["holiday-tracker-data.json"].content | fromjson | .appleCalUrl // empty')
+          if [ -z "$URL" ]; then echo "No appleCalUrl configured in tracker settings"; exit 0; fi
+          URL="${URL/webcal:\/\//https:\/\/}"
+          curl -sfL --max-time 60 "$URL" -o cal.ics
+          if ! grep -q "BEGIN:VCALENDAR" cal.ics; then echo "Fetched content is not a valid ICS calendar"; exit 1; fi
+          # Skip the PATCH if nothing changed
+          echo "$GIST_JSON" | jq -r '.files["apple-calendar-import.ics"].content // ""' > existing.ics
+          if cmp -s cal.ics existing.ics; then echo "Calendar unchanged - nothing to do"; exit 0; fi
+          jq -n --rawfile c cal.ics '{files:{"apple-calendar-import.ics":{content:$c}}}' > payload.json
+          curl -sf -X PATCH -H "$AUTH" -H "Content-Type: application/json" -d @payload.json "https://api.github.com/gists/$GIST_ID" > /dev/null
+          echo "Updated apple-calendar-import.ics in gist"
