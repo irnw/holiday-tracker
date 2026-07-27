@@ -880,6 +880,7 @@ function saveS(){S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.
 // ===== GIST SYNC =====
 const GIST_FILE='holiday-tracker-data.json';
 const ICS_FILE='holiday-tracker.ics';
+const APPLE_ICS_FILE='apple-calendar-import.ics';
 const GIST_DESC='Holiday Tracker Sync Data (do not delete)';
 function getSyncConfig(){try{return JSON.parse(localStorage.getItem('htSync'))||{};}catch(e){return {};}}
 function setSyncConfig(c){try{localStorage.setItem('htSync',JSON.stringify(c));}catch(e){}}
@@ -939,8 +940,8 @@ async function gistAPI(path,opts={}){
 
 function syncData(){
   // Extract only the data fields worth syncing (not UI state like current view)
-  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries}=S;const trips=events;
-  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[]};
+  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries,appleCalUrl}=S;const trips=events;
+  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[],appleCalUrl:appleCalUrl||''};
 }
 
 async function findExistingGist(){
@@ -968,7 +969,7 @@ async function pushToGist(retried){
         c.gistId=existing.id;setSyncConfig(c);
         resp=await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
       }else{
-        const g=await gistAPI('/gists',{method:'POST',body:JSON.stringify({...payload,public:true})});
+        const g=await gistAPI('/gists',{method:'POST',body:JSON.stringify({...payload,public:false})});
         c.gistId=g.id;setSyncConfig(c);
         resp=g;
       }
@@ -1004,6 +1005,8 @@ async function pullFromGist(retried){
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}else return false;}
     if(!gist||!gist.files||!gist.files[GIST_FILE])return false;
     if(gist.owner&&gist.owner.login&&c.gistOwner!==gist.owner.login){c.gistOwner=gist.owner.login;setSyncConfig(c);}
+    // One-time privacy migration: if the sync gist is still public, recreate it as secret
+    if(gist.public===true&&!window._gistMigrating){window._gistMigrating=true;ensureGistSecret(c.gistId).finally(()=>{window._gistMigrating=false;});}
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     // Always merge visitedCountries via union regardless of lastModified
     let vcChanged=false;
@@ -1016,13 +1019,16 @@ async function pullFromGist(retried){
       S.rates=remote.rates||S.rates;
       S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;
+      if(remote.appleCalUrl!==undefined&&remote.appleCalUrl!==S.appleCalUrl)S.appleCalUrl=remote.appleCalUrl;
       S.lastModified=remote.lastModified;
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
+      importAppleCalendar(gist.files[APPLE_ICS_FILE]?gist.files[APPLE_ICS_FILE].content:'');
       applyTheme();render();
       updateSyncStatus('Pulled latest data');
       return true;
     }
-    if(vcChanged){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}render();updateSyncStatus('Merged countries');return true;}
+    const appleChanged=importAppleCalendar(gist.files[APPLE_ICS_FILE]?gist.files[APPLE_ICS_FILE].content:'');
+    if(vcChanged||appleChanged){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}render();updateSyncStatus(appleChanged?'Imported from Apple Calendar':'Merged countries');return true;}
     updateSyncStatus('Already up to date');
     return false;
   }catch(e){console.error('Pull failed:',e);updateSyncStatus('Sync error: '+e.message);return false;}
@@ -1090,7 +1096,7 @@ async function connectSync(){
     const existing=await findExistingGist();
     if(existing){
       c.gistId=existing.id;setSyncConfig(c);
-      ensureGistPublic(existing.id);
+      ensureGistSecret(existing.id);
       const fullGist=await gistAPI('/gists/'+existing.id);
       const remote=JSON.parse(fullGist.files[GIST_FILE].content);
       // First-time connect: merge cloud with local (never lose local data)
@@ -1149,23 +1155,28 @@ async function pullGistAnon(gistId){
   }catch(e){console.error('Anon pull failed:',e);return false;}
 }
 
-// Ensure gist is public for cross-device read access.
-// GitHub API won't let you PATCH private→public, so we recreate it.
-async function ensureGistPublic(gistId){
+// Ensure gist is SECRET (unlisted — not shown on the GitHub profile).
+// Secret gists remain link-accessible, so device linking and the iCloud
+// calendar feed keep working. GitHub API can't PATCH visibility, so we
+// recreate the gist and delete the public one.
+async function ensureGistSecret(gistId){
   try{
     const gist=await gistAPI('/gists/'+gistId);
-    if(gist&&gist.public===false){
-      console.log('Gist is private — recreating as public for cross-device access…');
-      const content=gist.files[GIST_FILE]?gist.files[GIST_FILE].content:'{}';
+    if(gist&&gist.public===true){
+      console.log('Gist is public — recreating as secret…');
+      // Copy ALL files (data JSON, calendar feed, imports), not just the data file
+      const files={};
+      for(const[name,f]of Object.entries(gist.files||{})){if(f&&f.content!==undefined)files[name]={content:f.content};}
+      if(!files[GIST_FILE])return; // sanity: never migrate a gist without our data file
       const newGist=await gistAPI('/gists',{method:'POST',body:JSON.stringify({
-        description:GIST_DESC,public:true,
-        files:{[GIST_FILE]:{content}}
+        description:GIST_DESC,public:false,files
       })});
-      // Delete old private gist
+      // Delete old public gist only after the secret one exists
       try{await gistAPI('/gists/'+gistId,{method:'DELETE'});}catch(e2){}
-      // Update config with new public gist ID
       const c=getSyncConfig();c.gistId=newGist.id;setSyncConfig(c);
-      console.log('Recreated as public gist:',newGist.id);
+      console.log('Recreated as secret gist:',newGist.id);
+      toast('Sync data is now private (unlisted) — re-subscribe your Apple Calendar feed with the new URL in Settings');
+      render();
     }
   }catch(e){console.warn('Could not update gist visibility:',e);}
 }
@@ -1189,8 +1200,8 @@ async function connectSyncFromDash(){
     }
     if(!gist){const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}}
     if(gist&&gist.files&&gist.files[GIST_FILE]){
-      // Ensure gist is public for cross-device access
-      ensureGistPublic(c.gistId);
+      // Ensure gist is secret (unlisted) — keeps it off the public profile
+      ensureGistSecret(c.gistId);
       const remote=JSON.parse(gist.files[GIST_FILE].content);
       S.events=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
@@ -1496,7 +1507,7 @@ function vDash(){
       <div class="card-body" style="padding:12px">
       ${dashEvents.length?dashEvents.map(t=>{const st=eventStatus(t);const dl=daysUntil(t.startDate);const cc=catColor(t.category||'trip');const countTxt=st==='active'?'In progress':st==='completed'?(Math.abs(daysUntil(t.endDate))+' days ago'):(dl===0?'Today':(dl+' day'+(dl!==1?'s':'')+' away'));return`
         <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}${st==='completed'?';opacity:.6':''}" data-action="view" data-id="${t.id}">
-          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t,true)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
+          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t,true)}${t.source==='apple'?'<span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)">&#63743; Apple</span>':''}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
           <div class="entry-grid">
             <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</span></div>
             <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
@@ -1519,7 +1530,7 @@ function eventCardHtml(t){
   return`<div class="trip-card" data-action="view" data-id="${t.id}">
     <div class="trip-accent" style="background:${cc}"></div>
     <div class="trip-body">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t,true)}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t,true)}${t.source==='apple'?'<span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)">&#63743; Apple</span>':''}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
       <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
       <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}${(t.countries||[]).length?t.countries.slice(0,4).map(cid=>`<span class="country-tag">${esc(COUNTRY_DATA[cid]||cid)}</span>`).join('')+(t.countries.length>4?`<span class="country-tag">+${t.countries.length-4}</span>`:''):''}</div>
       <div class="trip-foot">
@@ -2037,7 +2048,11 @@ function buildICSCal(evts,stable){
   return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Holiday Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
     'X-WR-CALNAME:Holiday Tracker','X-WR-TIMEZONE:Asia/Singapore',...events,'END:VCALENDAR'].join('\r\n');
 }
-function buildICSFeed(){return buildICSCal(S.events||[],true);}
+function buildICSFeed(){
+  // Exclude Apple-sourced events from the outbound feed — they already live
+  // in Apple Calendar; re-exporting them would show duplicates there.
+  return buildICSCal((S.events||[]).filter(e=>e.source!=='apple'),true);
+}
 function generateICS(){
   const cal=buildICSCal(S.events,false);
   const blob=new Blob([cal],{type:'text/calendar;charset=utf-8'});
@@ -2055,6 +2070,86 @@ function calFeedUrl(){
   const c=getSyncConfig();
   if(!c.gistId||!c.gistOwner)return null;
   return 'https://gist.githubusercontent.com/'+c.gistOwner+'/'+c.gistId+'/raw/'+ICS_FILE;
+}
+
+// ===== APPLE CALENDAR INBOUND IMPORT =====
+function parseICSDate(v){
+  const m=v.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);
+  if(!m)return null;
+  if(!m[4])return{date:m[1]+'-'+m[2]+'-'+m[3],time:null};
+  if(m[7]){ // UTC → convert to local wall time
+    const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)));
+    const p=n=>String(n).padStart(2,'0');
+    return{date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),time:p(d.getHours())+':'+p(d.getMinutes())};
+  }
+  return{date:m[1]+'-'+m[2]+'-'+m[3],time:m[4]+':'+m[5]};
+}
+function icsPrevDay(d){const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()-1);const p=n=>String(n).padStart(2,'0');return dt.getFullYear()+'-'+p(dt.getMonth()+1)+'-'+p(dt.getDate());}
+function parseICSFeed(text){
+  const lines=text.replace(/\r\n[ \t]/g,'').replace(/\n[ \t]/g,'').split(/\r?\n/);
+  const evts=[];let cur=null;
+  const unesc=s=>(s||'').replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
+  for(const ln of lines){
+    if(ln==='BEGIN:VEVENT'){cur={};continue;}
+    if(ln==='END:VEVENT'){if(cur)evts.push(cur);cur=null;continue;}
+    if(!cur)continue;
+    const i=ln.indexOf(':');if(i<0)continue;
+    const left=ln.slice(0,i),val=ln.slice(i+1);
+    const prop=left.split(';')[0].toUpperCase();
+    if(prop==='UID')cur.uid=val.trim();
+    else if(prop==='SUMMARY')cur.summary=unesc(val);
+    else if(prop==='LOCATION')cur.location=unesc(val);
+    else if(prop==='DESCRIPTION')cur.description=unesc(val);
+    else if(prop==='RRULE')cur.rrule=val;
+    else if(prop==='STATUS')cur.status=val.trim().toUpperCase();
+    else if(prop==='DTSTART')cur.start=parseICSDate(val);
+    else if(prop==='DTEND')cur.end=parseICSDate(val);
+  }
+  return evts;
+}
+function appleId(u){let h=0;for(let i=0;i<u.length;i++){h=(h*31+u.charCodeAt(i))|0;}return 'ap-'+(h>>>0).toString(36);}
+function importAppleCalendar(icsText){
+  if(!icsText||!icsText.includes('BEGIN:VCALENDAR'))return 0;
+  let parsed;
+  try{parsed=parseICSFeed(icsText);}catch(e){console.warn('Apple import parse failed',e);return 0;}
+  const incoming=[];
+  for(const v of parsed){
+    if(!v.uid||!v.start||!v.summary)continue;
+    if(v.uid.includes('@holiday-tracker'))continue; // our own exported events — prevent echo loop
+    if(v.rrule)continue; // recurring events not supported
+    if(v.status==='CANCELLED')continue;
+    const startDate=v.start.date;
+    let endDate=v.end?v.end.date:startDate;
+    const startTime=v.start.time||'',endTime=v.end&&v.end.time?v.end.time:'';
+    if(!v.start.time){ // all-day: ICS DTEND is exclusive
+      if(v.end&&!v.end.time)endDate=icsPrevDay(endDate);
+      if(endDate<startDate)endDate=startDate;
+    }
+    incoming.push({appleUid:v.uid,name:v.summary,startDate,endDate,startTime,endTime,
+      locations:v.location?[v.location]:[],notes:v.description||''});
+  }
+  const byUid=new Map(incoming.map(e=>[e.appleUid,e]));
+  let changed=0;
+  // Update or delete existing apple-sourced events (never touches tracker-native events)
+  S.events=(S.events||[]).filter(ev=>{
+    if(ev.source!=='apple')return true;
+    const inc=byUid.get(ev.appleUid);
+    if(!inc){changed++;return false;} // deleted in Apple Calendar
+    const fields=['name','startDate','endDate','startTime','endTime','notes'];
+    const diff=fields.some(f=>(ev[f]||'')!==(inc[f]||''))||JSON.stringify(ev.locations||[])!==JSON.stringify(inc.locations);
+    if(diff){Object.assign(ev,inc);ev.year=parseInt(inc.startDate)||ev.year;changed++;}
+    byUid.delete(ev.appleUid);
+    return true;
+  });
+  // Add new events from Apple (deterministic IDs so devices don't duplicate)
+  for(const inc of byUid.values()){
+    S.events.push({id:appleId(inc.appleUid),source:'apple',category:'personal',requiresLeave:false,
+      hotels:[],flights:[],activities:[],transport:[],sharedLink:'',
+      year:parseInt(inc.startDate)||new Date().getFullYear(),...inc});
+    changed++;
+  }
+  if(changed){S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
+  return changed;
 }
 
 // ===== COUNTRIES =====
@@ -2267,7 +2362,15 @@ function vSettings(){
             Setting Location to iCloud on Mac makes the subscription appear on all your Apple devices automatically.
           </div>
         </details>
-        <button class="btn btn-s" data-action="publish-feed" style="margin-top:10px;font-size:11px">Republish Feed Now</button>`;})()}
+        <button class="btn btn-s" data-action="publish-feed" style="margin-top:10px;font-size:11px">Republish Feed Now</button>
+        <div style="border-top:1px solid var(--border);margin:16px 0 12px"></div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px">Inbound: Apple Calendar → Tracker</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Events you add in Apple Calendar appear here automatically (checked ~every 30 min, imported as <b>Personal</b>, no leave). In Apple Calendar, enable <b>Public Calendar</b> on the calendar you want to sync, then paste its URL below. Delete Apple events in Apple Calendar, not here — they'd be re-imported.</p>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input class="fc" id="apple-cal-url" placeholder="webcal://p##-caldav.icloud.com/published/2/…" value="${esc(S.appleCalUrl||'')}" style="flex:1;font-size:11px;font-family:monospace">
+          <button class="btn btn-p" data-action="save-apple-cal-url" style="white-space:nowrap">Save</button>
+        </div>
+        ${(S.events||[]).some(e=>e.source==='apple')?`<div style="font-size:10px;color:var(--green);margin-top:6px">${(S.events||[]).filter(e=>e.source==='apple').length} event(s) currently imported from Apple Calendar</div>`:''}`;})()}
     </div></div>
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Calendar Export (one-off)</h3></div><div class="card-body">
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Download a static .ics snapshot with built-in reminders (7 days and 1 day before). Import into Outlook, Google Calendar, or Apple Calendar. Unlike the subscription above, this won't update after changes.</p>
@@ -3858,6 +3961,16 @@ document.addEventListener('click',e=>{
     case 'publish-feed':{
       toast('Publishing calendar feed…');
       pushToGist().then(()=>{render();toast('Calendar feed published');});
+      break;
+    }
+    case 'save-apple-cal-url':{
+      const inp=document.getElementById('apple-cal-url');
+      if(!inp)break;
+      const url=inp.value.trim();
+      if(url&&!/^(webcal|https):\/\//.test(url)){toast('URL should start with webcal:// or https://');break;}
+      S.appleCalUrl=url;
+      saveS();render();
+      toast(url?'Apple Calendar URL saved — first import within ~30 min':'Apple Calendar import disabled');
       break;
     }
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
