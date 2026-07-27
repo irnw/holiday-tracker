@@ -879,6 +879,7 @@ function saveS(){S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.
 
 // ===== GIST SYNC =====
 const GIST_FILE='holiday-tracker-data.json';
+const ICS_FILE='holiday-tracker.ics';
 const GIST_DESC='Holiday Tracker Sync Data (do not delete)';
 function getSyncConfig(){try{return JSON.parse(localStorage.getItem('htSync'))||{};}catch(e){return {};}}
 function setSyncConfig(c){try{localStorage.setItem('htSync',JSON.stringify(c));}catch(e){}}
@@ -955,21 +956,24 @@ async function pushToGist(retried){
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   // Before pushing, merge remote visitedCountries so we never overwrite with fewer
   try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}}}}catch(e){/* non-fatal */}
-  const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)}}};
+  const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)},[ICS_FILE]:{content:buildICSFeed()}}};
   try{
+    let resp;
     if(c.gistId){
-      await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
+      resp=await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
     }else{
       // Try to find existing gist first before creating new
       const existing=await findExistingGist();
       if(existing){
         c.gistId=existing.id;setSyncConfig(c);
-        await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
+        resp=await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify(payload)});
       }else{
         const g=await gistAPI('/gists',{method:'POST',body:JSON.stringify({...payload,public:true})});
         c.gistId=g.id;setSyncConfig(c);
+        resp=g;
       }
     }
+    if(resp&&resp.owner&&resp.owner.login&&c.gistOwner!==resp.owner.login){c.gistOwner=resp.owner.login;}
     c.lastPush=Date.now();setSyncConfig(c);
     updateSyncStatus('Synced just now');
   }catch(e){
@@ -999,6 +1003,7 @@ async function pullFromGist(retried){
     }
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}else return false;}
     if(!gist||!gist.files||!gist.files[GIST_FILE])return false;
+    if(gist.owner&&gist.owner.login&&c.gistOwner!==gist.owner.login){c.gistOwner=gist.owner.login;setSyncConfig(c);}
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     // Always merge visitedCountries via union regardless of lastModified
     let vcChanged=false;
@@ -1079,6 +1084,7 @@ async function connectSync(){
   try{
     // Verify token works
     const user=await gistAPI('/user');
+    if(user&&user.login){c.gistOwner=user.login;setSyncConfig(c);}
     updateSyncStatus('Connected as '+user.login+'. Checking for existing data…');
     // Check for existing gist
     const existing=await findExistingGist();
@@ -1176,6 +1182,7 @@ async function connectSyncFromDash(){
   setSyncConfig(c);
   try{
     const user=await gistAPI('/user');
+    if(user&&user.login){c.gistOwner=user.login;setSyncConfig(c);}
     let gist;
     if(c.gistId){
       try{gist=await gistAPI('/gists/'+c.gistId);}catch(e){gist=null;}
@@ -1946,19 +1953,32 @@ function vBudget(){
 
 // ===== CALENDAR EXPORT (.ics) =====
 function icsDate(d){return d.replace(/[-:]/g,'').replace(/\.\d+/,'').slice(0,8);}
-function icsDateTime(d){if(!d)return'';const s=d.replace(/[-:T ]/g,'').replace(/\.\d+/,'');return s.length>=12?s.slice(0,15)+'Z':s.slice(0,8)+'T000000Z';}
+function icsNextDay(d){const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+1);return String(dt.getFullYear()).padStart(4,'0')+String(dt.getMonth()+1).padStart(2,'0')+String(dt.getDate()).padStart(2,'0');}
+function icsDateTime(d){
+  if(!d)return'';
+  // Floating local time (no Z) — datetime-local inputs are wall-clock times;
+  // marking them UTC would shift display by the viewer's UTC offset.
+  const m=d.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if(m)return m[1]+m[2]+m[3]+'T'+m[4]+m[5]+(m[6]||'00');
+  return icsDate(d)+'T000000';
+}
 function icsUid(){return 'ht-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'@holiday-tracker';}
 function icsEscape(s){return(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
-function generateICS(){
+function buildICSCal(evts,stable){
+  // stable=true → deterministic UIDs (required for subscribed feeds so Calendar
+  // recognizes the same event across refreshes instead of duplicating)
   const events=[];const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'').slice(0,15)+'Z';
-  S.events.forEach(t=>{
+  const uidFor=(kind,id)=>stable?('ht-'+kind+'-'+id+'@holiday-tracker'):icsUid();
+  evts.forEach(t=>{
     // Event entry (all-day, start to end)
+    if(!t.startDate||!t.endDate)return;
     events.push([
       'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(t.startDate),
-      'DTEND;VALUE=DATE:'+icsDate(new Date(new Date(t.endDate+'T00:00:00').getTime()+86400000).toISOString()),
+      'DTEND;VALUE=DATE:'+icsNextDay(t.endDate),
       'SUMMARY:'+icsEscape('🌍 '+t.name),
       'DESCRIPTION:'+icsEscape('Locations: '+(t.locations||[]).join(', ')+(t.notes?'\\n'+t.notes:'')),
-      'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED','TRANSP:OPAQUE',
+      'CATEGORIES:'+icsEscape(catLabel(t.category||'trip')),
+      'UID:'+uidFor('ev',t.id),'DTSTAMP:'+now,'STATUS:CONFIRMED','TRANSP:OPAQUE',
       'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(t.name+' in 7 days'),'END:VALARM',
       'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(t.name+' tomorrow!'),'END:VALARM',
       'END:VEVENT'
@@ -1972,10 +1992,10 @@ function generateICS(){
       events.push([
         'BEGIN:VEVENT',
         isAllDay?'DTSTART;VALUE=DATE:'+startD:'DTSTART:'+startD,
-        isAllDay?'DTEND;VALUE=DATE:'+startD:'DTEND:'+(f.arrivalTime?icsDateTime(f.arrivalTime):startD),
+        isAllDay?'DTEND;VALUE=DATE:'+icsNextDay(dt.slice(0,10)):'DTEND:'+(f.arrivalTime?icsDateTime(f.arrivalTime):startD),
         'SUMMARY:'+icsEscape(summary),
         'DESCRIPTION:'+icsEscape('Event: '+t.name+(f.pnr?'\\nPNR: '+f.pnr:'')+(f.seat?'\\nSeat: '+f.seat:'')+(f.notes?'\\n'+f.notes:'')),
-        'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
+        'UID:'+uidFor('fl',f.id),'DTSTAMP:'+now,'STATUS:CONFIRMED',
         'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(summary+' in 7 days'),'END:VALARM',
         'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(summary+' tomorrow!'),'END:VALARM',
         'END:VEVENT'
@@ -1986,11 +2006,11 @@ function generateICS(){
       if(!h.checkIn)return;
       events.push([
         'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(h.checkIn),
-        'DTEND;VALUE=DATE:'+icsDate(h.checkOut||h.checkIn),
+        'DTEND;VALUE=DATE:'+(h.checkOut?icsDate(h.checkOut):icsNextDay(h.checkIn)),
         'SUMMARY:'+icsEscape('🏨 '+h.name),
         'DESCRIPTION:'+icsEscape('Event: '+t.name+(h.notes?'\\n'+h.notes:'')),
         'LOCATION:'+icsEscape(h.name||''),
-        'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
+        'UID:'+uidFor('ho',h.id),'DTSTAMP:'+now,'STATUS:CONFIRMED',
         'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(h.name+' check-in in 7 days'),'END:VALARM',
         'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape(h.name+' check-in tomorrow!'),'END:VALARM',
         'END:VEVENT'
@@ -2001,22 +2021,26 @@ function generateICS(){
       if(!a.date)return;
       events.push([
         'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(a.date),
-        'DTEND;VALUE=DATE:'+icsDate(a.date),
+        'DTEND;VALUE=DATE:'+icsNextDay(a.endDate||a.date),
         'SUMMARY:'+icsEscape('🎯 '+(a.name||'Activity')),
         'DESCRIPTION:'+icsEscape('Event: '+t.name+(a.notes?'\\n'+a.notes:'')),
         'LOCATION:'+icsEscape(a.location||''),
-        'UID:'+icsUid(),'DTSTAMP:'+now,'STATUS:CONFIRMED',
+        'UID:'+uidFor('ac',a.id),'DTSTAMP:'+now,'STATUS:CONFIRMED',
         'BEGIN:VALARM','TRIGGER:-P7D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape((a.name||'Activity')+' in 7 days'),'END:VALARM',
         'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+icsEscape((a.name||'Activity')+' tomorrow!'),'END:VALARM',
         'END:VEVENT'
       ].join('\r\n'));
     });
   });
-  const cal=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Holiday Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Holiday Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
     'X-WR-CALNAME:Holiday Tracker','X-WR-TIMEZONE:Asia/Singapore',...events,'END:VCALENDAR'].join('\r\n');
+}
+function buildICSFeed(){return buildICSCal(S.events||[],true);}
+function generateICS(){
+  const cal=buildICSCal(S.events,false);
   const blob=new Blob([cal],{type:'text/calendar;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='holiday-tracker-events.ics';a.click();
-  toast('Calendar exported — import into Outlook for reminders');
+  toast('Calendar exported — import into your calendar app');
 }
 function exportUpcomingICS(){
   const today=new Date().toISOString().slice(0,10);
@@ -2024,6 +2048,11 @@ function exportUpcomingICS(){
   S.events=S.events.filter(t=>t.endDate>=today);
   generateICS();
   S.events=origEvents;
+}
+function calFeedUrl(){
+  const c=getSyncConfig();
+  if(!c.gistId||!c.gistOwner)return null;
+  return 'https://gist.githubusercontent.com/'+c.gistOwner+'/'+c.gistId+'/raw/'+ICS_FILE;
 }
 
 // ===== COUNTRIES =====
@@ -2218,8 +2247,28 @@ function vSettings(){
           <span id="sync-status" style="font-size:11px;color:var(--text3)"></span>
         </div>`;})()}
     </div></div>
-    <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Calendar Reminders</h3></div><div class="card-body">
-      <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Export trips, flights, and hotels as calendar events with built-in reminders (7 days and 1 day before). Import the .ics file into Outlook, Google Calendar, or Apple Calendar.</p>
+    <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Apple Calendar (iCloud) Sync</h3></div><div class="card-body">
+      ${(()=>{const url=calFeedUrl();const sc=getSyncConfig();
+        if(!sc.token&&!url)return '<p style="font-size:11px;color:var(--text3)">Connect cloud sync above first — the calendar feed is published alongside your sync data.</p>';
+        if(!url)return '<p style="font-size:11px;color:var(--text3)">Feed will be available after the next sync completes. Make any change (or click below) to publish it.</p><button class="btn btn-s" data-action="publish-feed" style="margin-top:8px">Publish Calendar Feed Now</button>';
+        return `
+        <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Subscribe once and your calendar stays up to date automatically — every change in this app republishes the feed, and iCloud re-fetches it on the refresh interval you choose. One-way: tracker → calendar.</p>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px">
+          <input class="fc" readonly value="${esc(url)}" id="cal-feed-url" style="flex:1;font-size:11px;font-family:monospace" onclick="this.select()">
+          <button class="btn btn-p" data-action="copy-cal-url" style="white-space:nowrap">Copy URL</button>
+        </div>
+        <details style="font-size:11px;color:var(--text2)">
+          <summary style="cursor:pointer;color:var(--primary);margin-bottom:6px">How to subscribe on Mac / iPhone</summary>
+          <div style="padding:8px 0 4px;line-height:1.7">
+            <b>Mac:</b> Calendar → File → New Calendar Subscription → paste the URL → set Location to <b>iCloud</b> and Auto-refresh to <b>Every hour</b>.<br>
+            <b>iPhone:</b> Settings → Apps → Calendar → Calendar Accounts → Add Account → Other → Add Subscribed Calendar → paste the URL.<br>
+            Setting Location to iCloud on Mac makes the subscription appear on all your Apple devices automatically.
+          </div>
+        </details>
+        <button class="btn btn-s" data-action="publish-feed" style="margin-top:10px;font-size:11px">Republish Feed Now</button>`;})()}
+    </div></div>
+    <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Calendar Export (one-off)</h3></div><div class="card-body">
+      <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Download a static .ics snapshot with built-in reminders (7 days and 1 day before). Import into Outlook, Google Calendar, or Apple Calendar. Unlike the subscription above, this won't update after changes.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-p" data-action="ics-upcoming">Export Upcoming Events</button>
         <button class="btn btn-s" data-action="ics-all">Export All Events</button>
@@ -3799,6 +3848,16 @@ document.addEventListener('click',e=>{
     case 'cal-today':{const now=new Date();S.calM=now.getMonth();S.calY=now.getFullYear();saveS();render();break;}
     case 'ics-upcoming':exportUpcomingICS();break;
     case 'ics-all':generateICS();break;
+    case 'copy-cal-url':{
+      const inp=document.getElementById('cal-feed-url');
+      if(inp){navigator.clipboard.writeText(inp.value).then(()=>toast('Feed URL copied — paste it into Calendar subscription')).catch(()=>{inp.select();document.execCommand('copy');toast('Feed URL copied');});}
+      break;
+    }
+    case 'publish-feed':{
+      toast('Publishing calendar feed…');
+      pushToGist().then(()=>{render();toast('Calendar feed published');});
+      break;
+    }
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
     case 'export-csv':{
       const csvRows=[['Event','Start','End','Locations','Days','Flights','Hotels','Activities','Transport','Total Cost (SGD)']];
